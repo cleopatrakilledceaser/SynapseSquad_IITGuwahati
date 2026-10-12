@@ -53,6 +53,7 @@ STATIC_COLUMNS: dict[str, str] = {
     "hdl_mgdl": "float64",
     "ldl_mgdl": "float64",
     "diabetes_duration_years": "float64",
+    "fasting_c_peptide_nmol_l": "float64",  # Shanghai only
     "n_periods": "Int64",
     "synthetic": "bool",
 }

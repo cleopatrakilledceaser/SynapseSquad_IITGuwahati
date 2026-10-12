@@ -23,6 +23,10 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D"]
+# fit/predict implement a documented common protocol (module docstring); per-method docstrings
+# would only repeat it.
+"src/models/baselines.py" = ["D102"]
+"src/models/lgbm.py" = ["D102"]
 "**/__init__.py" = ["D104"]
 
 [tool.pytest.ini_options]

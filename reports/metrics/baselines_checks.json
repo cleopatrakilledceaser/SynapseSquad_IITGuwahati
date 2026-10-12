@@ -1,0 +1,169 @@
+{
+  "name": "baselines_checks",
+  "timestamp_utc": "2026-10-12T21:08:25.698231+00:00",
+  "git_hash": "3f65329d53ab69c20c9d586fbeae88a702e35e1c-dirty",
+  "seed": 42,
+  "data_hash": "be85f61e0d8e3e1587ae52dbc4196a93f425e2c12178da03dda4c9ddb4d1b37c",
+  "config": {
+    "baselines": {
+      "seed": 42,
+      "cohorts": [
+        "cgmacros",
+        "shanghai_t2dm"
+      ],
+      "inner_split": {
+        "train": 0.8,
+        "calibration": 0.2,
+        "test": 0.0
+      },
+      "linear_trend": {
+        "window_min_grid": [
+          15,
+          30,
+          60
+        ],
+        "damping_grid": [
+          0.25,
+          0.5,
+          1.0
+        ]
+      },
+      "holt": {
+        "history_min": 120,
+        "alpha_grid": [
+          0.2,
+          0.4,
+          0.6,
+          0.8,
+          0.95
+        ],
+        "beta_grid": [
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "phi_grid": [
+          0.5,
+          0.65,
+          0.8,
+          0.9,
+          0.98
+        ]
+      },
+      "ar": {
+        "order_min_grid": [
+          30,
+          60,
+          120,
+          180
+        ],
+        "max_fit_rows": 300000
+      },
+      "patient_ar": {
+        "ridge_lambda": 50.0,
+        "min_pairs": 288
+      },
+      "lightgbm": {
+        "target": "delta",
+        "num_leaves_grid": [
+          15,
+          63
+        ],
+        "params": {
+          "learning_rate": 0.05,
+          "n_estimators": 2000,
+          "min_child_samples": 50,
+          "subsample": 0.8,
+          "subsample_freq": 1,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 1.0,
+          "n_jobs": 8,
+          "verbose": -1
+        },
+        "early_stopping_rounds": 50,
+        "classifier_num_leaves_grid": [
+          31
+        ],
+        "classifier_events": [
+          "hyper180_any",
+          "hyper180_at",
+          "hyper140_any",
+          "hyper140_at",
+          "hypo70_any",
+          "hypo70_at"
+        ]
+      },
+      "events": {
+        "definitions": [
+          "any",
+          "at"
+        ],
+        "min_pos_windows": 30,
+        "min_pos_patients": 5,
+        "never_report": {
+          "cgmacros": [
+            "hypo70"
+          ]
+        }
+      },
+      "bootstrap": {
+        "n_boot": 1000,
+        "auc_bins": 2000,
+        "ci": 0.95
+      },
+      "window_selection": {
+        "n_splits": 5,
+        "model": "lgbm_cgm_tod",
+        "horizons_min": [
+          30,
+          60,
+          120
+        ]
+      },
+      "shuffle_check": {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "horizon_min": 60,
+        "n_shuffles": 5
+      },
+      "sensitivity_exclude": {
+        "cgmacros": [
+          "cgmacros_007"
+        ]
+      },
+      "groups": {
+        "hba1c_bins_pct": [
+          0,
+          7.0,
+          9.0,
+          100
+        ],
+        "hba1c_labels": [
+          "<7",
+          "7-9",
+          ">=9"
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "shuffle_check": {
+      "event": "hyper180_any_60",
+      "horizon_min": 60,
+      "eval": "holdout calibration patients",
+      "true": {
+        "auroc": 0.9564593884723387,
+        "mae": 19.051418287369447
+      },
+      "shuffled_auroc_mean": 0.5004053434430449,
+      "shuffled_auroc_range": [
+        0.422212053751013,
+        0.5774302373649864
+      ],
+      "shuffled_mae_mean": 30.810901810641997,
+      "mae_predict_train_mean": 32.71332970178101,
+      "n_shuffles": 5
+    }
+  }
+}

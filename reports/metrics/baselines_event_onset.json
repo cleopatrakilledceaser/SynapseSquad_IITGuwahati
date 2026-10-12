@@ -1,0 +1,1114 @@
+{
+  "name": "baselines_event_onset",
+  "timestamp_utc": "2026-10-12T21:11:01.840073+00:00",
+  "git_hash": "3f65329d53ab69c20c9d586fbeae88a702e35e1c-dirty",
+  "seed": 42,
+  "data_hash": "694709fd022e902b5158197bf615edc8aaf9f017f96c4d9f4eda49a47915bde1",
+  "config": {
+    "baselines": {
+      "seed": 42,
+      "cohorts": [
+        "cgmacros",
+        "shanghai_t2dm"
+      ],
+      "inner_split": {
+        "train": 0.8,
+        "calibration": 0.2,
+        "test": 0.0
+      },
+      "linear_trend": {
+        "window_min_grid": [
+          15,
+          30,
+          60
+        ],
+        "damping_grid": [
+          0.25,
+          0.5,
+          1.0
+        ]
+      },
+      "holt": {
+        "history_min": 120,
+        "alpha_grid": [
+          0.2,
+          0.4,
+          0.6,
+          0.8,
+          0.95
+        ],
+        "beta_grid": [
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "phi_grid": [
+          0.5,
+          0.65,
+          0.8,
+          0.9,
+          0.98
+        ]
+      },
+      "ar": {
+        "order_min_grid": [
+          30,
+          60,
+          120,
+          180
+        ],
+        "max_fit_rows": 300000
+      },
+      "patient_ar": {
+        "ridge_lambda": 50.0,
+        "min_pairs": 288
+      },
+      "lightgbm": {
+        "target": "delta",
+        "num_leaves_grid": [
+          15,
+          63
+        ],
+        "params": {
+          "learning_rate": 0.05,
+          "n_estimators": 2000,
+          "min_child_samples": 50,
+          "subsample": 0.8,
+          "subsample_freq": 1,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 1.0,
+          "n_jobs": 8,
+          "verbose": -1
+        },
+        "early_stopping_rounds": 50,
+        "classifier_num_leaves_grid": [
+          31
+        ],
+        "classifier_events": [
+          "hyper180_any",
+          "hyper180_at",
+          "hyper140_any",
+          "hyper140_at",
+          "hypo70_any",
+          "hypo70_at"
+        ]
+      },
+      "events": {
+        "definitions": [
+          "any",
+          "at"
+        ],
+        "min_pos_windows": 30,
+        "min_pos_patients": 5,
+        "never_report": {
+          "cgmacros": [
+            "hypo70"
+          ]
+        }
+      },
+      "bootstrap": {
+        "n_boot": 1000,
+        "auc_bins": 2000,
+        "ci": 0.95
+      },
+      "window_selection": {
+        "n_splits": 5,
+        "model": "lgbm_cgm_tod",
+        "horizons_min": [
+          30,
+          60,
+          120
+        ]
+      },
+      "shuffle_check": {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "horizon_min": 60,
+        "n_shuffles": 5
+      },
+      "sensitivity_exclude": {
+        "cgmacros": [
+          "cgmacros_007"
+        ]
+      },
+      "groups": {
+        "hba1c_bins_pct": [
+          0,
+          7.0,
+          9.0,
+          100
+        ],
+        "hba1c_labels": [
+          "<7",
+          "7-9",
+          ">=9"
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "rows": [
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_30",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40484,
+        "n_pos": 7262,
+        "auroc": 0.9661850095982659,
+        "auroc_ci": [
+          0.9528436645404073,
+          0.9753543632762274
+        ],
+        "auprc": 0.9237901940419693,
+        "auprc_ci": [
+          0.8776796484403476,
+          0.9530387514899887
+        ],
+        "prevalence": 0.1793795079537595
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_30",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40484,
+        "n_pos": 7262,
+        "auroc": 0.975941278405816,
+        "auroc_ci": [
+          0.9664065298546034,
+          0.9828143991604065
+        ],
+        "auprc": 0.9422218758195757,
+        "auprc_ci": [
+          0.9070521157278214,
+          0.9642666075428035
+        ],
+        "prevalence": 0.1793795079537595
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_30",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 34634,
+        "n_pos": 1638,
+        "auroc": 0.8575765223919545,
+        "auroc_ci": [
+          0.8330898836361244,
+          0.8802763623635601
+        ],
+        "auprc": 0.28227103573527756,
+        "auprc_ci": [
+          0.24066117287483554,
+          0.32636084884264493
+        ],
+        "prevalence": 0.0472945660333776
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_30",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 34634,
+        "n_pos": 1638,
+        "auroc": 0.9002868553571668,
+        "auroc_ci": [
+          0.8816832682675471,
+          0.9164704134787773
+        ],
+        "auprc": 0.4257598539684898,
+        "auprc_ci": [
+          0.3797466877510441,
+          0.4675627940518036
+        ],
+        "prevalence": 0.0472945660333776
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40355,
+        "n_pos": 8676,
+        "auroc": 0.9197607516944227,
+        "auroc_ci": [
+          0.8917184723704382,
+          0.94047832600241
+        ],
+        "auprc": 0.8653295021455775,
+        "auprc_ci": [
+          0.7933800074928784,
+          0.9149398506810386
+        ],
+        "prevalence": 0.21499194647503408
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40355,
+        "n_pos": 8676,
+        "auroc": 0.9415009322786725,
+        "auroc_ci": [
+          0.9211931677713617,
+          0.9566124665849727
+        ],
+        "auprc": 0.8900049855010996,
+        "auprc_ci": [
+          0.8295719830592121,
+          0.9306790177080595
+        ],
+        "prevalence": 0.21499194647503408
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 34506,
+        "n_pos": 3018,
+        "auroc": 0.774837830444501,
+        "auroc_ci": [
+          0.7420765725201359,
+          0.8053260747429433
+        ],
+        "auprc": 0.30519048812329214,
+        "auprc_ci": [
+          0.2510116505902632,
+          0.3651435505826577
+        ],
+        "prevalence": 0.08746304990436446
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 34506,
+        "n_pos": 3018,
+        "auroc": 0.8375730594835459,
+        "auroc_ci": [
+          0.8118739862099734,
+          0.860079022907757
+        ],
+        "auprc": 0.40252301432270754,
+        "auprc_ci": [
+          0.3449547061241095,
+          0.4594712801610678
+        ],
+        "prevalence": 0.08746304990436446
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_120",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40371,
+        "n_pos": 11096,
+        "auroc": 0.8538322424218542,
+        "auroc_ci": [
+          0.8102694921664167,
+          0.8880948607334775
+        ],
+        "auprc": 0.8021668976524183,
+        "auprc_ci": [
+          0.7112532260820197,
+          0.869173544978921
+        ],
+        "prevalence": 0.2748507592083426
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_120",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40371,
+        "n_pos": 11096,
+        "auroc": 0.8991146300557145,
+        "auroc_ci": [
+          0.8692213136874296,
+          0.9237826412112072
+        ],
+        "auprc": 0.8435810743486267,
+        "auprc_ci": [
+          0.7661712459138444,
+          0.9005048403781495
+        ],
+        "prevalence": 0.2748507592083426
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_120",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 34528,
+        "n_pos": 5411,
+        "auroc": 0.7045189283973116,
+        "auroc_ci": [
+          0.6660169810008941,
+          0.7424014548697025
+        ],
+        "auprc": 0.3435457822799014,
+        "auprc_ci": [
+          0.278437871722563,
+          0.40403116535155964
+        ],
+        "prevalence": 0.1567133920296571
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_120",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 34528,
+        "n_pos": 5411,
+        "auroc": 0.7978846957450966,
+        "auroc_ci": [
+          0.7675808870224936,
+          0.8272958011006257
+        ],
+        "auprc": 0.45345914934626397,
+        "auprc_ci": [
+          0.38251372902617864,
+          0.5205550641075997
+        ],
+        "prevalence": 0.1567133920296571
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_30",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40522,
+        "n_pos": 19090,
+        "auroc": 0.9568257706320682,
+        "auroc_ci": [
+          0.9438782624652975,
+          0.9666337117003845
+        ],
+        "auprc": 0.9634848042275121,
+        "auprc_ci": [
+          0.9431739283893686,
+          0.9772479331255116
+        ],
+        "prevalence": 0.4711021173683431
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_30",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40522,
+        "n_pos": 19090,
+        "auroc": 0.9683886722702681,
+        "auroc_ci": [
+          0.9601038138709048,
+          0.975037061082792
+        ],
+        "auprc": 0.972609258457521,
+        "auprc_ci": [
+          0.9576162127350716,
+          0.982940129555494
+        ],
+        "prevalence": 0.4711021173683431
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_30",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 24341,
+        "n_pos": 3347,
+        "auroc": 0.7766744586691564,
+        "auroc_ci": [
+          0.7525410928052761,
+          0.8000397650513257
+        ],
+        "auprc": 0.39329563312972887,
+        "auprc_ci": [
+          0.3529498050243538,
+          0.43435450463394665
+        ],
+        "prevalence": 0.13750462183147774
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_30",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 24341,
+        "n_pos": 3347,
+        "auroc": 0.8402139538836751,
+        "auroc_ci": [
+          0.824940443284885,
+          0.8545964630858167
+        ],
+        "auprc": 0.5034946803629413,
+        "auprc_ci": [
+          0.4743861264231319,
+          0.532007155134304
+        ],
+        "prevalence": 0.13750462183147774
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_60",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40423,
+        "n_pos": 21514,
+        "auroc": 0.9199997396316169,
+        "auroc_ci": [
+          0.8980112451234039,
+          0.9383318837669753
+        ],
+        "auprc": 0.9459049150569472,
+        "auprc_ci": [
+          0.9167744412281945,
+          0.9669318686632704
+        ],
+        "prevalence": 0.5322217549414937
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_60",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40423,
+        "n_pos": 21514,
+        "auroc": 0.9407452874367392,
+        "auroc_ci": [
+          0.9262655297024619,
+          0.9531992555004952
+        ],
+        "auprc": 0.9580666048328581,
+        "auprc_ci": [
+          0.9353308141852837,
+          0.974205635478672
+        ],
+        "prevalence": 0.5322217549414937
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_60",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 24245,
+        "n_pos": 5669,
+        "auroc": 0.7123087873149664,
+        "auroc_ci": [
+          0.6802630391549855,
+          0.7414804809891694
+        ],
+        "auprc": 0.4661645322488909,
+        "auprc_ci": [
+          0.41476495059877677,
+          0.5189307120430564
+        ],
+        "prevalence": 0.23382140647556196
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_60",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 24245,
+        "n_pos": 5669,
+        "auroc": 0.7906058764524534,
+        "auroc_ci": [
+          0.7711906369681298,
+          0.8090209752568944
+        ],
+        "auprc": 0.5473480214338255,
+        "auprc_ci": [
+          0.5047164812930827,
+          0.5897095594271113
+        ],
+        "prevalence": 0.23382140647556196
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_120",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40467,
+        "n_pos": 25035,
+        "auroc": 0.8710979499100431,
+        "auroc_ci": [
+          0.8381263111440845,
+          0.9004525510586692
+        ],
+        "auprc": 0.9326901159680748,
+        "auprc_ci": [
+          0.8956587325066695,
+          0.9596704320719102
+        ],
+        "prevalence": 0.6186522351545704
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_120",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40467,
+        "n_pos": 25035,
+        "auroc": 0.9074620945399096,
+        "auroc_ci": [
+          0.8856142347465858,
+          0.9272048181897327
+        ],
+        "auprc": 0.9493483594727742,
+        "auprc_ci": [
+          0.9217533639525085,
+          0.9695827839536822
+        ],
+        "prevalence": 0.6186522351545704
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_120",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 24304,
+        "n_pos": 9123,
+        "auroc": 0.6590884585817309,
+        "auroc_ci": [
+          0.6194741505778933,
+          0.6976311434933408
+        ],
+        "auprc": 0.559454008790484,
+        "auprc_ci": [
+          0.4970449021363305,
+          0.6212989151820689
+        ],
+        "prevalence": 0.3753703094140882
+      },
+      {
+        "cohort": "cgmacros",
+        "event": "hyper140_any_120",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 24304,
+        "n_pos": 9123,
+        "auroc": 0.759821613381727,
+        "auroc_ci": [
+          0.7348821871949849,
+          0.7823881183880347
+        ],
+        "auprc": 0.636664845465138,
+        "auprc_ci": [
+          0.5832877192200941,
+          0.6946475743653427
+        ],
+        "prevalence": 0.3753703094140882
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_30",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 109708,
+        "n_pos": 22154,
+        "auroc": 0.9778345917963763,
+        "auroc_ci": [
+          0.9735369500205249,
+          0.9814679814741579
+        ],
+        "auprc": 0.9417431135329818,
+        "auprc_ci": [
+          0.9208172218102088,
+          0.9555723580766856
+        ],
+        "prevalence": 0.20193604841944068
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_30",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 109708,
+        "n_pos": 22154,
+        "auroc": 0.9908915655687307,
+        "auroc_ci": [
+          0.989343146868532,
+          0.9922687855905152
+        ],
+        "auprc": 0.9729036920314397,
+        "auprc_ci": [
+          0.9634710970972599,
+          0.9795119007259064
+        ],
+        "prevalence": 0.20193604841944068
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_30",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 89455,
+        "n_pos": 3707,
+        "auroc": 0.8953798946175856,
+        "auroc_ci": [
+          0.8843759241531617,
+          0.9057109545355819
+        ],
+        "auprc": 0.2656917911350223,
+        "auprc_ci": [
+          0.24663868944189543,
+          0.28208504966600983
+        ],
+        "prevalence": 0.04143983008216422
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_30",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 89455,
+        "n_pos": 3707,
+        "auroc": 0.9620323963825015,
+        "auroc_ci": [
+          0.9568685877667575,
+          0.9668753663060154
+        ],
+        "auprc": 0.6184199289475941,
+        "auprc_ci": [
+          0.5945519138784499,
+          0.6417108500845742
+        ],
+        "prevalence": 0.04143983008216422
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_60",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 109495,
+        "n_pos": 25614,
+        "auroc": 0.9430129415296679,
+        "auroc_ci": [
+          0.931198889188503,
+          0.9514220113708475
+        ],
+        "auprc": 0.8947390462991376,
+        "auprc_ci": [
+          0.8608273870539901,
+          0.9180777119598469
+        ],
+        "prevalence": 0.2339284898853829
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_60",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 109495,
+        "n_pos": 25614,
+        "auroc": 0.9709746827057077,
+        "auroc_ci": [
+          0.9658671666333581,
+          0.9752165264771121
+        ],
+        "auprc": 0.9377264471044305,
+        "auprc_ci": [
+          0.9172434952267877,
+          0.9523710203112774
+        ],
+        "prevalence": 0.2339284898853829
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_60",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 89300,
+        "n_pos": 7082,
+        "auroc": 0.8150258988356074,
+        "auroc_ci": [
+          0.7973140131115797,
+          0.828995063603063
+        ],
+        "auprc": 0.28673790264042953,
+        "auprc_ci": [
+          0.2616215287228516,
+          0.30805868585393625
+        ],
+        "prevalence": 0.07930571108622621
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_60",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 89300,
+        "n_pos": 7082,
+        "auroc": 0.9102557943622499,
+        "auroc_ci": [
+          0.9020280288646274,
+          0.9182559314927845
+        ],
+        "auprc": 0.5423561075768847,
+        "auprc_ci": [
+          0.515844446029725,
+          0.5672523176178893
+        ],
+        "prevalence": 0.07930571108622621
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_120",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 109064,
+        "n_pos": 31791,
+        "auroc": 0.8831093944348928,
+        "auroc_ci": [
+          0.8595799892657886,
+          0.8991875751959644
+        ],
+        "auprc": 0.8362597315359296,
+        "auprc_ci": [
+          0.7862051338612972,
+          0.870790605722623
+        ],
+        "prevalence": 0.291489400718844
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_120",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 109064,
+        "n_pos": 31791,
+        "auroc": 0.9380321211908849,
+        "auroc_ci": [
+          0.927579682178516,
+          0.9468326089938337
+        ],
+        "auprc": 0.8976540384940974,
+        "auprc_ci": [
+          0.8646654842090578,
+          0.921835865364897
+        ],
+        "prevalence": 0.291489400718844
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_120",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 88928,
+        "n_pos": 13128,
+        "auroc": 0.7336830073970276,
+        "auroc_ci": [
+          0.7082388829314643,
+          0.751308979860083
+        ],
+        "auprc": 0.3284878223086932,
+        "auprc_ci": [
+          0.29033724618868867,
+          0.35857975301585615
+        ],
+        "prevalence": 0.1476250449802087
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper180_any_120",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 88928,
+        "n_pos": 13128,
+        "auroc": 0.864039868660753,
+        "auroc_ci": [
+          0.849665648747038,
+          0.8768664500834604
+        ],
+        "auprc": 0.554063992693246,
+        "auprc_ci": [
+          0.5139383875358421,
+          0.5935823863951307
+        ],
+        "prevalence": 0.1476250449802087
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_30",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 109711,
+        "n_pos": 48686,
+        "auroc": 0.9748223582861238,
+        "auroc_ci": [
+          0.9700920260566321,
+          0.9786522058309102
+        ],
+        "auprc": 0.9731911328393555,
+        "auprc_ci": [
+          0.9633485694666295,
+          0.9797746783924117
+        ],
+        "prevalence": 0.4437658940306806
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_30",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 109711,
+        "n_pos": 48686,
+        "auroc": 0.9878552995415125,
+        "auroc_ci": [
+          0.9857885048317832,
+          0.9895709132743676
+        ],
+        "auprc": 0.9869270647568374,
+        "auprc_ci": [
+          0.9822525099884759,
+          0.9903301184585119
+        ],
+        "prevalence": 0.4437658940306806
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_30",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 63892,
+        "n_pos": 5527,
+        "auroc": 0.8423775058077626,
+        "auroc_ci": [
+          0.8298307262246283,
+          0.8542282684332381
+        ],
+        "auprc": 0.3284430011597675,
+        "auprc_ci": [
+          0.30813796619725986,
+          0.3454383919983994
+        ],
+        "prevalence": 0.08650535278282101
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_30",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 63892,
+        "n_pos": 5527,
+        "auroc": 0.9308626230885347,
+        "auroc_ci": [
+          0.9255335866623677,
+          0.936595513918984
+        ],
+        "auprc": 0.6296386566302224,
+        "auprc_ci": [
+          0.6120313778747443,
+          0.6450416709835747
+        ],
+        "prevalence": 0.08650535278282101
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_60",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 109497,
+        "n_pos": 53671,
+        "auroc": 0.9469263137582664,
+        "auroc_ci": [
+          0.9373417995690928,
+          0.9548770292536635
+        ],
+        "auprc": 0.9557482025556966,
+        "auprc_ci": [
+          0.9407073775038077,
+          0.967069187773652
+        ],
+        "prevalence": 0.4901595477501667
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_60",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 109497,
+        "n_pos": 53671,
+        "auroc": 0.9706631413726173,
+        "auroc_ci": [
+          0.9658340052464334,
+          0.9746713116371006
+        ],
+        "auprc": 0.9745872246482926,
+        "auprc_ci": [
+          0.9659663399700428,
+          0.9811982270155081
+        ],
+        "prevalence": 0.4901595477501667
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_60",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 63787,
+        "n_pos": 10247,
+        "auroc": 0.7686120337925922,
+        "auroc_ci": [
+          0.7521850153082389,
+          0.7847859208839232
+        ],
+        "auprc": 0.39006468867303395,
+        "auprc_ci": [
+          0.36380722101899066,
+          0.4137233684337965
+        ],
+        "prevalence": 0.1606440183736498
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_60",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 63787,
+        "n_pos": 10247,
+        "auroc": 0.8788749207609039,
+        "auroc_ci": [
+          0.8699824842361584,
+          0.8876040481309764
+        ],
+        "auprc": 0.619915996618895,
+        "auprc_ci": [
+          0.5942461721406613,
+          0.6421503508797821
+        ],
+        "prevalence": 0.1606440183736498
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_120",
+        "subset": "all",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 109064,
+        "n_pos": 61828,
+        "auroc": 0.9032076226803394,
+        "auroc_ci": [
+          0.8874613146554448,
+          0.916891545308807
+        ],
+        "auprc": 0.9377834413017663,
+        "auprc_ci": [
+          0.9171691599368189,
+          0.9534535762186982
+        ],
+        "prevalence": 0.5668965011369471
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_120",
+        "subset": "all",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 109064,
+        "n_pos": 61828,
+        "auroc": 0.9468655350522569,
+        "auroc_ci": [
+          0.9381986794596515,
+          0.9540913508043297
+        ],
+        "auprc": 0.9641741574392698,
+        "auprc_ci": [
+          0.9521503546331186,
+          0.9738740831448858
+        ],
+        "prevalence": 0.5668965011369471
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_120",
+        "subset": "onset_only",
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 63519,
+        "n_pos": 18121,
+        "auroc": 0.705797861057449,
+        "auroc_ci": [
+          0.6865664909143414,
+          0.7243977266979854
+        ],
+        "auprc": 0.48043930968018217,
+        "auprc_ci": [
+          0.44995254077469354,
+          0.5091707645586528
+        ],
+        "prevalence": 0.28528471795840615
+      },
+      {
+        "cohort": "shanghai_t2dm",
+        "event": "hyper140_any_120",
+        "subset": "onset_only",
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 63519,
+        "n_pos": 18121,
+        "auroc": 0.8469271290288828,
+        "auroc_ci": [
+          0.8306922351494699,
+          0.8613502198702783
+        ],
+        "auprc": 0.6902926591954072,
+        "auprc_ci": [
+          0.6540273148130032,
+          0.7214941808081397
+        ],
+        "prevalence": 0.28528471795840615
+      }
+    ]
+  }
+}

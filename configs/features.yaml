@@ -1,0 +1,64 @@
+# Windows, labels and causal features (Part 2). Every lookback is "at or before t".
+seed: 42
+
+cohorts:
+  cgmacros:            # primary modeling cohort, native 5-min Dexcom grid
+    grid_file: cgmacros_ts5.parquet
+    dataset: cgmacros
+    step_min: 5
+    anchor_stride_min: 15
+  shanghai_t2dm:       # native 15-min Libre H grid
+    grid_file: common_ts15.parquet
+    dataset: shanghai_t2dm
+    step_min: 15
+    anchor_stride_min: 15
+  cgmacros_15:         # CGMacros on the common 15-min grid (for later transfer only)
+    grid_file: common_ts15.parquet
+    dataset: cgmacros
+    step_min: 15
+    anchor_stride_min: 15
+
+windows:
+  input_hours: [2, 4, 6]          # N compared; evaluation rows = anchors valid for max(N)
+  horizons_min: [30, 60, 120]
+  anchor_requires_real: true      # forecasts are issued at a fresh real reading
+  min_real_frac_input: 0.7        # real readings in (t - N, t] for the largest N
+  min_real_frac_horizon: 0.7      # real readings in (t, t + h] needed for "any" labels
+
+events:                           # strict inequalities
+  hyper180: {threshold: 180, direction: above}
+  hyper140: {threshold: 140, direction: above}
+  hypo70: {threshold: 70, direction: below}
+
+cgm:
+  lags_min: [5, 10, 15, 30, 45, 60, 90, 120]
+  delta_min: [15, 30, 60]
+  slope_windows_min: [15, 30, 60]
+  slope_min_points: 3
+  accel_window_min: 30
+  rolling_windows_min: [60]       # the full input window N is always added
+  tir_window_min: 180             # capped at N
+  range_low: 70
+  range_high: 180
+  range_secondary: 140
+
+meals:
+  windows_h: [1, 3, 6]
+  macros: [carbs_g, protein_g, fat_g, fiber_g, kcal]
+  meal_types: [breakfast, lunch, dinner, snack, unknown]
+
+wearable:
+  windows_min: [30, 60]           # the full input window N is always added
+  post_meal_window_min: 120
+  night_start_hour: 22
+  night_end_hour: 7
+
+static:
+  cgmacros: [age_years, sex_male, bmi, hba1c_pct, fasting_glucose_mgdl, fasting_insulin,
+             triglycerides_mgdl, cholesterol_mgdl, hdl_mgdl, ldl_mgdl]
+  shanghai_t2dm: [age_years, sex_male, bmi, hba1c_pct, diabetes_duration_years,
+                  fasting_c_peptide_nmol_l, med_insulin, med_metformin, med_sulfonylurea,
+                  med_glinide, med_agi, med_dpp4, med_sglt2, med_glp1, med_tzd]
+  shared: [age_years, sex_male, bmi, hba1c_pct]
+
+glucose_clip_mgdl: [40, 400]      # forecasts are clipped to the sensor reporting range

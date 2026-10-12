@@ -245,3 +245,111 @@ From real readings only (`reports/metrics/eda_summary.json`):
   - Hypoglycemia is too rare in CGMacros for a standalone hypo model; report this honestly.
 - CGMacros T2D shows less hypo than Shanghai T2D, consistent with fewer insulin users (inferred,
   not verified: CGMacros has no medication data).
+
+## D-021 Forecast anchors, targets and event labels (Part 2)
+`src/features/windows.py`, `configs/features.yaml`.
+- **Anchors (forecast times t):**
+  - every 15 min, on the grid;
+  - only at a fresh REAL reading, since a forecast is issued when a reading arrives;
+  - at least 6 h of history;
+  - ≥ 70% real readings in (t - 6 h, t].
+  - Eligibility uses the largest N, so N = 2/4/6 h are compared on identical rows.
+  - A 15-min stride (same in both cohorts) limits near-duplicate, highly correlated windows.
+- **Regression target:** `y_h` = glucose at exactly t + h, only if that grid point is a REAL
+  reading; otherwise NaN and the window is dropped for that horizon.
+- **Two event definitions** (strict: > 180, > 140, < 70). Both are reported.
+  - `<event>_at_h`: y_h beyond the threshold ("will glucose BE high at t + h?").
+  - `<event>_any_h`: ANY real reading in (t, t + h] beyond the threshold ("will an excursion OCCUR
+    within h?"). This is the clinically more useful alert target.
+    - A negative needs ≥ 70% real readings in the horizon (else NaN).
+    - A positive seen in real readings counts even with less coverage.
+- Carried/missing values never form a target or label (unit-tested: setting every carried value
+  to 500 mg/dL changes no target).
+
+## D-022 Splits and CV settings (Part 2)
+- **Holdout 60/20/20 (fixed; used for the single final run and later conformal calibration):**
+  - CGMacros, stratified by status: 27/9/9 patients (3 per status in calibration and in test).
+  - Shanghai, stratified by HbA1c group (<7, 7-9, ≥9, unknown): 60/21/19 patients.
+- **Headline CV: 5-fold × 5 repeats, patient-grouped, both cohorts.**
+  - CGMacros: K = 5 gives 9 validation patients per fold (3 per status). K = 10 would leave 1-2
+    patients per status per fold.
+  - Repeats average out the partition luck that dominates with 45 patients.
+  - Metrics: per-patient statistics averaged over repeats (each patient counts once), then a
+    patient bootstrap (1,000 resamples) for 95% CIs.
+- **Nested tuning:** inside each outer fold, an 80/20 stratified patient split of that fold's
+  training patients is the inner validation set for every choice. The outer fold and the holdout
+  test are never used for a choice.
+- **Window length N:** chosen once per cohort by 5-fold patient-grouped CV on HOLDOUT-TRAIN
+  patients only (LightGBM CGM + time of day, mean MAE over horizons).
+- **Chronological split** (later personalization): the first 2 days of a patient's FIRST period
+  are 'adapt', the rest 'eval'; later Shanghai periods are always 'eval'.
+- **Shanghai:** the split unit is `patient_id`, so all periods share one assignment (tested).
+- sha256 of every split file is in `data/processed/splits/splits_manifest.json`.
+
+## D-023 Features (Part 2)
+`src/features/build.py`; explicit sets in `data/processed/features/feature_sets.json`.
+- All features are trailing (rows at or before t).
+- **CGM features (REAL readings only):**
+  - lags, deltas, LS slopes over 15/30/60 min, acceleration;
+  - mean/std/min/max over 60 min and over N;
+  - TIR and time > 140 over min(3 h, N);
+  - real/carried fractions; minutes since the last real reading.
+- **Meals:**
+  - time since last logged meal;
+  - macros and grams over 1/3/6 h;
+  - last meal type; last meal `amount_gt100`.
+  - Shanghai drops the type/amount features (constant there).
+- **Wearables (CGMacros):**
+  - HR/activity mean/max/std over 30/60 min and N;
+  - post-meal activity (≤ 120 min after the last meal);
+  - `rest_proxy_prev_night_frac` (most recent COMPLETED night, 22-07 h).
+- **Time:** sin/cos of clock time, `days_since_start`. No calendar features (tested).
+- **Static:**
+  - CGMacros: age, sex, BMI, HbA1c, fasting glucose/insulin, lipids.
+  - Shanghai: age, sex, BMI, HbA1c, diabetes duration, fasting C-peptide (added; 78/100 have it),
+    9 medication-class flags.
+  - Shared set: CGM + time of day + age/sex/BMI/HbA1c.
+- **Missingness:** NaN is kept (LightGBM native). The statistical baselines fall back to
+  persistence when their history is incomplete. No Part 2 model needs imputation; later ones fit
+  imputation on training patients only.
+- Baselines use `cgm_only` and `cgm_tod`. `full` and `shared` are prepared for Part 3.
+
+## D-024 Baselines (Part 2)
+- **persistence:** y = glucose(t).
+- **linear_trend:** now + d·h·slope_w, with (w, d) tuned; d = 1 (plain extrapolation) is in the
+  grid.
+- **exp_smoothing:** damped Holt on the last 2 h; recursion verified against statsmodels Holt.
+- **ar_pooled:** direct AR(p) per horizon via statsmodels OLS; p (30-180 min of history) tuned.
+- **ar_per_patient:** per-patient ridge AR shrunk towards the pooled fit, updated CAUSALLY (only
+  that patient's pairs whose target time is ≤ t; tested).
+- **lgbm_cgm / lgbm_cgm_tod:** LightGBM on Δ = y - glucose(t); early stopping and leaves {15, 63}
+  chosen on inner validation.
+- **Event classifiers:** lgbm_cgm_tod features, 31 leaves.
+- For events, value-based scores (persistence and the LightGBM regressor) are also ranked for
+  AUROC/AUPRC. Brier is reported only for the classifiers (value scores are not probabilities).
+- Forecasts are clipped to the cohort's sensor range.
+
+## D-025 Evaluation and reliability rules (Part 2)
+- MAE, RMSE, MARD, Clarke A and A+B; AUROC, AUPRC, Brier.
+- **CIs:** 1,000 patient-bootstrap resamples (patients, not rows; tested). AUROC/AUPRC bootstraps
+  use per-patient score histograms (2,000 bins; matches sklearn within 0.002 in tests). Point
+  estimates are exact.
+- **Reliability (owner rule):** "not reliable" unless ≥ 30 positive windows AND ≥ 5 patients with
+  events. Hypo on CGMacros is never reported as a result (owner policy), only counted.
+- **Sensitivity:** every headline table is repeated without 007 (evaluation-only exclusion). The
+  018/026 gaps are missing, not filled.
+- **Groups:** MAE at 60 min by diabetes status (CGMacros) and HbA1c group.
+
+## D-026 Part 2 findings that shape later parts
+- **N = 6 h in both cohorts**, but the gain over 2 h is tiny (CGMacros 16.8 vs 17.2 mg/dL mean
+  MAE; Shanghai 16.6 vs 16.9). It is chosen by the rule, not because it clearly matters.
+- **The per-patient causal AR matches LightGBM on CGMacros** (+120 min: 21.8 vs 22.0 mg/dL, CIs
+  overlap fully). Its advantage over the pooled AR grows with days of data (0 on day 0, about
+  1.3-1.6 mg/dL from day 4), as expected for a causal adaptive model. Personalization is
+  therefore a real lever. On Shanghai, LightGBM CGM + time of day is best at +120 min (24.6 vs 26.4).
+- **Event AUROCs are high largely because many windows are already above the threshold at t.**
+  On ONSET windows only (glucose at t ≤ threshold), AUROC falls (e.g. CGMacros hyper180 within
+  60 min: 0.84 classifier vs 0.78 persistence; AUPRC 0.40 vs 0.31). Future event claims must
+  quote onset-only metrics (`reports/metrics/baselines_event_onset.json`).
+- **Holdout test vs CV:** the CGMacros holdout test (9 patients) is about 1.5-2.5 mg/dL worse than
+  CV, within its wide CIs. Headline numbers are the CV results; the holdout is a confirmation only.

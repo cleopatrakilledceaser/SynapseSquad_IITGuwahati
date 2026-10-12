@@ -11,3 +11,22 @@ cv:
   n_splits: 5
   n_repeats: 5
   stratify_by: diabetes_status
+
+# Per-cohort settings (Part 2, DECISIONS D-022). Strata: CGMacros by diabetes status;
+# Shanghai (all T2D) by HbA1c group so every fold spans glycemic control levels.
+cohorts:
+  cgmacros:
+    strata: diabetes_status
+    n_splits: 5
+    n_repeats: 5
+  shanghai_t2dm:
+    strata: hba1c_group
+    n_splits: 5
+    n_repeats: 5
+
+hba1c_group_bins_pct: [0, 7.0, 9.0, 100]
+hba1c_group_labels: ["<7", "7-9", ">=9"]
+
+chronological:                    # for the later personalization experiment
+  adapt_days: [1, 2, 3]
+  default_adapt_days: 2

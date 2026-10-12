@@ -25,10 +25,12 @@ data:
 	$(PY) data/scripts/amount_consumed_analysis.py
 
 features:
-	@echo "[features] not yet implemented"
+	$(PY) -m src.features.make_features
+	$(PY) -m src.features.make_splits
 
 models:
-	@echo "[models] not yet implemented"
+	$(PY) -W ignore -m src.models.run_baselines
+	$(PY) -m src.eval.report
 
 figures:
 	$(PY) -m src.eval.eda

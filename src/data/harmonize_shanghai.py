@@ -160,6 +160,7 @@ def build_static(z: zipfile.ZipFile, periods: pd.DataFrame) -> pd.DataFrame:
             "hdl_mgdl": num("High-Density Lipoprotein Cholesterol (mmol/L)") * CHOL_MMOL_TO_MGDL,
             "ldl_mgdl": num("Low-Density Lipoprotein Cholesterol (mmol/L)") * CHOL_MMOL_TO_MGDL,
             "diabetes_duration_years": num("Duration of diabetes (years)"),
+            "fasting_c_peptide_nmol_l": num("Fasting C-peptide (nmol/L)"),
             "synthetic": False,
         }
     )

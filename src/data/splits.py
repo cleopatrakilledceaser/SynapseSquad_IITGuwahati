@@ -201,6 +201,28 @@ def repeated_patient_group_kfold(
             yield fold
 
 
+def chronological_within_patient(
+    df: pd.DataFrame,
+    adapt_days: float,
+    patient_col: str = "patient_id",
+    period_col: str = "period_id",
+    days_col: str = "days_since_start",
+) -> pd.Series:
+    """Label rows 'adapt' (first ``adapt_days`` of a patient's FIRST period) or 'eval' (later).
+
+    For the personalization experiment: a test patient's early data adapts the model; evaluation
+    uses strictly later data. Rows of later periods (Shanghai repeats) are always 'eval'.
+    A gap equal to the largest forecast horizon should be enforced by the caller so that adapt
+    targets never overlap eval inputs.
+    """
+    first_period = df.groupby(patient_col)[period_col].transform(
+        lambda s: sorted(s.unique(), key=str)[0]
+    )
+    in_first = df[period_col] == first_period
+    label = np.where(in_first & (df[days_col] < adapt_days), "adapt", "eval")
+    return pd.Series(label, index=df.index, dtype="string")
+
+
 def assign_rows(
     df: pd.DataFrame, split: PatientSplit, patient_col: str = "patient_id"
 ) -> pd.Series:

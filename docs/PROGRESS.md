@@ -7,7 +7,18 @@
 | B-pre. Library compatibility | ✅ done: torch 2.5.1+cpu + opacus 1.5.4 run locally (`requirements-torch.txt`); flwr kept out of the venv (D-008/D-009) |
 | B. Dataset verification | ✅ done, approved (tag `part-1b-done`) |
 | C. Harmonization + QC | ✅ done: `make data` (about 20 s) -> data/processed/*.parquet (D-015 to D-019) |
-| D. EDA + data card + integrity tests | ✅ done: `make figures`, 6 figures, 47 tests pass (tag `part-1-done`). Awaiting owner review |
+| D. EDA + data card + integrity tests | ✅ done, approved (tag `part-1-done`) |
+
+## Part 2: Windows, features, splits, baselines
+| Step | Status |
+|---|---|
+| Windows + labels (D-021) | ✅ `src/features/windows.py` |
+| Causal features (D-023) | ✅ `src/features/build.py`; `make features` builds N = 2/4/6 h tables + splits |
+| Splits (D-022) | ✅ holdout, 5×5 patient-grouped CV, chronological; saved with sha256 |
+| Evaluation (D-025) | ✅ `src/eval/metrics.py`, `src/eval/report.py` (patient bootstrap) |
+| Baselines (D-024) | ✅ 7 forecasters + LightGBM event classifiers; `make models` (about 70 min) |
+| Leakage tests | ✅ causality per feature group, real-only targets, no calendar, patient bootstrap, shuffle |
+| Status | Done (tag `part-2-done`). Awaiting owner review. No fusion / mechanistic code yet |
 
 ## Environment (dev box)
 - Project `C:\Projects\glucotwin`, venv `.venv` (Python 3.11.9). GNU Make 4.4.1 (ezwinports).
@@ -44,7 +55,18 @@
   - 028/029 (no amount column).
 - Disk: 711.7 GB free on C: (BIG IDEAs needs about 39 GB including the zip). Not downloaded.
 
+## Part 2 outputs
+- `data/processed/features/` (gitignored): `<cohort>_N{2,4,6}.parquet`, `feature_sets.json`,
+  `window_counts.json`.
+- `data/processed/splits/` (gitignored): holdout / cv / chrono + `splits_manifest.json`.
+- `data/processed/predictions/` (gitignored): out-of-fold CV and holdout-test predictions.
+- `reports/metrics/`: `baselines_cgmacros.json`, `baselines_shanghai_t2dm.json`,
+  `baselines_checks.json`, per-patient CSVs.
+- `reports/figures/`: `baselines_error_vs_horizon.png`, `baselines_clarke_grid.png`,
+  `baselines_per_patient_spread.png`.
+- Pinned in requirements.txt: lightgbm 4.7.0, statsmodels 0.15.0.
+
 ## Next steps
-1. Owner reviews the Part 1 final report.
-2. Part 2 (modeling) only after approval. Feature-building must reuse `minutes_since_real`,
-   `glucose_is_real` and the causal rule; no calendar features (test enforces this).
+1. Owner reviews the Part 2 report.
+2. Part 3 (fusion ablation) uses the `full` / `shared` feature sets and the same splits/evaluation.
+   The Part 2 baselines are the bar to beat (per-patient AR is the strongest at +120 min on CGMacros).

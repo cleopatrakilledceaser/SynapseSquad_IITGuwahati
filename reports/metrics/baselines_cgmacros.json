@@ -1,0 +1,5178 @@
+{
+  "name": "baselines_cgmacros",
+  "timestamp_utc": "2026-10-12T21:06:30.048381+00:00",
+  "git_hash": "3f65329d53ab69c20c9d586fbeae88a702e35e1c-dirty",
+  "seed": 42,
+  "data_hash": "466b88a0581ff1bbf810ec83afddb6401d0f2d67fc7f3b9e9168c2b9eb28750f",
+  "config": {
+    "baselines": {
+      "seed": 42,
+      "cohorts": [
+        "cgmacros",
+        "shanghai_t2dm"
+      ],
+      "inner_split": {
+        "train": 0.8,
+        "calibration": 0.2,
+        "test": 0.0
+      },
+      "linear_trend": {
+        "window_min_grid": [
+          15,
+          30,
+          60
+        ],
+        "damping_grid": [
+          0.25,
+          0.5,
+          1.0
+        ]
+      },
+      "holt": {
+        "history_min": 120,
+        "alpha_grid": [
+          0.2,
+          0.4,
+          0.6,
+          0.8,
+          0.95
+        ],
+        "beta_grid": [
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "phi_grid": [
+          0.5,
+          0.65,
+          0.8,
+          0.9,
+          0.98
+        ]
+      },
+      "ar": {
+        "order_min_grid": [
+          30,
+          60,
+          120,
+          180
+        ],
+        "max_fit_rows": 300000
+      },
+      "patient_ar": {
+        "ridge_lambda": 50.0,
+        "min_pairs": 288
+      },
+      "lightgbm": {
+        "target": "delta",
+        "num_leaves_grid": [
+          15,
+          63
+        ],
+        "params": {
+          "learning_rate": 0.05,
+          "n_estimators": 2000,
+          "min_child_samples": 50,
+          "subsample": 0.8,
+          "subsample_freq": 1,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 1.0,
+          "n_jobs": 8,
+          "verbose": -1
+        },
+        "early_stopping_rounds": 50,
+        "classifier_num_leaves_grid": [
+          31
+        ],
+        "classifier_events": [
+          "hyper180_any",
+          "hyper180_at",
+          "hyper140_any",
+          "hyper140_at",
+          "hypo70_any",
+          "hypo70_at"
+        ]
+      },
+      "events": {
+        "definitions": [
+          "any",
+          "at"
+        ],
+        "min_pos_windows": 30,
+        "min_pos_patients": 5,
+        "never_report": {
+          "cgmacros": [
+            "hypo70"
+          ]
+        }
+      },
+      "bootstrap": {
+        "n_boot": 1000,
+        "auc_bins": 2000,
+        "ci": 0.95
+      },
+      "window_selection": {
+        "n_splits": 5,
+        "model": "lgbm_cgm_tod",
+        "horizons_min": [
+          30,
+          60,
+          120
+        ]
+      },
+      "shuffle_check": {
+        "cohort": "cgmacros",
+        "event": "hyper180_any_60",
+        "horizon_min": 60,
+        "n_shuffles": 5
+      },
+      "sensitivity_exclude": {
+        "cgmacros": [
+          "cgmacros_007"
+        ]
+      },
+      "groups": {
+        "hba1c_bins_pct": [
+          0,
+          7.0,
+          9.0,
+          100
+        ],
+        "hba1c_labels": [
+          "<7",
+          "7-9",
+          ">=9"
+        ]
+      }
+    },
+    "features": {
+      "seed": 42,
+      "cohorts": {
+        "cgmacros": {
+          "grid_file": "cgmacros_ts5.parquet",
+          "dataset": "cgmacros",
+          "step_min": 5,
+          "anchor_stride_min": 15
+        },
+        "shanghai_t2dm": {
+          "grid_file": "common_ts15.parquet",
+          "dataset": "shanghai_t2dm",
+          "step_min": 15,
+          "anchor_stride_min": 15
+        },
+        "cgmacros_15": {
+          "grid_file": "common_ts15.parquet",
+          "dataset": "cgmacros",
+          "step_min": 15,
+          "anchor_stride_min": 15
+        }
+      },
+      "windows": {
+        "input_hours": [
+          2,
+          4,
+          6
+        ],
+        "horizons_min": [
+          30,
+          60,
+          120
+        ],
+        "anchor_requires_real": true,
+        "min_real_frac_input": 0.7,
+        "min_real_frac_horizon": 0.7
+      },
+      "events": {
+        "hyper180": {
+          "threshold": 180,
+          "direction": "above"
+        },
+        "hyper140": {
+          "threshold": 140,
+          "direction": "above"
+        },
+        "hypo70": {
+          "threshold": 70,
+          "direction": "below"
+        }
+      },
+      "cgm": {
+        "lags_min": [
+          5,
+          10,
+          15,
+          30,
+          45,
+          60,
+          90,
+          120
+        ],
+        "delta_min": [
+          15,
+          30,
+          60
+        ],
+        "slope_windows_min": [
+          15,
+          30,
+          60
+        ],
+        "slope_min_points": 3,
+        "accel_window_min": 30,
+        "rolling_windows_min": [
+          60
+        ],
+        "tir_window_min": 180,
+        "range_low": 70,
+        "range_high": 180,
+        "range_secondary": 140
+      },
+      "meals": {
+        "windows_h": [
+          1,
+          3,
+          6
+        ],
+        "macros": [
+          "carbs_g",
+          "protein_g",
+          "fat_g",
+          "fiber_g",
+          "kcal"
+        ],
+        "meal_types": [
+          "breakfast",
+          "lunch",
+          "dinner",
+          "snack",
+          "unknown"
+        ]
+      },
+      "wearable": {
+        "windows_min": [
+          30,
+          60
+        ],
+        "post_meal_window_min": 120,
+        "night_start_hour": 22,
+        "night_end_hour": 7
+      },
+      "static": {
+        "cgmacros": [
+          "age_years",
+          "sex_male",
+          "bmi",
+          "hba1c_pct",
+          "fasting_glucose_mgdl",
+          "fasting_insulin",
+          "triglycerides_mgdl",
+          "cholesterol_mgdl",
+          "hdl_mgdl",
+          "ldl_mgdl"
+        ],
+        "shanghai_t2dm": [
+          "age_years",
+          "sex_male",
+          "bmi",
+          "hba1c_pct",
+          "diabetes_duration_years",
+          "fasting_c_peptide_nmol_l",
+          "med_insulin",
+          "med_metformin",
+          "med_sulfonylurea",
+          "med_glinide",
+          "med_agi",
+          "med_dpp4",
+          "med_sglt2",
+          "med_glp1",
+          "med_tzd"
+        ],
+        "shared": [
+          "age_years",
+          "sex_male",
+          "bmi",
+          "hba1c_pct"
+        ]
+      },
+      "glucose_clip_mgdl": [
+        40,
+        400
+      ]
+    }
+  },
+  "metrics": {
+    "N_hours": 6,
+    "window_selection": {
+      "mae_by_N": {
+        "N2": {
+          "30": 12.422923871342025,
+          "60": 17.295050190300433,
+          "120": 21.791469857386456
+        },
+        "N4": {
+          "30": 12.342669035055758,
+          "60": 17.204242933871342,
+          "120": 21.456918235826297
+        },
+        "N6": {
+          "30": 12.285030734472251,
+          "60": 17.008474396190508,
+          "120": 21.178743739256575
+        }
+      },
+      "mean_mae_by_N": {
+        "N2": 17.169814639676304,
+        "N4": 17.0012767349178,
+        "N6": 16.824082956639778
+      },
+      "chosen": "N6",
+      "n_train_patients": 27
+    },
+    "cv_regression": [
+      {
+        "model": "persistence",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 13.385425421466357,
+        "mae_ci": [
+          12.491306177552167,
+          14.346883948163152
+        ],
+        "rmse": 20.662107288685156,
+        "rmse_ci": [
+          19.33348956320006,
+          22.09336456141222
+        ],
+        "mard_pct": 9.327518164313991,
+        "mard_pct_ci": [
+          8.900115198169145,
+          9.828880322499838
+        ],
+        "clarke_A_pct": 87.63286696000395,
+        "clarke_A_pct_ci": [
+          86.3854043451082,
+          88.72950648095862
+        ],
+        "clarke_AB_pct": 99.60943293617441,
+        "clarke_AB_pct_ci": [
+          99.47971158344846,
+          99.722300184217
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 13.536879138520131,
+        "mae_ci": [
+          12.745044972889014,
+          14.362580963026705
+        ],
+        "rmse": 20.655952747370147,
+        "rmse_ci": [
+          19.508474478908717,
+          21.882655887415666
+        ],
+        "mard_pct": 9.543262650249297,
+        "mard_pct_ci": [
+          9.058481900918474,
+          10.147719590125178
+        ],
+        "clarke_A_pct": 87.14490532456617,
+        "clarke_A_pct_ci": [
+          85.68988343868212,
+          88.35245859659881
+        ],
+        "clarke_AB_pct": 99.65689425025957,
+        "clarke_AB_pct_ci": [
+          99.5467616403229,
+          99.7515158111263
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 13.164054398066888,
+        "mae_ci": [
+          12.371916802651374,
+          14.023360754559594
+        ],
+        "rmse": 20.174096747404512,
+        "rmse_ci": [
+          18.96650749458122,
+          21.449041757235445
+        ],
+        "mard_pct": 9.238711820988343,
+        "mard_pct_ci": [
+          8.78859730216369,
+          9.787149692980483
+        ],
+        "clarke_A_pct": 87.90230879517476,
+        "clarke_A_pct_ci": [
+          86.57096990038673,
+          89.01586376450474
+        ],
+        "clarke_AB_pct": 99.65244475206407,
+        "clarke_AB_pct_ci": [
+          99.53370040007042,
+          99.75177421413736
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 12.694903670511692,
+        "mae_ci": [
+          11.921898271872323,
+          13.545078335423538
+        ],
+        "rmse": 19.132814983588457,
+        "rmse_ci": [
+          17.926362448640553,
+          20.488184716697813
+        ],
+        "mard_pct": 9.008046870706766,
+        "mard_pct_ci": [
+          8.565712414897233,
+          9.570012281427994
+        ],
+        "clarke_A_pct": 89.27819251495526,
+        "clarke_A_pct_ci": [
+          87.91578739494052,
+          90.41294481924521
+        ],
+        "clarke_AB_pct": 99.60547782666733,
+        "clarke_AB_pct_ci": [
+          99.46444590072659,
+          99.72466727899325
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 12.181286012653523,
+        "mae_ci": [
+          11.412050018189339,
+          12.98648353422457
+        ],
+        "rmse": 18.36403624484758,
+        "rmse_ci": [
+          17.218187362732476,
+          19.563274779657167
+        ],
+        "mard_pct": 8.597377191859,
+        "mard_pct_ci": [
+          8.240208312089193,
+          9.01167152582083
+        ],
+        "clarke_A_pct": 90.23878973649084,
+        "clarke_A_pct_ci": [
+          89.12540308660547,
+          91.1939861620592
+        ],
+        "clarke_AB_pct": 99.63168042715182,
+        "clarke_AB_pct_ci": [
+          99.49144036084776,
+          99.74606710526318
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 12.431504960627352,
+        "mae_ci": [
+          11.663732193429327,
+          13.263233418191845
+        ],
+        "rmse": 18.75871958889233,
+        "rmse_ci": [
+          17.544789180462512,
+          20.06483671899963
+        ],
+        "mard_pct": 8.795385199302496,
+        "mard_pct_ci": [
+          8.39060071201348,
+          9.284147645118946
+        ],
+        "clarke_A_pct": 89.80570524546401,
+        "clarke_A_pct_ci": [
+          88.66800382315071,
+          90.80850430986254
+        ],
+        "clarke_AB_pct": 99.56543234290798,
+        "clarke_AB_pct_ci": [
+          99.40748921840591,
+          99.6989014370569
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 30,
+        "n_rows": 40454,
+        "n_patients": 45,
+        "mae": 12.325437684808943,
+        "mae_ci": [
+          11.5669312891391,
+          13.11836658116763
+        ],
+        "rmse": 18.52705234521002,
+        "rmse_ci": [
+          17.320635918549105,
+          19.803571656103024
+        ],
+        "mard_pct": 8.732053528847722,
+        "mard_pct_ci": [
+          8.333248550362079,
+          9.196274598644488
+        ],
+        "clarke_A_pct": 90.00395510950709,
+        "clarke_A_pct_ci": [
+          88.86137230285871,
+          91.00190464928568
+        ],
+        "clarke_AB_pct": 99.5802640035596,
+        "clarke_AB_pct_ci": [
+          99.41859077903581,
+          99.71394790534647
+        ]
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 19.533564786112834,
+        "mae_ci": [
+          17.800773085192986,
+          21.378254162024284
+        ],
+        "rmse": 30.111132452668482,
+        "rmse_ci": [
+          27.361665135582196,
+          32.875202541927244
+        ],
+        "mard_pct": 13.420959587990799,
+        "mard_pct_ci": [
+          12.649832432571724,
+          14.22893488622759
+        ],
+        "clarke_A_pct": 77.50030998140112,
+        "clarke_A_pct_ci": [
+          75.63038202411718,
+          79.23235260178687
+        ],
+        "clarke_AB_pct": 98.7997520148791,
+        "clarke_AB_pct_ci": [
+          98.35915087607518,
+          99.17222045762725
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 21.000938049285796,
+        "mae_ci": [
+          19.39942796674041,
+          22.670026177904308
+        ],
+        "rmse": 32.05220990514744,
+        "rmse_ci": [
+          29.531964936558083,
+          34.57097285377774
+        ],
+        "mard_pct": 14.491189013666768,
+        "mard_pct_ci": [
+          13.754668901574286,
+          15.29128042889862
+        ],
+        "clarke_A_pct": 75.05914445133293,
+        "clarke_A_pct_ci": [
+          73.31544858019899,
+          76.66418239258613
+        ],
+        "clarke_AB_pct": 98.64947303161813,
+        "clarke_AB_pct_ci": [
+          98.19725252761947,
+          99.0460977758984
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 19.57308627302623,
+        "mae_ci": [
+          17.861901412678908,
+          21.40263050834759
+        ],
+        "rmse": 30.06225826267931,
+        "rmse_ci": [
+          27.421088628871246,
+          32.73541333493133
+        ],
+        "mard_pct": 13.469314062573496,
+        "mard_pct_ci": [
+          12.715661008646872,
+          14.257492226895124
+        ],
+        "clarke_A_pct": 77.21810291382518,
+        "clarke_A_pct_ci": [
+          75.41885682466207,
+          78.90765066583667
+        ],
+        "clarke_AB_pct": 98.84339739615623,
+        "clarke_AB_pct_ci": [
+          98.42082811038588,
+          99.2051535561143
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 18.38974669293555,
+        "mae_ci": [
+          16.92097463586479,
+          20.062898038849948
+        ],
+        "rmse": 27.571763155889425,
+        "rmse_ci": [
+          24.96404150615528,
+          30.289425283380687
+        ],
+        "mard_pct": 12.881723943523651,
+        "mard_pct_ci": [
+          12.252926812257082,
+          13.57115600641256
+        ],
+        "clarke_A_pct": 79.54023558586485,
+        "clarke_A_pct_ci": [
+          77.67069426285579,
+          81.21653918437386
+        ],
+        "clarke_AB_pct": 98.8409175449473,
+        "clarke_AB_pct_ci": [
+          98.4281464212943,
+          99.18198597498856
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 17.399859787472852,
+        "mae_ci": [
+          15.9129311928048,
+          19.060572805116937
+        ],
+        "rmse": 26.21270480313664,
+        "rmse_ci": [
+          23.782761761650868,
+          28.684303890003626
+        ],
+        "mard_pct": 12.088297263492148,
+        "mard_pct_ci": [
+          11.433785486857161,
+          12.800530459492625
+        ],
+        "clarke_A_pct": 81.07079975201489,
+        "clarke_A_pct_ci": [
+          79.2036676936236,
+          82.7431621629816
+        ],
+        "clarke_AB_pct": 98.99566026038435,
+        "clarke_AB_pct_ci": [
+          98.64002375955347,
+          99.31197779516155
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 18.071921467414768,
+        "mae_ci": [
+          16.627405164950435,
+          19.737215581563827
+        ],
+        "rmse": 26.989502700350776,
+        "rmse_ci": [
+          24.489974983824634,
+          29.622951282385245
+        ],
+        "mard_pct": 12.585946862845914,
+        "mard_pct_ci": [
+          11.98316411526366,
+          13.27362053513055
+        ],
+        "clarke_A_pct": 80.25840049597025,
+        "clarke_A_pct_ci": [
+          78.38794808855886,
+          81.93985739670863
+        ],
+        "clarke_AB_pct": 98.9237445753255,
+        "clarke_AB_pct_ci": [
+          98.55328098837045,
+          99.24594204850285
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_rows": 40325,
+        "n_patients": 45,
+        "mae": 17.681017561117486,
+        "mae_ci": [
+          16.25450114517753,
+          19.291648532602355
+        ],
+        "rmse": 26.351273017646385,
+        "rmse_ci": [
+          23.90828732634802,
+          28.898151242868142
+        ],
+        "mard_pct": 12.347373428162067,
+        "mard_pct_ci": [
+          11.760041230851948,
+          12.998274122995108
+        ],
+        "clarke_A_pct": 80.32386856788592,
+        "clarke_A_pct_ci": [
+          78.56291684640168,
+          81.90255675580761
+        ],
+        "clarke_AB_pct": 98.96887786732798,
+        "clarke_AB_pct_ci": [
+          98.6151666062126,
+          99.27367338086351
+        ]
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 26.926003438224082,
+        "mae_ci": [
+          24.018236274983465,
+          30.266477755720526
+        ],
+        "rmse": 40.54058034989461,
+        "rmse_ci": [
+          35.954643290049084,
+          45.18693659957668
+        ],
+        "mard_pct": 18.67165240223163,
+        "mard_pct_ci": [
+          17.31540323334294,
+          20.2892061762467
+        ],
+        "clarke_A_pct": 66.59441413159928,
+        "clarke_A_pct_ci": [
+          63.643047447992444,
+          69.18153339907377
+        ],
+        "clarke_AB_pct": 97.17965966564516,
+        "clarke_AB_pct_ci": [
+          96.0093332798467,
+          98.12666656439877
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 31.18384742166657,
+        "mae_ci": [
+          28.27609056041214,
+          34.38341353849786
+        ],
+        "rmse": 46.657480937057564,
+        "rmse_ci": [
+          42.28412525291765,
+          51.13558788947694
+        ],
+        "mard_pct": 21.800205055482788,
+        "mard_pct_ci": [
+          20.374769793051044,
+          23.299607792248167
+        ],
+        "clarke_A_pct": 61.342402272217655,
+        "clarke_A_pct_ci": [
+          58.87622562185025,
+          63.583460016333404
+        ],
+        "clarke_AB_pct": 95.98624710366992,
+        "clarke_AB_pct_ci": [
+          94.69540324126655,
+          97.08264697124899
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 26.978787424195787,
+        "mae_ci": [
+          23.975495451972154,
+          30.463862319062166
+        ],
+        "rmse": 40.56474232322616,
+        "rmse_ci": [
+          35.752746822330685,
+          45.36599772924736
+        ],
+        "mard_pct": 18.70736406962525,
+        "mard_pct_ci": [
+          17.29949000652331,
+          20.42738311323926
+        ],
+        "clarke_A_pct": 66.33330841866606,
+        "clarke_A_pct_ci": [
+          63.27588731135161,
+          69.04184600423838
+        ],
+        "clarke_AB_pct": 97.21005555970798,
+        "clarke_AB_pct_ci": [
+          96.02067335518032,
+          98.15925099105483
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 23.681889216116705,
+        "mae_ci": [
+          21.19375759355939,
+          26.526217264567194
+        ],
+        "rmse": 34.74003676858827,
+        "rmse_ci": [
+          30.397566786523004,
+          39.45595957975567
+        ],
+        "mard_pct": 16.624031534294442,
+        "mard_pct_ci": [
+          15.62416171938969,
+          17.765892968011908
+        ],
+        "clarke_A_pct": 69.95291127886986,
+        "clarke_A_pct_ci": [
+          67.2742237745426,
+          72.3920019362388
+        ],
+        "clarke_AB_pct": 97.70087450482097,
+        "clarke_AB_pct_ci": [
+          96.58652865777822,
+          98.53122394510227
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 21.84011904682564,
+        "mae_ci": [
+          19.37462764754903,
+          24.650762872123053
+        ],
+        "rmse": 32.4163996487659,
+        "rmse_ci": [
+          28.592851801268,
+          36.55071321277625
+        ],
+        "mard_pct": 15.14054530172282,
+        "mard_pct_ci": [
+          14.061208099856032,
+          16.42964041309131
+        ],
+        "clarke_A_pct": 73.37967461444552,
+        "clarke_A_pct_ci": [
+          70.27326198390493,
+          75.98408477181235
+        ],
+        "clarke_AB_pct": 98.27391185190723,
+        "clarke_AB_pct_ci": [
+          97.53727662570365,
+          98.90041437179686
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 23.088165991137952,
+        "mae_ci": [
+          20.789162953537488,
+          25.682095926915654
+        ],
+        "rmse": 33.54315493006895,
+        "rmse_ci": [
+          29.558202906071323,
+          37.760118077464575
+        ],
+        "mard_pct": 16.09225307929723,
+        "mard_pct_ci": [
+          15.194012199695369,
+          17.13245545811523
+        ],
+        "clarke_A_pct": 70.99534095722152,
+        "clarke_A_pct_ci": [
+          68.32642327320502,
+          73.356581570554
+        ],
+        "clarke_AB_pct": 98.065625233575,
+        "clarke_AB_pct_ci": [
+          97.19855028773358,
+          98.74260499715074
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 120,
+        "n_rows": 40137,
+        "n_patients": 45,
+        "mae": 22.019205000165883,
+        "mae_ci": [
+          19.820769598917952,
+          24.520732777164604
+        ],
+        "rmse": 32.11741977712088,
+        "rmse_ci": [
+          28.476360123749934,
+          35.99497698562886
+        ],
+        "mard_pct": 15.382593204334311,
+        "mard_pct_ci": [
+          14.519287853704244,
+          16.361058693045656
+        ],
+        "clarke_A_pct": 72.39255549742133,
+        "clarke_A_pct_ci": [
+          69.83561196845045,
+          74.63088072695727
+        ],
+        "clarke_AB_pct": 98.29683334579067,
+        "clarke_AB_pct_ci": [
+          97.6093682161942,
+          98.85282440355975
+        ]
+      }
+    ],
+    "cv_events": [
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40484,
+        "n_pos": 7262,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1793795079537595,
+        "auroc": 0.9661850095982659,
+        "auprc": 0.9237901940419693,
+        "brier": null,
+        "auroc_ci": [
+          0.9528436645404073,
+          0.9753543632762274
+        ],
+        "auprc_ci": [
+          0.8776796484403476,
+          0.9530387514899887
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40484,
+        "n_pos": 7262,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1793795079537595,
+        "auroc": 0.9704882359960262,
+        "auprc": 0.9279757400838288,
+        "brier": null,
+        "auroc_ci": [
+          0.9591056709417087,
+          0.9785620347269038
+        ],
+        "auprc_ci": [
+          0.8840250449336878,
+          0.9548268422828458
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40484,
+        "n_pos": 7262,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1793795079537595,
+        "auroc": 0.975941278405816,
+        "auprc": 0.9422218758195757,
+        "brier": 0.03301269968052064,
+        "auroc_ci": [
+          0.9664065298546034,
+          0.9828143991604065
+        ],
+        "auprc_ci": [
+          0.9070521157278214,
+          0.9642666075428035
+        ],
+        "brier_ci": [
+          0.026626300016158552,
+          0.039620235899387596
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40454,
+        "n_pos": 5829,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1440895832303357,
+        "auroc": 0.9487094417121416,
+        "auprc": 0.8352689377779938,
+        "brier": null,
+        "auroc_ci": [
+          0.928863431386462,
+          0.9619001923487803
+        ],
+        "auprc_ci": [
+          0.7361563166325233,
+          0.8926937697478677
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40454,
+        "n_pos": 5829,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1440895832303357,
+        "auroc": 0.9573889100495282,
+        "auprc": 0.8610747399785237,
+        "brier": null,
+        "auroc_ci": [
+          0.9400678751181331,
+          0.9688963350492986
+        ],
+        "auprc_ci": [
+          0.773043655670593,
+          0.911239759851351
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40454,
+        "n_pos": 5829,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1440895832303357,
+        "auroc": 0.9608319859683284,
+        "auprc": 0.8625145750933455,
+        "brier": 0.04502592072099399,
+        "auroc_ci": [
+          0.9454873261183233,
+          0.9713669502990204
+        ],
+        "auprc_ci": [
+          0.7731931902905727,
+          0.9123104414494219
+        ],
+        "brier_ci": [
+          0.03471507087022553,
+          0.05583367763403748
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40522,
+        "n_pos": 19090,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.4711021173683431,
+        "auroc": 0.9568257706320682,
+        "auprc": 0.9634848042275121,
+        "brier": null,
+        "auroc_ci": [
+          0.9438782624652975,
+          0.9666337117003845
+        ],
+        "auprc_ci": [
+          0.9431739283893686,
+          0.9772479331255116
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40522,
+        "n_pos": 19090,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.4711021173683431,
+        "auroc": 0.9592004208958137,
+        "auprc": 0.9647893429970965,
+        "brier": null,
+        "auroc_ci": [
+          0.9469624418979435,
+          0.968380089097207
+        ],
+        "auprc_ci": [
+          0.9449729348234621,
+          0.9782053227170403
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40522,
+        "n_pos": 19090,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.4711021173683431,
+        "auroc": 0.9683886722702681,
+        "auprc": 0.972609258457521,
+        "brier": 0.06209372793753601,
+        "auroc_ci": [
+          0.9601038138709048,
+          0.975037061082792
+        ],
+        "auprc_ci": [
+          0.9576162127350716,
+          0.982940129555494
+        ],
+        "brier_ci": [
+          0.05509884226991552,
+          0.06894677844692902
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40454,
+        "n_pos": 16116,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39837840510209127,
+        "auroc": 0.9234877569966335,
+        "auprc": 0.9017988893847436,
+        "brier": null,
+        "auroc_ci": [
+          0.9040374074692016,
+          0.9399117580159545
+        ],
+        "auprc_ci": [
+          0.8524400707642189,
+          0.937382767761526
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40454,
+        "n_pos": 16116,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39837840510209127,
+        "auroc": 0.9320569348984591,
+        "auprc": 0.9142091529336037,
+        "brier": null,
+        "auroc_ci": [
+          0.9137444244090315,
+          0.9469480685406393
+        ],
+        "auprc_ci": [
+          0.8687476522772574,
+          0.9462346622732392
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40454,
+        "n_pos": 16116,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39837840510209127,
+        "auroc": 0.9391586224826862,
+        "auprc": 0.922999106888969,
+        "brier": 0.09277387131915057,
+        "auroc_ci": [
+          0.9230901141284142,
+          0.9523003243003986
+        ],
+        "auprc_ci": [
+          0.881128653959094,
+          0.9516818792417407
+        ],
+        "brier_ci": [
+          0.08123617475179198,
+          0.1045109110779421
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40451,
+        "n_pos": 246,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.006081431855825567,
+        "auroc": 0.9504160082018679,
+        "auprc": 0.5618363923404065,
+        "brier": null,
+        "auroc_ci": [
+          0.90067281615277,
+          0.9805313210640654
+        ],
+        "auprc_ci": [
+          0.4411142056260565,
+          0.66681505033486
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40451,
+        "n_pos": 246,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.006081431855825567,
+        "auroc": 0.9582060638415114,
+        "auprc": 0.5381423286446059,
+        "brier": null,
+        "auroc_ci": [
+          0.920736299804063,
+          0.9824574604336441
+        ],
+        "auprc_ci": [
+          0.4044181898024686,
+          0.650920358419736
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40451,
+        "n_pos": 246,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.006081431855825567,
+        "auroc": 0.9621398159635122,
+        "auprc": 0.5519500517708563,
+        "brier": 0.003858288398757004,
+        "auroc_ci": [
+          0.9172583056623073,
+          0.982365023625519
+        ],
+        "auprc_ci": [
+          0.4355848502872421,
+          0.6691056423612228
+        ],
+        "brier_ci": [
+          0.0019450001711188657,
+          0.0063041412615359995
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40454,
+        "n_pos": 107,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.002644979482869432,
+        "auroc": 0.9161544628386132,
+        "auprc": 0.1717962914554728,
+        "brier": null,
+        "auroc_ci": [
+          0.820448182472329,
+          0.96959320550495
+        ],
+        "auprc_ci": [
+          0.05718736471112523,
+          0.343917037407687
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40454,
+        "n_pos": 107,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.002644979482869432,
+        "auroc": 0.9293803821938145,
+        "auprc": 0.19513453468739925,
+        "brier": null,
+        "auroc_ci": [
+          0.8513439524636442,
+          0.9736535436432593
+        ],
+        "auprc_ci": [
+          0.07194306457890697,
+          0.3565451674717628
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40454,
+        "n_pos": 107,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.002644979482869432,
+        "auroc": 0.9486039217266845,
+        "auprc": 0.12249374134193003,
+        "brier": 0.002517607752578671,
+        "auroc_ci": [
+          0.8918910689428344,
+          0.970999359392094
+        ],
+        "auprc_ci": [
+          0.05063767929739747,
+          0.2333237433841724
+        ],
+        "brier_ci": [
+          0.0012883342824824063,
+          0.004005306801681225
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40355,
+        "n_pos": 8676,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.21499194647503408,
+        "auroc": 0.9197607516944227,
+        "auprc": 0.8653295021455775,
+        "brier": null,
+        "auroc_ci": [
+          0.8917184723704382,
+          0.94047832600241
+        ],
+        "auprc_ci": [
+          0.7933800074928784,
+          0.9149398506810386
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40355,
+        "n_pos": 8676,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.21499194647503408,
+        "auroc": 0.9239582142216112,
+        "auprc": 0.8468225564658853,
+        "brier": null,
+        "auroc_ci": [
+          0.8979085780072175,
+          0.9433133216696765
+        ],
+        "auprc_ci": [
+          0.764116414548318,
+          0.9030226898126682
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40355,
+        "n_pos": 8676,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.21499194647503408,
+        "auroc": 0.9415009322786725,
+        "auprc": 0.8900049855010996,
+        "brier": 0.05894867823728778,
+        "auroc_ci": [
+          0.9211931677713617,
+          0.9566124665849727
+        ],
+        "auprc_ci": [
+          0.8295719830592121,
+          0.9306790177080595
+        ],
+        "brier_ci": [
+          0.048411698841634515,
+          0.07004778897737371
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40325,
+        "n_pos": 5816,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14422814631122133,
+        "auroc": 0.8792326413224021,
+        "auprc": 0.6673678126336501,
+        "brier": null,
+        "auroc_ci": [
+          0.8322912798308301,
+          0.9105883209404713
+        ],
+        "auprc_ci": [
+          0.49973921020430584,
+          0.764465845287173
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40325,
+        "n_pos": 5816,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14422814631122133,
+        "auroc": 0.8992623024641658,
+        "auprc": 0.7070052982638733,
+        "brier": null,
+        "auroc_ci": [
+          0.8571787086386147,
+          0.9273069943601744
+        ],
+        "auprc_ci": [
+          0.5417614507461017,
+          0.8051910951759071
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40325,
+        "n_pos": 5816,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14422814631122133,
+        "auroc": 0.9059531242632197,
+        "auprc": 0.7092311679393034,
+        "brier": 0.07007620550508675,
+        "auroc_ci": [
+          0.8679007925029221,
+          0.9317107987402394
+        ],
+        "auprc_ci": [
+          0.5499733484119474,
+          0.8073327263007195
+        ],
+        "brier_ci": [
+          0.05305358054549471,
+          0.08888629817076836
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40423,
+        "n_pos": 21514,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.5322217549414937,
+        "auroc": 0.9199997396316169,
+        "auprc": 0.9459049150569472,
+        "brier": null,
+        "auroc_ci": [
+          0.8980112451234039,
+          0.9383318837669753
+        ],
+        "auprc_ci": [
+          0.9167744412281945,
+          0.9669318686632704
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40423,
+        "n_pos": 21514,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.5322217549414937,
+        "auroc": 0.9191047614165009,
+        "auprc": 0.9402973599874689,
+        "brier": null,
+        "auroc_ci": [
+          0.8961885145278299,
+          0.9378267435427888
+        ],
+        "auprc_ci": [
+          0.9063503819348191,
+          0.963689285484785
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40423,
+        "n_pos": 21514,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.5322217549414937,
+        "auroc": 0.9407452874367392,
+        "auprc": 0.9580666048328581,
+        "brier": 0.0918856523162264,
+        "auroc_ci": [
+          0.9262655297024619,
+          0.9531992555004952
+        ],
+        "auprc_ci": [
+          0.9353308141852837,
+          0.974205635478672
+        ],
+        "brier_ci": [
+          0.08051370788183237,
+          0.10184741976764947
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40325,
+        "n_pos": 16069,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39848729076255424,
+        "auroc": 0.8594608173508343,
+        "auprc": 0.8186811849009284,
+        "brier": null,
+        "auroc_ci": [
+          0.8269067313727531,
+          0.8881126555211567
+        ],
+        "auprc_ci": [
+          0.7328574165664627,
+          0.8787905383073122
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40325,
+        "n_pos": 16069,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39848729076255424,
+        "auroc": 0.87954483035396,
+        "auprc": 0.8460042670869802,
+        "brier": null,
+        "auroc_ci": [
+          0.8480957183034815,
+          0.9059960942773447
+        ],
+        "auprc_ci": [
+          0.7678328388697194,
+          0.9012451613340196
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40325,
+        "n_pos": 16069,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39848729076255424,
+        "auroc": 0.8877829086257467,
+        "auprc": 0.8580740855401633,
+        "brier": 0.12952812687775603,
+        "auroc_ci": [
+          0.8596347180388877,
+          0.9121021420604463
+        ],
+        "auprc_ci": [
+          0.7854048171702712,
+          0.9084387644269641
+        ],
+        "brier_ci": [
+          0.11332610440834474,
+          0.14515599244043223
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40299,
+        "n_pos": 378,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.009379885356956748,
+        "auroc": 0.895756983799618,
+        "auprc": 0.43303721197889844,
+        "brier": null,
+        "auroc_ci": [
+          0.8234362897237787,
+          0.940325546282273
+        ],
+        "auprc_ci": [
+          0.3164275430992948,
+          0.5353554663783595
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40299,
+        "n_pos": 378,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.009379885356956748,
+        "auroc": 0.9191245964748631,
+        "auprc": 0.39164572443209966,
+        "brier": null,
+        "auroc_ci": [
+          0.8483077408340699,
+          0.9605139839734936
+        ],
+        "auprc_ci": [
+          0.2299793867406606,
+          0.5195178564731483
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40299,
+        "n_pos": 378,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.009379885356956748,
+        "auroc": 0.9055258142768475,
+        "auprc": 0.45457945509817804,
+        "brier": 0.006821425249983924,
+        "auroc_ci": [
+          0.8235406854970876,
+          0.9571322227671716
+        ],
+        "auprc_ci": [
+          0.3192502399094459,
+          0.559603414893372
+        ],
+        "brier_ci": [
+          0.0034951279042660472,
+          0.011053837253962726
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40325,
+        "n_pos": 102,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0025294482331060138,
+        "auroc": 0.851836672316541,
+        "auprc": 0.08974881133764272,
+        "brier": null,
+        "auroc_ci": [
+          0.7431545356120213,
+          0.9169137420479598
+        ],
+        "auprc_ci": [
+          0.0262743389839469,
+          0.2550719823805007
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40325,
+        "n_pos": 102,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0025294482331060138,
+        "auroc": 0.8895327665909613,
+        "auprc": 0.09428382073855283,
+        "brier": null,
+        "auroc_ci": [
+          0.7906251677965954,
+          0.9451392252173286
+        ],
+        "auprc_ci": [
+          0.03041712197064009,
+          0.2676079053212634
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40325,
+        "n_pos": 102,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0025294482331060138,
+        "auroc": 0.8577841523701443,
+        "auprc": 0.06508056051646291,
+        "brier": 0.002463246401292835,
+        "auroc_ci": [
+          0.7541849588152908,
+          0.9145307657834758
+        ],
+        "auprc_ci": [
+          0.017222652715721692,
+          0.16323240108799167
+        ],
+        "brier_ci": [
+          0.0012354305709522343,
+          0.003969805746256111
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40371,
+        "n_pos": 11096,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.2748507592083426,
+        "auroc": 0.8538322424218542,
+        "auprc": 0.8021668976524183,
+        "brier": null,
+        "auroc_ci": [
+          0.8102694921664167,
+          0.8880948607334775
+        ],
+        "auprc_ci": [
+          0.7112532260820197,
+          0.869173544978921
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40371,
+        "n_pos": 11096,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.2748507592083426,
+        "auroc": 0.8565468926724119,
+        "auprc": 0.7510483785233717,
+        "brier": null,
+        "auroc_ci": [
+          0.8139589435731723,
+          0.8897376570443934
+        ],
+        "auprc_ci": [
+          0.627960550782077,
+          0.835302303728333
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40371,
+        "n_pos": 11096,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.2748507592083426,
+        "auroc": 0.8991146300557145,
+        "auprc": 0.8435810743486267,
+        "brier": 0.09621217144983961,
+        "auroc_ci": [
+          0.8692213136874296,
+          0.9237826412112072
+        ],
+        "auprc_ci": [
+          0.7661712459138444,
+          0.9005048403781495
+        ],
+        "brier_ci": [
+          0.0808005843949519,
+          0.11252835602777761
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40137,
+        "n_pos": 5811,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14477913147469915,
+        "auroc": 0.7888984949223984,
+        "auprc": 0.46290270188037236,
+        "brier": null,
+        "auroc_ci": [
+          0.7079733979987517,
+          0.840833567805095
+        ],
+        "auprc_ci": [
+          0.26758158096671897,
+          0.592493188201906
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40137,
+        "n_pos": 5811,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14477913147469915,
+        "auroc": 0.8418256991361027,
+        "auprc": 0.5546391528712756,
+        "brier": null,
+        "auroc_ci": [
+          0.7793503846886096,
+          0.8864927989384684
+        ],
+        "auprc_ci": [
+          0.3484701247590399,
+          0.6879913227508652
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40137,
+        "n_pos": 5811,
+        "n_patients": 45,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14477913147469915,
+        "auroc": 0.8454683966811662,
+        "auprc": 0.5179569101211108,
+        "brier": 0.09227287989857128,
+        "auroc_ci": [
+          0.785079371479665,
+          0.8902377151455274
+        ],
+        "auprc_ci": [
+          0.33605736895261284,
+          0.6619845916419871
+        ],
+        "brier_ci": [
+          0.06764261362457409,
+          0.11961752435166294
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40467,
+        "n_pos": 25035,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.6186522351545704,
+        "auroc": 0.8710979499100431,
+        "auprc": 0.9326901159680748,
+        "brier": null,
+        "auroc_ci": [
+          0.8381263111440845,
+          0.9004525510586692
+        ],
+        "auprc_ci": [
+          0.8956587325066695,
+          0.9596704320719102
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40467,
+        "n_pos": 25035,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.6186522351545704,
+        "auroc": 0.8645765019175331,
+        "auprc": 0.9182589226960767,
+        "brier": null,
+        "auroc_ci": [
+          0.8288640105299636,
+          0.8956757290519256
+        ],
+        "auprc_ci": [
+          0.8734776811201235,
+          0.9510774684764023
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40467,
+        "n_pos": 25035,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.6186522351545704,
+        "auroc": 0.9074620945399096,
+        "auprc": 0.9493483594727742,
+        "brier": 0.12007379847788455,
+        "auroc_ci": [
+          0.8856142347465858,
+          0.9272048181897327
+        ],
+        "auprc_ci": [
+          0.9217533639525085,
+          0.9695827839536822
+        ],
+        "brier_ci": [
+          0.1023858564308013,
+          0.13588834653277296
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40137,
+        "n_pos": 16009,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39885890823928044,
+        "auroc": 0.7701490930768717,
+        "auprc": 0.6911403176827104,
+        "brier": null,
+        "auroc_ci": [
+          0.7204100302879879,
+          0.813404014525326
+        ],
+        "auprc_ci": [
+          0.5671105919704011,
+          0.7845681634259585
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40137,
+        "n_pos": 16009,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39885890823928044,
+        "auroc": 0.8221719442089355,
+        "auprc": 0.7623426590810174,
+        "brier": null,
+        "auroc_ci": [
+          0.7778854421125398,
+          0.8592450047631226
+        ],
+        "auprc_ci": [
+          0.6555686466743311,
+          0.8429407671208071
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40137,
+        "n_pos": 16009,
+        "n_patients": 45,
+        "n_patients_with_events": 45,
+        "prevalence": 0.39885890823928044,
+        "auroc": 0.8193369576865168,
+        "auprc": 0.764643465961901,
+        "brier": 0.1666812851317342,
+        "auroc_ci": [
+          0.772434578245622,
+          0.8579510798204881
+        ],
+        "auprc_ci": [
+          0.6554751918311824,
+          0.8402876508874346
+        ],
+        "brier_ci": [
+          0.14617314634665984,
+          0.18622139659456172
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40283,
+        "n_pos": 619,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.01536628354392672,
+        "auroc": 0.8278948050538906,
+        "auprc": 0.33393918547257595,
+        "brier": null,
+        "auroc_ci": [
+          0.7372744057860237,
+          0.8911302628064941
+        ],
+        "auprc_ci": [
+          0.22061240364566495,
+          0.45124985898167547
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40283,
+        "n_pos": 619,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.01536628354392672,
+        "auroc": 0.8666567951079862,
+        "auprc": 0.3165751288330615,
+        "brier": null,
+        "auroc_ci": [
+          0.7815583376778831,
+          0.9201395517802635
+        ],
+        "auprc_ci": [
+          0.14630789299333918,
+          0.46177376247727253
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40283,
+        "n_pos": 619,
+        "n_patients": 45,
+        "n_patients_with_events": 19,
+        "prevalence": 0.01536628354392672,
+        "auroc": 0.8145911317425014,
+        "auprc": 0.35833483001184646,
+        "brier": 0.012095394574862924,
+        "auroc_ci": [
+          0.6956742131053619,
+          0.9086476443350663
+        ],
+        "auprc_ci": [
+          0.1812946408281007,
+          0.5081384369306181
+        ],
+        "brier_ci": [
+          0.006456114312827351,
+          0.019123069514068954
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40137,
+        "n_pos": 95,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0023668933901387747,
+        "auroc": 0.7518253202558366,
+        "auprc": 0.03032556839505089,
+        "brier": null,
+        "auroc_ci": [
+          0.5532222161646378,
+          0.8691417391291291
+        ],
+        "auprc_ci": [
+          0.004563610429623239,
+          0.10853768407918085
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40137,
+        "n_pos": 95,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0023668933901387747,
+        "auroc": 0.8639298473444988,
+        "auprc": 0.035341966006451266,
+        "brier": null,
+        "auroc_ci": [
+          0.7816846752435648,
+          0.9150083670338598
+        ],
+        "auprc_ci": [
+          0.010020913318296137,
+          0.10816851846488754
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40137,
+        "n_pos": 95,
+        "n_patients": 45,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0023668933901387747,
+        "auroc": 0.8155863974405821,
+        "auprc": 0.024683902348505222,
+        "brier": 0.0023465869669956163,
+        "auroc_ci": [
+          0.7222825052011296,
+          0.8686882539422144
+        ],
+        "auprc_ci": [
+          0.006722382476981111,
+          0.0549827422672801
+        ],
+        "brier_ci": [
+          0.0011251119705740487,
+          0.0038980115978270555
+        ]
+      }
+    ],
+    "cv_groups_60min": [
+      {
+        "grouping": "diabetes_status",
+        "group": "healthy",
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_patients": 15,
+        "mae": 15.1416365912941,
+        "mae_ci": [
+          13.038752507304595,
+          18.2206269664527
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "healthy",
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_patients": 15,
+        "mae": 13.464667360428043,
+        "mae_ci": [
+          11.672415032018284,
+          16.14467835386
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "healthy",
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_patients": 15,
+        "mae": 14.285045093741278,
+        "mae_ci": [
+          12.719464824792443,
+          16.590623325457454
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "prediabetes",
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_patients": 16,
+        "mae": 19.30586964350018,
+        "mae_ci": [
+          17.006732936170888,
+          21.790617238318543
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "prediabetes",
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_patients": 16,
+        "mae": 17.141061273138927,
+        "mae_ci": [
+          15.097538030758342,
+          19.214929642404694
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "prediabetes",
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_patients": 16,
+        "mae": 16.964393306643473,
+        "mae_ci": [
+          15.127655954723124,
+          18.866351599481593
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "t2d",
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_patients": 14,
+        "mae": 24.41506646971935,
+        "mae_ci": [
+          22.031652837714528,
+          26.684583217565446
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "t2d",
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_patients": 14,
+        "mae": 21.832847811535196,
+        "mae_ci": [
+          19.72155979603287,
+          23.91924815606233
+        ]
+      },
+      {
+        "grouping": "diabetes_status",
+        "group": "t2d",
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_patients": 14,
+        "mae": 22.03905580747823,
+        "mae_ci": [
+          19.85054641979808,
+          24.098938299569877
+        ]
+      },
+      {
+        "grouping": "hba1c_group",
+        "group": "7-9",
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_patients": 10,
+        "mae": 25.017608695652175,
+        "mae_ci": [
+          22.162109523028118,
+          27.709614400483595
+        ]
+      },
+      {
+        "grouping": "hba1c_group",
+        "group": "7-9",
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_patients": 10,
+        "mae": 22.43838778116006,
+        "mae_ci": [
+          19.962247740447978,
+          24.900585950119908
+        ]
+      },
+      {
+        "grouping": "hba1c_group",
+        "group": "7-9",
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_patients": 10,
+        "mae": 22.519947420243756,
+        "mae_ci": [
+          19.955836311418434,
+          25.05371873971454
+        ]
+      },
+      {
+        "grouping": "hba1c_group",
+        "group": "<7",
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_patients": 35,
+        "mae": 17.91257831325301,
+        "mae_ci": [
+          16.126474064506816,
+          19.811694477598696
+        ]
+      },
+      {
+        "grouping": "hba1c_group",
+        "group": "<7",
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_patients": 35,
+        "mae": 15.910559946768524,
+        "mae_ci": [
+          14.354215593751531,
+          17.549222070890213
+        ]
+      },
+      {
+        "grouping": "hba1c_group",
+        "group": "<7",
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_patients": 35,
+        "mae": 16.25071540195405,
+        "mae_ci": [
+          14.839102051892684,
+          17.7692661971432
+        ]
+      }
+    ],
+    "holdout_test_regression": [
+      {
+        "model": "persistence",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 14.116589185221434,
+        "mae_ci": [
+          11.97019719479903,
+          16.494942805426938
+        ],
+        "rmse": 22.067574778813974,
+        "rmse_ci": [
+          18.716762129527655,
+          25.109358480898994
+        ],
+        "mard_pct": 9.42507127235726,
+        "mard_pct_ci": [
+          8.64463499284424,
+          10.252661552289553
+        ],
+        "clarke_A_pct": 86.81184242720822,
+        "clarke_A_pct_ci": [
+          84.69461273574099,
+          88.78270290209895
+        ],
+        "clarke_AB_pct": 99.66968436505995,
+        "clarke_AB_pct_ci": [
+          99.5212829474069,
+          99.8174616000016
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 14.419529134053306,
+        "mae_ci": [
+          12.44998795654866,
+          16.60747274038684
+        ],
+        "rmse": 22.509819528228256,
+        "rmse_ci": [
+          19.444199711368526,
+          25.3821400542256
+        ],
+        "mard_pct": 9.650581759187672,
+        "mard_pct_ci": [
+          8.8086977495442,
+          10.54274011765626
+        ],
+        "clarke_A_pct": 86.40812331783704,
+        "clarke_A_pct_ci": [
+          83.82327201499845,
+          88.67489140196994
+        ],
+        "clarke_AB_pct": 99.66968436505995,
+        "clarke_AB_pct_ci": [
+          99.50902172578863,
+          99.81748988392955
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 13.761075253002703,
+        "mae_ci": [
+          11.741898079767227,
+          15.957127297639154
+        ],
+        "rmse": 21.434873893785657,
+        "rmse_ci": [
+          18.34658095541282,
+          24.246668107302423
+        ],
+        "mard_pct": 9.219452639066319,
+        "mard_pct_ci": [
+          8.435672332728926,
+          10.037647458158116
+        ],
+        "clarke_A_pct": 87.27673109860534,
+        "clarke_A_pct_ci": [
+          85.2538806676741,
+          89.25489585858072
+        ],
+        "clarke_AB_pct": 99.69415218987032,
+        "clarke_AB_pct_ci": [
+          99.55641668964725,
+          99.8308871664711
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 13.349760434673048,
+        "mae_ci": [
+          11.286455984821181,
+          15.465572892711606
+        ],
+        "rmse": 20.464935809262933,
+        "rmse_ci": [
+          17.150072112535682,
+          23.499864223017592
+        ],
+        "mard_pct": 9.005289525519974,
+        "mard_pct_ci": [
+          8.301606620580397,
+          9.674029535541205
+        ],
+        "clarke_A_pct": 89.18522143381453,
+        "clarke_A_pct_ci": [
+          87.6810769875971,
+          90.87560127263393
+        ],
+        "clarke_AB_pct": 99.65745045265476,
+        "clarke_AB_pct_ci": [
+          99.49987649370884,
+          99.81866866301722
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 12.841921513179754,
+        "mae_ci": [
+          10.88917925300621,
+          14.96137296570472
+        ],
+        "rmse": 19.48892348818038,
+        "rmse_ci": [
+          16.495980119108246,
+          22.19626603220054
+        ],
+        "mard_pct": 8.704328121790752,
+        "mard_pct_ci": [
+          8.070391466038462,
+          9.45547569767634
+        ],
+        "clarke_A_pct": 89.96819182774651,
+        "clarke_A_pct_ci": [
+          88.1853507858137,
+          91.55684702471741
+        ],
+        "clarke_AB_pct": 99.7063861022755,
+        "clarke_AB_pct_ci": [
+          99.5626755711922,
+          99.85229526918926
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 13.137570535774937,
+        "mae_ci": [
+          11.204453266203583,
+          15.277782577250575
+        ],
+        "rmse": 20.68134855359867,
+        "rmse_ci": [
+          17.583681910147096,
+          23.522342593449114
+        ],
+        "mard_pct": 8.78589327126342,
+        "mard_pct_ci": [
+          8.090564102888841,
+          9.518900809253214
+        ],
+        "clarke_A_pct": 88.7448005872278,
+        "clarke_A_pct_ci": [
+          86.92975652131673,
+          90.43925514093792
+        ],
+        "clarke_AB_pct": 99.65745045265476,
+        "clarke_AB_pct_ci": [
+          99.51845609544466,
+          99.80599417035849
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 30,
+        "n_rows": 8174,
+        "n_patients": 9,
+        "mae": 12.862167589263402,
+        "mae_ci": [
+          10.953409809984084,
+          14.930019603178359
+        ],
+        "rmse": 20.164247440681113,
+        "rmse_ci": [
+          17.017475937237,
+          22.99877761518029
+        ],
+        "mard_pct": 8.614242580776724,
+        "mard_pct_ci": [
+          7.976336310625311,
+          9.263027369474061
+        ],
+        "clarke_A_pct": 89.57670663078052,
+        "clarke_A_pct_ci": [
+          88.0970590908015,
+          91.04682477451406
+        ],
+        "clarke_AB_pct": 99.60851480303401,
+        "clarke_AB_pct_ci": [
+          99.42876778711542,
+          99.79236322522843
+        ]
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 21.463360746286977,
+        "mae_ci": [
+          17.305893554534162,
+          25.93380846835645
+        ],
+        "rmse": 33.13396414879414,
+        "rmse_ci": [
+          26.677953678371995,
+          38.68254644479504
+        ],
+        "mard_pct": 14.20571037986149,
+        "mard_pct_ci": [
+          12.758720390425594,
+          15.77239632238414
+        ],
+        "clarke_A_pct": 75.54928194427397,
+        "clarke_A_pct_ci": [
+          72.12828177725623,
+          78.71536220393781
+        ],
+        "clarke_AB_pct": 98.51479072051062,
+        "clarke_AB_pct_ci": [
+          97.5160232975853,
+          99.3705959763205
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 22.693036807068868,
+        "mae_ci": [
+          18.809471372935192,
+          27.005301182306198
+        ],
+        "rmse": 34.90074354894606,
+        "rmse_ci": [
+          28.89436755569027,
+          40.214535702587376
+        ],
+        "mard_pct": 15.02147686525044,
+        "mard_pct_ci": [
+          13.630445927281619,
+          16.529294176356565
+        ],
+        "clarke_A_pct": 73.65901558856021,
+        "clarke_A_pct_ci": [
+          70.29721586505163,
+          76.60106637895524
+        ],
+        "clarke_AB_pct": 98.35522278139193,
+        "clarke_AB_pct_ci": [
+          97.47371534780729,
+          99.20655449521736
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 21.33063366069841,
+        "mae_ci": [
+          17.330903410839927,
+          25.58332670886023
+        ],
+        "rmse": 32.82464407566052,
+        "rmse_ci": [
+          26.622606173669723,
+          38.14224920875071
+        ],
+        "mard_pct": 14.132918843551886,
+        "mard_pct_ci": [
+          12.754428107253183,
+          15.606959441390192
+        ],
+        "clarke_A_pct": 75.5247330305634,
+        "clarke_A_pct_ci": [
+          72.23296807397752,
+          78.42073305929945
+        ],
+        "clarke_AB_pct": 98.60071191849761,
+        "clarke_AB_pct_ci": [
+          97.69751231131035,
+          99.39567161936671
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 20.126705414312134,
+        "mae_ci": [
+          16.44588576288421,
+          24.075339130306244
+        ],
+        "rmse": 30.510872657932953,
+        "rmse_ci": [
+          24.123205295778384,
+          36.39292835739018
+        ],
+        "mard_pct": 13.432656460998983,
+        "mard_pct_ci": [
+          12.508887494406947,
+          14.263633860500141
+        ],
+        "clarke_A_pct": 78.34785810727875,
+        "clarke_A_pct_ci": [
+          75.5232452436169,
+          81.02036559589556
+        ],
+        "clarke_AB_pct": 98.49024180680004,
+        "clarke_AB_pct_ci": [
+          97.44438128192454,
+          99.38515318132842
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 19.009750324112886,
+        "mae_ci": [
+          15.122238903554994,
+          23.109422244962012
+        ],
+        "rmse": 28.69500942626441,
+        "rmse_ci": [
+          22.817195391527633,
+          33.89649291357405
+        ],
+        "mard_pct": 12.705772472234207,
+        "mard_pct_ci": [
+          11.44998611490784,
+          14.007655277847546
+        ],
+        "clarke_A_pct": 79.4034613968332,
+        "clarke_A_pct_ci": [
+          75.65141962029149,
+          82.85519736565449
+        ],
+        "clarke_AB_pct": 98.71118203019516,
+        "clarke_AB_pct_ci": [
+          97.85601950145474,
+          99.46338346406851
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 19.468100518930132,
+        "mae_ci": [
+          15.765217490069082,
+          23.361527265534566
+        ],
+        "rmse": 30.006170492911615,
+        "rmse_ci": [
+          23.808601009503306,
+          35.442822958700916
+        ],
+        "mard_pct": 12.883799819476854,
+        "mard_pct_ci": [
+          11.833563553695662,
+          13.9676917981511
+        ],
+        "clarke_A_pct": 79.02295323431939,
+        "clarke_A_pct_ci": [
+          75.91669261128342,
+          81.96921269448302
+        ],
+        "clarke_AB_pct": 98.56388854793175,
+        "clarke_AB_pct_ci": [
+          97.65078175198116,
+          99.36408302101526
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_rows": 8147,
+        "n_patients": 9,
+        "mae": 18.9823671211211,
+        "mae_ci": [
+          15.423921103758623,
+          22.758229785123156
+        ],
+        "rmse": 29.31563559469109,
+        "rmse_ci": [
+          23.388806747769745,
+          34.571008213698946
+        ],
+        "mard_pct": 12.547374958512206,
+        "mard_pct_ci": [
+          11.551138334259962,
+          13.602405797016619
+        ],
+        "clarke_A_pct": 79.51393150853075,
+        "clarke_A_pct_ci": [
+          76.77633910835873,
+          81.99938882852186
+        ],
+        "clarke_AB_pct": 98.72345648705044,
+        "clarke_AB_pct_ci": [
+          97.95194238104799,
+          99.42565727981867
+        ]
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 30.190828402366865,
+        "mae_ci": [
+          22.930053580543085,
+          37.90112215885032
+        ],
+        "rmse": 45.28942102527624,
+        "rmse_ci": [
+          34.66460355850854,
+          54.787765244540545
+        ],
+        "mard_pct": 20.341767656441437,
+        "mard_pct_ci": [
+          17.3478705359678,
+          23.242936272760197
+        ],
+        "clarke_A_pct": 63.6094674556213,
+        "clarke_A_pct_ci": [
+          57.824760710994504,
+          69.40958733141576
+        ],
+        "clarke_AB_pct": 96.38806706114399,
+        "clarke_AB_pct_ci": [
+          93.62864030584389,
+          98.77209845718825
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 34.446513029661155,
+        "mae_ci": [
+          27.168710011376568,
+          41.84613404998629
+        ],
+        "rmse": 51.572092635947705,
+        "rmse_ci": [
+          40.955906781831324,
+          60.64483809085856
+        ],
+        "mard_pct": 23.43993326399684,
+        "mard_pct_ci": [
+          20.310256020730296,
+          26.386266866901398
+        ],
+        "clarke_A_pct": 59.09763313609467,
+        "clarke_A_pct_ci": [
+          54.027619113122405,
+          63.94371541834931
+        ],
+        "clarke_AB_pct": 94.79783037475345,
+        "clarke_AB_pct_ci": [
+          91.77227079188955,
+          97.62338484713902
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 30.200451559860294,
+        "mae_ci": [
+          22.946514806369017,
+          37.9002770637482
+        ],
+        "rmse": 45.30210665937091,
+        "rmse_ci": [
+          34.68581698794263,
+          54.79234089229857
+        ],
+        "mard_pct": 20.34944359047755,
+        "mard_pct_ci": [
+          17.365095602876647,
+          23.241360807135635
+        ],
+        "clarke_A_pct": 63.46153846153846,
+        "clarke_A_pct_ci": [
+          57.76709958036431,
+          69.19510900811257
+        ],
+        "clarke_AB_pct": 96.4620315581854,
+        "clarke_AB_pct_ci": [
+          93.7024288838162,
+          98.82101989541874
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 26.420460543963575,
+        "mae_ci": [
+          20.667335486219102,
+          33.142078399318045
+        ],
+        "rmse": 39.00310953332757,
+        "rmse_ci": [
+          28.194608648180502,
+          48.90122363182566
+        ],
+        "mard_pct": 17.678458860427725,
+        "mard_pct_ci": [
+          16.244282696562514,
+          19.193987434935377
+        ],
+        "clarke_A_pct": 66.82692307692308,
+        "clarke_A_pct_ci": [
+          62.53279065141721,
+          71.01700016618878
+        ],
+        "clarke_AB_pct": 96.60996055226825,
+        "clarke_AB_pct_ci": [
+          93.685432638709,
+          99.20972653389829
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 24.146879727175232,
+        "mae_ci": [
+          18.13747653545156,
+          30.97686773607271
+        ],
+        "rmse": 36.082469551881076,
+        "rmse_ci": [
+          26.217609235148448,
+          45.07334793437336
+        ],
+        "mard_pct": 16.14026388811643,
+        "mard_pct_ci": [
+          13.82807533325109,
+          18.672060942836087
+        ],
+        "clarke_A_pct": 71.11686390532545,
+        "clarke_A_pct_ci": [
+          65.13545907870282,
+          77.07913519577981
+        ],
+        "clarke_AB_pct": 97.63313609467455,
+        "clarke_AB_pct_ci": [
+          95.55850413075453,
+          99.34277162078152
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 25.46161997679294,
+        "mae_ci": [
+          19.73169090312801,
+          32.012041727749995
+        ],
+        "rmse": 37.91717803885967,
+        "rmse_ci": [
+          27.87550671611199,
+          47.306609007736725
+        ],
+        "mard_pct": 16.894185634453027,
+        "mard_pct_ci": [
+          15.36151456094473,
+          18.507500565672064
+        ],
+        "clarke_A_pct": 68.86094674556213,
+        "clarke_A_pct_ci": [
+          64.06451451532081,
+          73.3881380359116
+        ],
+        "clarke_AB_pct": 96.94280078895464,
+        "clarke_AB_pct_ci": [
+          94.34335928438307,
+          99.1869461517457
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 120,
+        "n_rows": 8112,
+        "n_patients": 9,
+        "mae": 24.41472361427209,
+        "mae_ci": [
+          18.904409189584566,
+          30.613263990277677
+        ],
+        "rmse": 36.522984525838766,
+        "rmse_ci": [
+          27.32557150128122,
+          45.124359866257706
+        ],
+        "mard_pct": 16.215831709960792,
+        "mard_pct_ci": [
+          14.626064144343067,
+          17.88934176567558
+        ],
+        "clarke_A_pct": 70.03205128205128,
+        "clarke_A_pct_ci": [
+          65.32210473241678,
+          74.60232170519589
+        ],
+        "clarke_AB_pct": 97.38658777120315,
+        "clarke_AB_pct_ci": [
+          95.26291785748225,
+          99.19778585001544
+        ]
+      }
+    ],
+    "cv_regression_without_007": [
+      {
+        "model": "persistence",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 13.410220788886132,
+        "mae_ci": [
+          12.455414275578324,
+          14.364471565514553
+        ],
+        "rmse": 20.68884795415291,
+        "rmse_ci": [
+          19.22364682741583,
+          22.11831155505618
+        ],
+        "mard_pct": 9.341998835911705,
+        "mard_pct_ci": [
+          8.881427182624414,
+          9.87176335143735
+        ],
+        "clarke_A_pct": 87.60357231456214,
+        "clarke_A_pct_ci": [
+          86.31141316133382,
+          88.74290007908573
+        ],
+        "clarke_AB_pct": 99.60803770776482,
+        "clarke_AB_pct_ci": [
+          99.47785545816159,
+          99.72298254289697
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 13.562358190763915,
+        "mae_ci": [
+          12.720298952350367,
+          14.432763089841766
+        ],
+        "rmse": 20.683410907165072,
+        "rmse_ci": [
+          19.468668044504852,
+          21.914999528966206
+        ],
+        "mard_pct": 9.558419963779409,
+        "mard_pct_ci": [
+          9.008428169142533,
+          10.135418394592248
+        ],
+        "clarke_A_pct": 87.11386752666833,
+        "clarke_A_pct_ci": [
+          85.70052653405928,
+          88.46190001408725
+        ],
+        "clarke_AB_pct": 99.65566856859338,
+        "clarke_AB_pct_ci": [
+          99.54454492851173,
+          99.74912793358064
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 13.188420708517857,
+        "mae_ci": [
+          12.334415234639778,
+          14.06474261273219
+        ],
+        "rmse": 20.20043754136137,
+        "rmse_ci": [
+          18.92317186592028,
+          21.466079648464802
+        ],
+        "mard_pct": 9.252929750432704,
+        "mard_pct_ci": [
+          8.750478191555521,
+          9.806733158615348
+        ],
+        "clarke_A_pct": 87.87248821632349,
+        "clarke_A_pct_ci": [
+          86.60086997106097,
+          89.08773389408023
+        ],
+        "clarke_AB_pct": 99.65120317539072,
+        "clarke_AB_pct_ci": [
+          99.53416758566676,
+          99.74703731637345
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 12.716361351906862,
+        "mae_ci": [
+          11.916838977753029,
+          13.568531420463431
+        ],
+        "rmse": 19.15690262501685,
+        "rmse_ci": [
+          17.84015884250233,
+          20.513310801084014
+        ],
+        "mard_pct": 9.020276191271321,
+        "mard_pct_ci": [
+          8.531611181861928,
+          9.546544459323455
+        ],
+        "clarke_A_pct": 89.24882163234928,
+        "clarke_A_pct_ci": [
+          87.93483659177544,
+          90.41148632071426
+        ],
+        "clarke_AB_pct": 99.60406846936245,
+        "clarke_AB_pct_ci": [
+          99.45904367980934,
+          99.71820182117985
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 12.201124161684145,
+        "mae_ci": [
+          11.397406763161092,
+          13.016997709963354
+        ],
+        "rmse": 18.386429571825296,
+        "rmse_ci": [
+          17.140337018682466,
+          19.630120032262333
+        ],
+        "mard_pct": 8.608374547017776,
+        "mard_pct_ci": [
+          8.231551020410208,
+          9.045711347795985
+        ],
+        "clarke_A_pct": 90.2128504093277,
+        "clarke_A_pct_ci": [
+          89.1475057349815,
+          91.21512722329969
+        ],
+        "clarke_AB_pct": 99.63036467377819,
+        "clarke_AB_pct_ci": [
+          99.49589461860565,
+          99.74610758386791
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 12.446429475661564,
+        "mae_ci": [
+          11.638967823565993,
+          13.289264527751442
+        ],
+        "rmse": 18.77708379254153,
+        "rmse_ci": [
+          17.465532141211355,
+          20.069024377029425
+        ],
+        "mard_pct": 8.801983584150475,
+        "mard_pct_ci": [
+          8.373644326195254,
+          9.286676743931714
+        ],
+        "clarke_A_pct": 89.79111882907469,
+        "clarke_A_pct_ci": [
+          88.69228569719937,
+          90.82882172697009
+        ],
+        "clarke_AB_pct": 99.56387993053832,
+        "clarke_AB_pct_ci": [
+          99.4040983262392,
+          99.6950289318724
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 30,
+        "n_rows": 40310,
+        "n_patients": 44,
+        "mae": 12.3411903542819,
+        "mae_ci": [
+          11.54856906995465,
+          13.152431162215525
+        ],
+        "rmse": 18.545632337371014,
+        "rmse_ci": [
+          17.27906642782522,
+          19.797388607551238
+        ],
+        "mard_pct": 8.739472985349868,
+        "mard_pct_ci": [
+          8.341729569349141,
+          9.205840714827637
+        ],
+        "clarke_A_pct": 89.98561151079136,
+        "clarke_A_pct_ci": [
+          88.868309731661,
+          91.0263701660128
+        ],
+        "clarke_AB_pct": 99.57876457454725,
+        "clarke_AB_pct_ci": [
+          99.42122674126547,
+          99.70751416873298
+        ]
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 19.56849962677283,
+        "mae_ci": [
+          17.694341231959505,
+          21.51431681529562
+        ],
+        "rmse": 30.14977871405682,
+        "rmse_ci": [
+          27.09425501404281,
+          32.966526945994765
+        ],
+        "mard_pct": 13.440642233738254,
+        "mard_pct_ci": [
+          12.668473980311772,
+          14.307401198084932
+        ],
+        "clarke_A_pct": 77.45956705648172,
+        "clarke_A_pct_ci": [
+          75.46955246359686,
+          79.21292786961493
+        ],
+        "clarke_AB_pct": 98.79572032843991,
+        "clarke_AB_pct_ci": [
+          98.36418606784814,
+          99.18250559372335
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 21.03889537872966,
+        "mae_ci": [
+          19.28084804553654,
+          22.853705699450362
+        ],
+        "rmse": 32.0933508988866,
+        "rmse_ci": [
+          29.351065368513197,
+          34.79009768753428
+        ],
+        "mard_pct": 14.51292186953123,
+        "mard_pct_ci": [
+          13.781993034377948,
+          15.331173078115118
+        ],
+        "clarke_A_pct": 75.01318736003982,
+        "clarke_A_pct_ci": [
+          73.21076080578467,
+          76.68617707430914
+        ],
+        "clarke_AB_pct": 98.64493655138094,
+        "clarke_AB_pct_ci": [
+          98.19198908386632,
+          99.04716978600138
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 19.60802657738057,
+        "mae_ci": [
+          17.764801248350157,
+          21.529164093468957
+        ],
+        "rmse": 30.100968303418025,
+        "rmse_ci": [
+          27.14473615806509,
+          32.856125848323025
+        ],
+        "mard_pct": 13.488965201751272,
+        "mard_pct_ci": [
+          12.73889145526953,
+          14.315645448125167
+        ],
+        "clarke_A_pct": 77.17541677034087,
+        "clarke_A_pct_ci": [
+          75.2631323599623,
+          78.8970145718838
+        ],
+        "clarke_AB_pct": 98.83951231649664,
+        "clarke_AB_pct_ci": [
+          98.4230486511287,
+          99.21817594222813
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 18.420320323552065,
+        "mae_ci": [
+          16.841890537205316,
+          20.097450917697024
+        ],
+        "rmse": 27.60594066930976,
+        "rmse_ci": [
+          24.76416315367957,
+          30.313287076350516
+        ],
+        "mard_pct": 12.898893354723667,
+        "mard_pct_ci": [
+          12.228713824342723,
+          13.624396397152276
+        ],
+        "clarke_A_pct": 79.50385668076636,
+        "clarke_A_pct_ci": [
+          77.66420443915608,
+          81.24801747906353
+        ],
+        "clarke_AB_pct": 98.83702413535705,
+        "clarke_AB_pct_ci": [
+          98.4339950734178,
+          99.18971153769354
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 17.427108343885905,
+        "mae_ci": [
+          15.680039847037328,
+          19.1267214726683
+        ],
+        "rmse": 26.24397447635878,
+        "rmse_ci": [
+          23.61676303572914,
+          28.738945652870253
+        ],
+        "mard_pct": 12.102801519135951,
+        "mard_pct_ci": [
+          11.428697625126546,
+          12.849874177869184
+        ],
+        "clarke_A_pct": 81.03956208011944,
+        "clarke_A_pct_ci": [
+          79.1055984422622,
+          82.78234333167984
+        ],
+        "clarke_AB_pct": 98.99228663846728,
+        "clarke_AB_pct_ci": [
+          98.65861970732865,
+          99.29564459487038
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 18.095278058451033,
+        "mae_ci": [
+          16.438999685934892,
+          19.763222779229576
+        ],
+        "rmse": 27.01843190219057,
+        "rmse_ci": [
+          24.211069871339834,
+          29.631704837758175
+        ],
+        "mard_pct": 12.59648346783184,
+        "mard_pct_ci": [
+          11.96852168210375,
+          13.291633537724081
+        ],
+        "clarke_A_pct": 80.23189848220952,
+        "clarke_A_pct_ci": [
+          78.31969466278514,
+          81.91879913683788
+        ],
+        "clarke_AB_pct": 98.92012938541926,
+        "clarke_AB_pct_ci": [
+          98.56524971978557,
+          99.24369280841668
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 60,
+        "n_rows": 40190,
+        "n_patients": 44,
+        "mae": 17.70465610853197,
+        "mae_ci": [
+          16.08500022532336,
+          19.29946742839585
+        ],
+        "rmse": 26.379443771612994,
+        "rmse_ci": [
+          23.66337008489427,
+          28.902309834123653
+        ],
+        "mard_pct": 12.358573888824496,
+        "mard_pct_ci": [
+          11.789526100376683,
+          13.030136306634192
+        ],
+        "clarke_A_pct": 80.29310773824335,
+        "clarke_A_pct_ci": [
+          78.5069950639847,
+          81.92769305642769
+        ],
+        "clarke_AB_pct": 98.96541428215976,
+        "clarke_AB_pct_ci": [
+          98.62095775531881,
+          99.27107144008902
+        ]
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 26.97045517034519,
+        "mae_ci": [
+          23.718980798805514,
+          30.29990196768509
+        ],
+        "rmse": 40.59129938327321,
+        "rmse_ci": [
+          35.59681175111408,
+          45.29271740558635
+        ],
+        "mard_pct": 18.69730754730031,
+        "mard_pct_ci": [
+          17.225187892632814,
+          20.26602601513039
+        ],
+        "clarke_A_pct": 66.5458544754668,
+        "clarke_A_pct_ci": [
+          63.45238778505923,
+          69.42814266168025
+        ],
+        "clarke_AB_pct": 97.17049516334642,
+        "clarke_AB_pct_ci": [
+          96.08829049121394,
+          98.12939343932327
+        ]
+      },
+      {
+        "model": "linear_trend",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 31.23496542033245,
+        "mae_ci": [
+          27.980297734870888,
+          34.55962339470181
+        ],
+        "rmse": 46.71409309856635,
+        "rmse_ci": [
+          41.78416182539076,
+          51.441091554170136
+        ],
+        "mard_pct": 21.830340204324546,
+        "mard_pct_ci": [
+          20.390670557531077,
+          23.3514901271653
+        ],
+        "clarke_A_pct": 61.27427700152473,
+        "clarke_A_pct_ci": [
+          58.705323899507405,
+          63.61284928068125
+        ],
+        "clarke_AB_pct": 95.9732046891794,
+        "clarke_AB_pct_ci": [
+          94.70190314915789,
+          97.11776743053882
+        ]
+      },
+      {
+        "model": "exp_smoothing",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 27.02356963078839,
+        "mae_ci": [
+          23.626565852810952,
+          30.373380801607173
+        ],
+        "rmse": 40.61587717312655,
+        "rmse_ci": [
+          35.382841899743426,
+          45.35915487571259
+        ],
+        "mard_pct": 18.733253422922402,
+        "mard_pct_ci": [
+          17.20599926026038,
+          20.400488007284387
+        ],
+        "clarke_A_pct": 66.28589996750569,
+        "clarke_A_pct_ci": [
+          63.02253316675128,
+          69.26762280718202
+        ],
+        "clarke_AB_pct": 97.20098982678033,
+        "clarke_AB_pct_ci": [
+          96.11845297993654,
+          98.19465382731964
+        ]
+      },
+      {
+        "model": "ar_pooled",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 23.71617520990867,
+        "mae_ci": [
+          21.125030254895332,
+          26.521626248030206
+        ],
+        "rmse": 34.78058661769817,
+        "rmse_ci": [
+          30.11159566914701,
+          39.3882036539261
+        ],
+        "mard_pct": 16.64264549807682,
+        "mard_pct_ci": [
+          15.59880845303635,
+          17.770089324674384
+        ],
+        "clarke_A_pct": 69.91126552853251,
+        "clarke_A_pct_ci": [
+          67.26663278800281,
+          72.62346936700457
+        ],
+        "clarke_AB_pct": 97.69340365436048,
+        "clarke_AB_pct_ci": [
+          96.68841694242734,
+          98.58044356082493
+        ]
+      },
+      {
+        "model": "ar_per_patient",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 21.868420334890917,
+        "mae_ci": [
+          19.12135153494633,
+          24.640403098782
+        ],
+        "rmse": 32.452040804093556,
+        "rmse_ci": [
+          28.29652080733729,
+          36.5624970541477
+        ],
+        "mard_pct": 15.154338778834504,
+        "mard_pct_ci": [
+          13.961842600034943,
+          16.431254064325927
+        ],
+        "clarke_A_pct": 73.34916389631815,
+        "clarke_A_pct_ci": [
+          70.2681753424726,
+          76.30036441201538
+        ],
+        "clarke_AB_pct": 98.2683030469668,
+        "clarke_AB_pct_ci": [
+          97.58213545762628,
+          98.8873088853152
+        ]
+      },
+      {
+        "model": "lgbm_cgm",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 23.119210288673546,
+        "mae_ci": [
+          20.611597478048644,
+          25.70301679903901
+        ],
+        "rmse": 33.582122546829794,
+        "rmse_ci": [
+          29.370744602403946,
+          37.7555698328062
+        ],
+        "mard_pct": 16.107262445423455,
+        "mard_pct_ci": [
+          15.152276900769444,
+          17.133729349091347
+        ],
+        "clarke_A_pct": 70.9505836478616,
+        "clarke_A_pct_ci": [
+          68.19298395453846,
+          73.62506946282086
+        ],
+        "clarke_AB_pct": 98.05933961556725,
+        "clarke_AB_pct_ci": [
+          97.2975115759788,
+          98.79317611449187
+        ]
+      },
+      {
+        "model": "lgbm_cgm_tod",
+        "horizon_min": 120,
+        "n_rows": 40007,
+        "n_patients": 44,
+        "mae": 22.04817657448286,
+        "mae_ci": [
+          19.625054350543454,
+          24.47885945201521
+        ],
+        "rmse": 32.1536990284127,
+        "rmse_ci": [
+          28.234638010317177,
+          35.966559780154334
+        ],
+        "mard_pct": 15.396593629779845,
+        "mard_pct_ci": [
+          14.485352302455345,
+          16.414572458828285
+        ],
+        "clarke_A_pct": 72.34933886569851,
+        "clarke_A_pct_ci": [
+          69.7484680560433,
+          74.7485815740229
+        ],
+        "clarke_AB_pct": 98.29129902267103,
+        "clarke_AB_pct_ci": [
+          97.6578551678644,
+          98.87934746908276
+        ]
+      }
+    ],
+    "cv_events_without_007": [
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40370,
+        "n_pos": 7262,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.17988605400049543,
+        "auroc": 0.9661002912877501,
+        "auprc": 0.9238163856731769,
+        "brier": null,
+        "auroc_ci": [
+          0.9531131409545479,
+          0.9760962723005638
+        ],
+        "auprc_ci": [
+          0.8735713361127291,
+          0.9512379031819302
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40370,
+        "n_pos": 7262,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.17988605400049543,
+        "auroc": 0.9704022533000582,
+        "auprc": 0.9279838882763916,
+        "brier": null,
+        "auroc_ci": [
+          0.9594986926971467,
+          0.9791273336230649
+        ],
+        "auprc_ci": [
+          0.8809530022427596,
+          0.9535318744577098
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40370,
+        "n_pos": 7262,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.17988605400049543,
+        "auroc": 0.9758815627794261,
+        "auprc": 0.9422408461064875,
+        "brier": 0.033103555024765065,
+        "auroc_ci": [
+          0.9663329190947574,
+          0.9828229121867861
+        ],
+        "auprc_ci": [
+          0.9026677687217094,
+          0.9631907866239092
+        ],
+        "brier_ci": [
+          0.026390880860550876,
+          0.03971731885944324
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40310,
+        "n_pos": 5829,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1446043165467626,
+        "auroc": 0.9485381664912672,
+        "auprc": 0.8352945809762065,
+        "brier": null,
+        "auroc_ci": [
+          0.9283770724252521,
+          0.9630047508542143
+        ],
+        "auprc_ci": [
+          0.7321789307452012,
+          0.890488409591527
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40310,
+        "n_pos": 5829,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1446043165467626,
+        "auroc": 0.9572313859648633,
+        "auprc": 0.8610829342104684,
+        "brier": null,
+        "auroc_ci": [
+          0.9401519850055532,
+          0.9699734995237259
+        ],
+        "auprc_ci": [
+          0.7696385126934487,
+          0.9101611122364874
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40310,
+        "n_pos": 5829,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1446043165467626,
+        "auroc": 0.9606895523811018,
+        "auprc": 0.8625267850098817,
+        "brier": 0.045185890329661506,
+        "auroc_ci": [
+          0.9457037174985441,
+          0.9721924865602152
+        ],
+        "auprc_ci": [
+          0.7733736536351226,
+          0.9119467971314219
+        ],
+        "brier_ci": [
+          0.034359233506544164,
+          0.05623824416627647
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40402,
+        "n_pos": 19073,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.4720805900697985,
+        "auroc": 0.9567827236305424,
+        "auprc": 0.9635631471289805,
+        "brier": null,
+        "auroc_ci": [
+          0.9445408359074112,
+          0.9663201955967882
+        ],
+        "auprc_ci": [
+          0.9412047574290934,
+          0.9765527550548518
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40402,
+        "n_pos": 19073,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.4720805900697985,
+        "auroc": 0.9591774183250671,
+        "auprc": 0.9648851038857463,
+        "brier": null,
+        "auroc_ci": [
+          0.9474226498105497,
+          0.9682854810316768
+        ],
+        "auprc_ci": [
+          0.9425526408272642,
+          0.9775369008660131
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40402,
+        "n_pos": 19073,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.4720805900697985,
+        "auroc": 0.9683746325972725,
+        "auprc": 0.9726814038962524,
+        "brier": 0.06215343799520431,
+        "auroc_ci": [
+          0.9597472867276524,
+          0.9746914268242086
+        ],
+        "auprc_ci": [
+          0.9564787996107642,
+          0.9821587896385299
+        ],
+        "brier_ci": [
+          0.05483532360284928,
+          0.06888883631566495
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40310,
+        "n_pos": 16106,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.3995534606797321,
+        "auroc": 0.9233445019047605,
+        "auprc": 0.9020024445947217,
+        "brier": null,
+        "auroc_ci": [
+          0.9035645701232419,
+          0.939206416108
+        ],
+        "auprc_ci": [
+          0.8448526448119711,
+          0.9341848901751952
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40310,
+        "n_pos": 16106,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.3995534606797321,
+        "auroc": 0.9319357127666623,
+        "auprc": 0.9143851033214889,
+        "brier": null,
+        "auroc_ci": [
+          0.9136368138994228,
+          0.9465146878052879
+        ],
+        "auprc_ci": [
+          0.8629818434307684,
+          0.9433033786608999
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40310,
+        "n_pos": 16106,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.3995534606797321,
+        "auroc": 0.9390847166607328,
+        "auprc": 0.9231806203152657,
+        "brier": 0.09292587655477662,
+        "auroc_ci": [
+          0.9234155457792352,
+          0.9521361516954279
+        ],
+        "auprc_ci": [
+          0.8762178945630137,
+          0.9494203932955023
+        ],
+        "brier_ci": [
+          0.08110658287251021,
+          0.10379585901140544
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40337,
+        "n_pos": 246,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.006098619133797754,
+        "auroc": 0.9505293648007691,
+        "auprc": 0.561907170475689,
+        "brier": null,
+        "auroc_ci": [
+          0.9003493566645693,
+          0.9819203191952705
+        ],
+        "auprc_ci": [
+          0.43730682993844033,
+          0.6817212999285178
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40337,
+        "n_pos": 246,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.006098619133797754,
+        "auroc": 0.9583793414697013,
+        "auprc": 0.5406010818894049,
+        "brier": null,
+        "auroc_ci": [
+          0.9191121023618586,
+          0.9832764028018347
+        ],
+        "auprc_ci": [
+          0.40930779142029733,
+          0.6778802780033628
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40337,
+        "n_pos": 246,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.006098619133797754,
+        "auroc": 0.9621777630686935,
+        "auprc": 0.552022214468922,
+        "brier": 0.0038691647068938963,
+        "auroc_ci": [
+          0.9144176141356867,
+          0.9821223218067644
+        ],
+        "auprc_ci": [
+          0.42998043108929185,
+          0.6788705014063344
+        ],
+        "brier_ci": [
+          0.0018991680305119772,
+          0.006396131685057953
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40310,
+        "n_pos": 107,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.002654428181592657,
+        "auroc": 0.9163881153612705,
+        "auprc": 0.17183600275338268,
+        "brier": null,
+        "auroc_ci": [
+          0.8178693016029727,
+          0.9710290773435873
+        ],
+        "auprc_ci": [
+          0.06101631213645097,
+          0.36404444919542184
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40310,
+        "n_pos": 107,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.002654428181592657,
+        "auroc": 0.9297204537439783,
+        "auprc": 0.19623479284638998,
+        "brier": null,
+        "auroc_ci": [
+          0.8499002048778611,
+          0.9756987364670406
+        ],
+        "auprc_ci": [
+          0.08002190471019437,
+          0.3887262495780979
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 30,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40310,
+        "n_pos": 107,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.002654428181592657,
+        "auroc": 0.948636952512727,
+        "auprc": 0.12254988353154674,
+        "brier": 0.002526590773853161,
+        "auroc_ci": [
+          0.8883343579093976,
+          0.9690845663040382
+        ],
+        "auprc_ci": [
+          0.052333109860127465,
+          0.244267889104875
+        ],
+        "brier_ci": [
+          0.0013508422967309765,
+          0.004044070513401895
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40251,
+        "n_pos": 8676,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.21554743981515986,
+        "auroc": 0.9195845292863851,
+        "auprc": 0.8653676063394957,
+        "brier": null,
+        "auroc_ci": [
+          0.8912653922233534,
+          0.9408282740691042
+        ],
+        "auprc_ci": [
+          0.7894849368481592,
+          0.9106042459867891
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40251,
+        "n_pos": 8676,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.21554743981515986,
+        "auroc": 0.923735991242028,
+        "auprc": 0.8468322466614986,
+        "brier": null,
+        "auroc_ci": [
+          0.8979067018751623,
+          0.9443084728284596
+        ],
+        "auprc_ci": [
+          0.7567583563429549,
+          0.8985091880682446
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40251,
+        "n_pos": 8676,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.21554743981515986,
+        "auroc": 0.9413559616229116,
+        "auprc": 0.8900228659375644,
+        "brier": 0.05909917056129732,
+        "auroc_ci": [
+          0.9206322938357621,
+          0.9574385645442303
+        ],
+        "auprc_ci": [
+          0.8231502943374472,
+          0.9282601616540336
+        ],
+        "brier_ci": [
+          0.047732172912552245,
+          0.06988886239259309
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40190,
+        "n_pos": 5816,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1447126150783777,
+        "auroc": 0.8788856851276464,
+        "auprc": 0.6674037087668038,
+        "brier": null,
+        "auroc_ci": [
+          0.8318356367634872,
+          0.9111440699712497
+        ],
+        "auprc_ci": [
+          0.4968196849663117,
+          0.765322761461798
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40190,
+        "n_pos": 5816,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1447126150783777,
+        "auroc": 0.8988996998907317,
+        "auprc": 0.7070129416289505,
+        "brier": null,
+        "auroc_ci": [
+          0.857670333575528,
+          0.9277990100753579
+        ],
+        "auprc_ci": [
+          0.5377287928001039,
+          0.8059060318955074
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40190,
+        "n_pos": 5816,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.1447126150783777,
+        "auroc": 0.90562204125443,
+        "auprc": 0.7092412005775002,
+        "brier": 0.07031063431380158,
+        "auroc_ci": [
+          0.8693042775181644,
+          0.9326179035671371
+        ],
+        "auprc_ci": [
+          0.5386384934073466,
+          0.8116167687953634
+        ],
+        "brier_ci": [
+          0.05248295434960737,
+          0.0885894050287573
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40307,
+        "n_pos": 21491,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.5331828218423599,
+        "auroc": 0.9199987424533351,
+        "auprc": 0.9460532248921862,
+        "brier": null,
+        "auroc_ci": [
+          0.897893750050332,
+          0.9378386106840244
+        ],
+        "auprc_ci": [
+          0.913505804422895,
+          0.9651601195313012
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40307,
+        "n_pos": 21491,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.5331828218423599,
+        "auroc": 0.919157568321987,
+        "auprc": 0.940506695208694,
+        "brier": null,
+        "auroc_ci": [
+          0.8974721821052979,
+          0.937620529368208
+        ],
+        "auprc_ci": [
+          0.9021803975316184,
+          0.9621204163913349
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40307,
+        "n_pos": 21491,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.5331828218423599,
+        "auroc": 0.9407751248881433,
+        "auprc": 0.958206127878889,
+        "brier": 0.09190482253992037,
+        "auroc_ci": [
+          0.9256102914777486,
+          0.9534718046018074
+        ],
+        "auprc_ci": [
+          0.9329555851042957,
+          0.9727235628662875
+        ],
+        "brier_ci": [
+          0.08088813125654366,
+          0.10202769238883758
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40190,
+        "n_pos": 16060,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.3996018910176661,
+        "auroc": 0.8592916572694913,
+        "auprc": 0.8189823090440203,
+        "brier": null,
+        "auroc_ci": [
+          0.8284473266130801,
+          0.8875492019625048
+        ],
+        "auprc_ci": [
+          0.7273632237829344,
+          0.8729970439703992
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40190,
+        "n_pos": 16060,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.3996018910176661,
+        "auroc": 0.8793953801507917,
+        "auprc": 0.8462594908757426,
+        "brier": null,
+        "auroc_ci": [
+          0.8496121809260142,
+          0.904796317256396
+        ],
+        "auprc_ci": [
+          0.7624773671683874,
+          0.8957281175154691
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40190,
+        "n_pos": 16060,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.3996018910176661,
+        "auroc": 0.8876574764442706,
+        "auprc": 0.8583328020430664,
+        "brier": 0.1297412726065314,
+        "auroc_ci": [
+          0.860223527877144,
+          0.9107398786787892
+        ],
+        "auprc_ci": [
+          0.7788249495575804,
+          0.9033686319610277
+        ],
+        "brier_ci": [
+          0.11262715843620946,
+          0.14453817845837924
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40195,
+        "n_pos": 378,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.009404154745615127,
+        "auroc": 0.8959710915533805,
+        "auprc": 0.43308937642066947,
+        "brier": null,
+        "auroc_ci": [
+          0.821645310281478,
+          0.9391049939133406
+        ],
+        "auprc_ci": [
+          0.3100567388864365,
+          0.5487298204930504
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40195,
+        "n_pos": 378,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.009404154745615127,
+        "auroc": 0.9195476048955717,
+        "auprc": 0.39550369164479426,
+        "brier": null,
+        "auroc_ci": [
+          0.8463588437705011,
+          0.9589711879708561
+        ],
+        "auprc_ci": [
+          0.24538050254246443,
+          0.5252482368918847
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40195,
+        "n_pos": 378,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.009404154745615127,
+        "auroc": 0.9056521216842186,
+        "auprc": 0.4546129122552646,
+        "brier": 0.006839040457169029,
+        "auroc_ci": [
+          0.8223091875293004,
+          0.9562192719857298
+        ],
+        "auprc_ci": [
+          0.31957440717907626,
+          0.5648380102421372
+        ],
+        "brier_ci": [
+          0.003431443548389589,
+          0.011204736785611437
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40190,
+        "n_pos": 102,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0025379447623787013,
+        "auroc": 0.8521749699680311,
+        "auprc": 0.08977096722607814,
+        "brier": null,
+        "auroc_ci": [
+          0.7419627428658163,
+          0.9157671087782756
+        ],
+        "auprc_ci": [
+          0.028695334481499964,
+          0.2872216022204981
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40190,
+        "n_pos": 102,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0025379447623787013,
+        "auroc": 0.8902385340486224,
+        "auprc": 0.09554332775612583,
+        "brier": null,
+        "auroc_ci": [
+          0.7924326597738873,
+          0.941719346277585
+        ],
+        "auprc_ci": [
+          0.034103240516851464,
+          0.2889816763963434
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 60,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40190,
+        "n_pos": 102,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0025379447623787013,
+        "auroc": 0.8582367565864902,
+        "auprc": 0.06510497976095062,
+        "brier": 0.0024715057424509876,
+        "auroc_ci": [
+          0.7574382165953194,
+          0.9157066557504495
+        ],
+        "auprc_ci": [
+          0.01922622946376316,
+          0.16189289259468062
+        ],
+        "brier_ci": [
+          0.0013211443423919915,
+          0.003949698975928903
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40251,
+        "n_pos": 11096,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.27567016968522523,
+        "auroc": 0.853487043184768,
+        "auprc": 0.8022648547142439,
+        "brier": null,
+        "auroc_ci": [
+          0.8108879586952643,
+          0.8870126360183554
+        ],
+        "auprc_ci": [
+          0.7054914969105316,
+          0.863469692725133
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40251,
+        "n_pos": 11096,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.27567016968522523,
+        "auroc": 0.8560349832589335,
+        "auprc": 0.7510710159060396,
+        "brier": null,
+        "auroc_ci": [
+          0.8136492164044606,
+          0.890605984152502
+        ],
+        "auprc_ci": [
+          0.6203063938812291,
+          0.8305189774573293
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40251,
+        "n_pos": 11096,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.27567016968522523,
+        "auroc": 0.8987905353716314,
+        "auprc": 0.8436150695301946,
+        "brier": 0.0964907800604416,
+        "auroc_ci": [
+          0.8666676925669216,
+          0.9227962942542546
+        ],
+        "auprc_ci": [
+          0.760186430747657,
+          0.8943772407214702
+        ],
+        "brier_ci": [
+          0.08082124598636294,
+          0.11127891220226008
+        ]
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40007,
+        "n_pos": 5811,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14524958132326843,
+        "auroc": 0.7883815361289277,
+        "auprc": 0.46298344538873054,
+        "brier": null,
+        "auroc_ci": [
+          0.7099155553813155,
+          0.8466976561678766
+        ],
+        "auprc_ci": [
+          0.2639265323295136,
+          0.6015159242716636
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40007,
+        "n_pos": 5811,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14524958132326843,
+        "auroc": 0.8412783437230936,
+        "auprc": 0.5546503754381182,
+        "brier": null,
+        "auroc_ci": [
+          0.7828103862133334,
+          0.8876479490311975
+        ],
+        "auprc_ci": [
+          0.34438810732464353,
+          0.6952592107482439
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper180",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40007,
+        "n_pos": 5811,
+        "n_patients": 44,
+        "n_patients_with_events": 42,
+        "prevalence": 0.14524958132326843,
+        "auroc": 0.8449607759848331,
+        "auprc": 0.517971294894678,
+        "brier": 0.09257030813977749,
+        "auroc_ci": [
+          0.788582088430998,
+          0.8891314461473377
+        ],
+        "auprc_ci": [
+          0.32106908937500345,
+          0.6661159661251822
+        ],
+        "brier_ci": [
+          0.06688056120296142,
+          0.11891472830270694
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40323,
+        "n_pos": 24995,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.6198695533566451,
+        "auroc": 0.8712365176584378,
+        "auprc": 0.9330258620416154,
+        "brier": null,
+        "auroc_ci": [
+          0.837603071316627,
+          0.8994071301688747
+        ],
+        "auprc_ci": [
+          0.8924840901045041,
+          0.957770217696653
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40323,
+        "n_pos": 24995,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.6198695533566451,
+        "auroc": 0.8646102954933367,
+        "auprc": 0.9185949391709081,
+        "brier": null,
+        "auroc_ci": [
+          0.8289544258828502,
+          0.8944182377287416
+        ],
+        "auprc_ci": [
+          0.8672299935945429,
+          0.949191096062776
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40323,
+        "n_pos": 24995,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.6198695533566451,
+        "auroc": 0.9075835352352307,
+        "auprc": 0.949620860911912,
+        "brier": 0.11995228353323246,
+        "auroc_ci": [
+          0.8848710284609121,
+          0.926866135723655
+        ],
+        "auprc_ci": [
+          0.9184168652698905,
+          0.9682973496174169
+        ],
+        "brier_ci": [
+          0.1033839322580332,
+          0.13634127289539108
+        ]
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "reliable",
+        "n_rows": 40007,
+        "n_pos": 15997,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.39985502537056017,
+        "auroc": 0.7699074719783594,
+        "auprc": 0.6915416539299357,
+        "brier": null,
+        "auroc_ci": [
+          0.7223057961067004,
+          0.8136801012623998
+        ],
+        "auprc_ci": [
+          0.5639388508210741,
+          0.7743926329193431
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "reliable",
+        "n_rows": 40007,
+        "n_pos": 15997,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.39985502537056017,
+        "auroc": 0.82191153760947,
+        "auprc": 0.7626256305596636,
+        "brier": null,
+        "auroc_ci": [
+          0.7799983153512883,
+          0.8587236680502168
+        ],
+        "auprc_ci": [
+          0.6549581596305845,
+          0.83177515945467
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hyper140",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "reliable",
+        "n_rows": 40007,
+        "n_pos": 15997,
+        "n_patients": 44,
+        "n_patients_with_events": 44,
+        "prevalence": 0.39985502537056017,
+        "auroc": 0.8190681330112993,
+        "auprc": 0.7649323441768953,
+        "brier": 0.16693668186380947,
+        "auroc_ci": [
+          0.774031238100559,
+          0.857125575692686
+        ],
+        "auprc_ci": [
+          0.6591430881498833,
+          0.8329358970551956
+        ],
+        "brier_ci": [
+          0.14569628730901982,
+          0.18548615914462685
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40163,
+        "n_pos": 619,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.015412195304135647,
+        "auroc": 0.8282218380000504,
+        "auprc": 0.3340541961461527,
+        "brier": null,
+        "auroc_ci": [
+          0.7403516479963168,
+          0.8868702474780382
+        ],
+        "auprc_ci": [
+          0.21823437160335282,
+          0.448411892171632
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40163,
+        "n_pos": 619,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.015412195304135647,
+        "auroc": 0.8674104296247007,
+        "auprc": 0.3187581800397939,
+        "brier": null,
+        "auroc_ci": [
+          0.7909311052587128,
+          0.9187469474245832
+        ],
+        "auprc_ci": [
+          0.14928991149929974,
+          0.45508700368651467
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "any",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40163,
+        "n_pos": 619,
+        "n_patients": 44,
+        "n_patients_with_events": 19,
+        "prevalence": 0.015412195304135647,
+        "auroc": 0.8149608076498578,
+        "auprc": 0.35841849629127476,
+        "brier": 0.012131306781923215,
+        "auroc_ci": [
+          0.6867071061492722,
+          0.9069147042496237
+        ],
+        "auprc_ci": [
+          0.18433020277549436,
+          0.4940960009349764
+        ],
+        "brier_ci": [
+          0.006420093499093087,
+          0.01911207857568568
+        ]
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "persistence_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40007,
+        "n_pos": 95,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0023745844477216487,
+        "auroc": 0.7521838834910488,
+        "auprc": 0.03034705235466371,
+        "brier": null,
+        "auroc_ci": [
+          0.5596071047556488,
+          0.87361320754896
+        ],
+        "auprc_ci": [
+          0.00593343737542568,
+          0.12278664457198216
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_reg_value",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40007,
+        "n_pos": 95,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0023745844477216487,
+        "auroc": 0.864886038758954,
+        "auprc": 0.03581317128494716,
+        "brier": null,
+        "auroc_ci": [
+          0.7837664839146317,
+          0.9140942481844699
+        ],
+        "auprc_ci": [
+          0.010644436955158036,
+          0.11519959047727335
+        ],
+        "brier_ci": null
+      },
+      {
+        "event": "hypo70",
+        "definition": "at",
+        "horizon_min": 120,
+        "scorer": "lgbm_classifier",
+        "reliability": "not reported (owner policy)",
+        "n_rows": 40007,
+        "n_pos": 95,
+        "n_patients": 44,
+        "n_patients_with_events": 18,
+        "prevalence": 0.0023745844477216487,
+        "auroc": 0.8157474074542941,
+        "auprc": 0.024697272486034986,
+        "brier": 0.0023542073446619623,
+        "auroc_ci": [
+          0.7214248337492708,
+          0.8677804734840833
+        ],
+        "auprc_ci": [
+          0.0077317615611908535,
+          0.05427123579757132
+        ],
+        "brier_ci": [
+          0.0012056925648625877,
+          0.0038516681738110835
+        ]
+      }
+    ]
+  }
+}
