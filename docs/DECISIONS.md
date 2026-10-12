@@ -46,3 +46,36 @@ With largest-remainder rounding and a stable tie-break, ties go to calibration b
 (e.g. 20 synthetic patients in 3 strata give 12/5/3). Every patient is still in exactly one
 split. The real counts per stratum will be reviewed once participant numbers are verified in
 Step B; tie-breaking can be changed then if needed.
+
+## D-008 Library compatibility on the dev box (Part 1B pre-step) — PENDING OWNER DECISION
+Method: each library installed into `.venv` with `-c requirements.txt -c requirements-dev.txt`
+as constraints (so it must coexist with pandas 2.2.3 / scikit-learn 1.5.2), then
+`python -c "import X; print(X.__version__)"`. Script/log: `%TEMP%\gt_libtest*.{ps1,txt}`. Not added
+to requirements.txt.
+
+| Library | Version tested | Install | Import | Note |
+|---|---|---|---|---|
+| lightgbm | 4.7.0 | ✅ | ✅ PASS | |
+| torch (CPU, download.pytorch.org/whl/cpu) | 2.14.1+cpu | ✅ | ❌ BLOCKED | `WinError 4551`: Application Control blocked `torch\lib\c10.dll` (unsigned) |
+| shap | 0.51.0 | ✅ | ✅ PASS | |
+| statsmodels | 0.15.0 | ✅ | ✅ PASS | |
+| flwr (Flower) | 1.39.0 | ✅ | ✅ PASS | Pins `packaging<26`; downgraded packaging 26.3 to 25.0 (see below) |
+| opacus | 1.6.0 | ✅ | ❌ BLOCKED | Imports torch, so same `c10.dll` block |
+| streamlit | 1.59.1 | ✅ | ✅ PASS | |
+| plotly | 7.1.0 | ✅ | ✅ PASS | |
+| graphviz (Python pkg) | 0.21 | ✅ | ✅ PASS | Rendering also needs the Graphviz system binary (not tested) |
+| python-pptx | 1.0.2 | ✅ | ✅ PASS | |
+| matplotlib | 3.11.2 | ✅ | ✅ PASS | already pinned |
+| nbformat | 5.11.1 | ✅ | ✅ PASS | |
+
+Side effects found:
+- Core stack unchanged after all installs (pandas 2.2.3, scikit-learn 1.5.2, numpy 2.4.6); 14/14
+  tests still pass.
+- `pip check` now reports `virtualenv 21.14.7 requires packaging>=26.3, have 25.0`, caused by
+  flwr's `packaging<26` pin. pre-commit still runs. Must be resolved before pinning flwr (e.g. pin
+  virtualenv/pre-commit to a version that accepts packaging 25, or keep flwr out of the dev env).
+- `lib_lightgbm.dll` is also unsigned but allowed, so the policy looks reputation-based (Smart
+  App Control style), not signature-based. Same pattern as D-006 (older pandas/sklearn passed).
+- Also installed for Step B probing: xlrd 2.0.2, openpyxl 3.1.5 (needed to read Shanghai .xls/.xlsx).
+
+Decision: pending (owner chooses torch/opacus workaround).
