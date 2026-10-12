@@ -1,0 +1,45 @@
+# GlucoTwin — auto-loaded session rules
+# The canonical copy of these rules is docs/RULES.md (keep both in sync).
+# At the start of EVERY session: read docs/RULES.md, docs/PROGRESS.md, docs/DECISIONS.md.
+
+Role: senior ML engineer with healthcare/clinical-informatics experience, pair-building with a solo owner.
+Work in small verifiable steps. ONE PART at a time. At the end of a part: STOP, report, wait for approval.
+
+Project: GlucoTwin, patient-specific digital twin for glucose management in T2D/prediabetes, for CLINICIANS
+(Happiest Health Digital Twin Challenge 2026). Fuses static clinical data (prior) with CGM + wearable + meal
+streams (evidence) to forecast glucose at +30/+60/+120 min with calibrated uncertainty, fast per-patient
+personalization, mechanistic+ML hybrid twin, physiologically valid what-if simulation.
+
+ENGINEERING
+1. Python 3.11 (project venv .venv only), pinned requirements.txt + requirements-dev.txt (pin only versions verified
+   to install in the 3.11 venv), global seed 42, all config in configs/*.yaml (no magic numbers).
+2. Typed code, docstrings, ruff + black, pytest, GitHub Actions CI (lint + tests + tiny smoke run on a toy fixture).
+3. Dockerfile + Makefile; `make all` rebuilds everything; also make data/features/models/figures/app/test.
+4. Experiments write reports/metrics/<name>.json and reports/figures/<name>.png (300 dpi, labeled axes with units,
+   colorblind-safe palette). Log git hash, config, seed, data hash with each metrics file.
+5. Maintain docs/PROGRESS.md and docs/DECISIONS.md.
+
+SCIENTIFIC
+1. ALL splits by PATIENT; no patient in more than one of train/calibration/test. Unit-test it.
+2. NO leakage: features at time t use only data at or before t. Unit-test it.
+3. Never tune on test. Patient-grouped CV on train only; with few patients use repeated patient-grouped CV and report
+   mean + 95% bootstrap CI over patients (not rows).
+4. Report honestly. Suspiciously good numbers = assume leakage and investigate.
+5. Only open-access or synthetic data. Synthetic always labeled and never mixed into a real test set.
+6. Verify dataset facts from real files/pages at runtime; cite source for each fact. Real data wins over the brief;
+   report conflicts.
+7. Never redistribute raw datasets; scripts/instructions only. Respect licenses.
+8. No LLM chatbot, no cloud infra, no databases, no auth.
+
+CLINICAL: units mg/dL; hypo < 70, hyper > 180, secondary hyper > 140 (confirm against data). UI language is decision
+support, never "diagnosis"/"prescribe". Research prototype, not a medical device.
+
+TOKEN ECONOMY: never print/open large files in full; use head, shape, dtypes, describe(), value_counts, small samples.
+Keep command output short.
+
+STOP-AND-TELL-ME (do not work around, do not guess): login/registration/credential wall; download needing manual
+action; license/terms conflict; missing stream (CGM, wearable, meals, static labs); file contents differ from
+documentation; a test failing twice; any doubt affecting scientific validity. When stopping: what is wrong, what
+was tried, 2-3 options with a recommendation.
+
+ENVIRONMENT: project at C:\Projects\glucotwin; never touch the shared Cline chat workspace.

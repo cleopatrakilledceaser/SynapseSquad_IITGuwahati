@@ -1,0 +1,30 @@
+[project]
+name = "glucotwin"
+version = "0.1.0"
+description = "GlucoTwin: patient-specific glucose digital twin for T2D/prediabetes (research prototype, not a medical device)."
+requires-python = ">=3.11,<3.12"
+license = { text = "MIT" }
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "D", "SIM", "NPY", "PD"]
+ignore = ["PD901"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+"**/__init__.py" = ["D104"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

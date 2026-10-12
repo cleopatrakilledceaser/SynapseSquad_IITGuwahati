@@ -1,0 +1,20 @@
+# Global configuration. All tunable values live in configs/*.yaml (no magic numbers in code).
+project: glucotwin
+seed: 42
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  metrics: reports/metrics
+  figures: reports/figures
+
+clinical:
+  units: mg/dL
+  hypo_threshold_mgdl: 70        # provisional; confirm against data (Part 1 Step D)
+  hyper_threshold_mgdl: 180      # provisional; confirm against data
+  secondary_hyper_threshold_mgdl: 140
+
+figures:
+  dpi: 300
+  palette: colorblind            # Okabe-Ito / seaborn colorblind

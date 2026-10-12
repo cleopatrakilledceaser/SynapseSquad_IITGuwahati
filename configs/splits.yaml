@@ -1,0 +1,13 @@
+# Patient-level split configuration. Splits are ALWAYS by patient (see docs/RULES.md).
+seed: 42
+
+holdout:
+  train: 0.6
+  calibration: 0.2
+  test: 0.2
+  stratify_by: diabetes_status   # column in the static table; null to disable
+
+cv:
+  n_splits: 5
+  n_repeats: 5
+  stratify_by: diabetes_status

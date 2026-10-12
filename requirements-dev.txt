@@ -1,0 +1,6 @@
+# Dev/test tooling. Pinned versions verified to install in the Python 3.11.9 venv (2026-10-12).
+pytest==9.1.1
+pytest-cov==7.1.0
+ruff==0.17.0
+black==26.10.1
+pre-commit==4.6.2

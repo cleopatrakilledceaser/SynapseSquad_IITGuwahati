@@ -1,0 +1,9 @@
+# Runtime dependencies. Pinned versions verified to install AND import in the Python 3.11.9 venv
+# (2026-10-12). pandas/scikit-learn are held back: see docs/DECISIONS.md D-006.
+numpy==2.4.6
+pandas==2.2.3
+pyarrow==26.0.0
+PyYAML==6.0.3
+scikit-learn==1.5.2
+scipy==1.17.1
+matplotlib==3.11.2
