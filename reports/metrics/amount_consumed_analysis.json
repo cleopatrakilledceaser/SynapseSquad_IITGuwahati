@@ -1,0 +1,116 @@
+{
+  "name": "amount_consumed_analysis",
+  "timestamp_utc": "2026-10-12T20:03:36.656823+00:00",
+  "git_hash": "d8636da420bba91918663c5219d42494e02989db-dirty",
+  "seed": 42,
+  "data_hash": "2f3370e812525e2cb218503f2651e294144cbc0b5e47b5b6ebffbe39a7f88829",
+  "config": {
+    "seed": 42,
+    "paths": {
+      "cgmacros_zip": "data/raw/cgmacros/CGMacros_dateshifted365.zip",
+      "shanghai_zip": "data/raw/shanghai/diabetes_datasets.zip",
+      "processed": "data/processed"
+    },
+    "cgm": {
+      "dexcom_period_min": 5,
+      "libre_period_min": 15,
+      "shanghai_period_min": 15,
+      "kink_tol": 0.001,
+      "integer_tol": 1e-06,
+      "max_gap_min": 30,
+      "session_gap_min": 120,
+      "early_wear_hours": 24,
+      "glucose_range_mgdl": {
+        "cgmacros": [
+          40,
+          405
+        ],
+        "shanghai_t2dm": [
+          39,
+          470
+        ]
+      }
+    },
+    "grid": {
+      "primary_min": 5,
+      "common_min": 15
+    },
+    "activity": {
+      "mets_scale": 10,
+      "mets_cutpoints": [
+        1.5,
+        3.0,
+        6.0
+      ]
+    },
+    "rest_proxy": {
+      "night_start_hour": 22,
+      "night_end_hour": 7,
+      "hr_quantile": 0.25,
+      "window_min": 30
+    },
+    "meals": {
+      "amount_plausible_max": 100,
+      "response_window_min": 120,
+      "baseline_window_min": 15,
+      "isolation_min": 180
+    },
+    "clinical": {
+      "hypo_mgdl": 70,
+      "hyper_mgdl": 180,
+      "secondary_hyper_mgdl": 140,
+      "hba1c_prediabetes_pct": 5.7,
+      "hba1c_t2d_pct": 6.5
+    }
+  },
+  "metrics": {
+    "A_all|iauc": {
+      "n_meals": 1031,
+      "n_patients": 43,
+      "rho_logged_carbs": 0.277,
+      "rho_carbs_x_amount": 0.168,
+      "within_rho_logged": 0.346,
+      "within_rho_x_amount": 0.334
+    },
+    "A_all|peak_rise": {
+      "n_meals": 1031,
+      "n_patients": 43,
+      "rho_logged_carbs": 0.272,
+      "rho_carbs_x_amount": 0.172,
+      "within_rho_logged": 0.321,
+      "within_rho_x_amount": 0.308
+    },
+    "B_amount_le100|iauc": {
+      "n_meals": 965,
+      "n_patients": 43,
+      "rho_logged_carbs": 0.294,
+      "rho_carbs_x_amount": 0.172,
+      "within_rho_logged": 0.354,
+      "within_rho_x_amount": 0.374
+    },
+    "B_amount_le100|peak_rise": {
+      "n_meals": 965,
+      "n_patients": 43,
+      "rho_logged_carbs": 0.285,
+      "rho_carbs_x_amount": 0.181,
+      "within_rho_logged": 0.329,
+      "within_rho_x_amount": 0.349
+    },
+    "C_amount_gt100|iauc": {
+      "n_meals": 66,
+      "n_patients": 15,
+      "rho_logged_carbs": 0.083,
+      "rho_carbs_x_amount": 0.07,
+      "within_rho_logged": 0.201,
+      "within_rho_x_amount": 0.272
+    },
+    "C_amount_gt100|peak_rise": {
+      "n_meals": 66,
+      "n_patients": 15,
+      "rho_logged_carbs": 0.104,
+      "rho_carbs_x_amount": 0.079,
+      "within_rho_logged": 0.153,
+      "within_rho_x_amount": 0.179
+    }
+  }
+}

@@ -18,7 +18,11 @@ setup:
 	$(PY) -m pip install -r requirements.txt -r requirements-dev.txt
 
 data:
-	@echo "[data] not yet implemented (Part 1 Step C)"
+	$(PY) data/scripts/download.py cgmacros shanghai
+	$(PY) -m src.data.make_dataset
+	$(PY) data/scripts/qc_summary.py
+	$(PY) data/scripts/validate_cgm_reconstruction.py all
+	$(PY) data/scripts/amount_consumed_analysis.py
 
 features:
 	@echo "[features] not yet implemented"
@@ -27,7 +31,7 @@ models:
 	@echo "[models] not yet implemented"
 
 figures:
-	@echo "[figures] not yet implemented"
+	$(PY) -m src.eval.eda
 
 app:
 	@echo "[app] not yet implemented"

@@ -1,0 +1,48 @@
+# Harmonization + QC configuration (Part 1 Step C). All values documented in docs/DECISIONS.md.
+seed: 42
+
+paths:
+  cgmacros_zip: data/raw/cgmacros/CGMacros_dateshifted365.zip
+  shanghai_zip: data/raw/shanghai/diabetes_datasets.zip
+  processed: data/processed
+
+cgm:
+  dexcom_period_min: 5          # native Dexcom G6 Pro cadence (verified, D-010)
+  libre_period_min: 15          # native Libre Pro cadence (verified)
+  shanghai_period_min: 15       # Libre H (verified)
+  kink_tol: 0.001               # |2nd difference| above this marks a native reading (mg/dL)
+  integer_tol: 0.000001         # native Dexcom values are integers in mg/dL
+  max_gap_min: 30               # gaps longer than this are MISSING, never filled
+  session_gap_min: 120          # a gap this long starts a new sensor session
+  early_wear_hours: 24          # first hours of a session flagged (lower sensor accuracy)
+  glucose_range_mgdl:           # sensor reporting range per cohort (verified from raw files)
+    cgmacros: [40, 405]         # Dexcom 40-400 (dictionary); Libre max 405 (participant 030)
+    shanghai_t2dm: [39, 470]    # Libre H readings observed 39.6-468.0 mg/dL
+
+grid:
+  primary_min: 5                # CGMacros grid (native Dexcom)
+  common_min: 15                # cross-cohort grid (native Shanghai)
+
+activity:
+  # METs (stored x10 in CGMacros) mapped to Fitbit-style intensity levels 0..3
+  mets_scale: 10
+  mets_cutpoints: [1.5, 3.0, 6.0]   # <1.5 sedentary, <3 light, <6 moderate, >=6 vigorous
+
+rest_proxy:
+  night_start_hour: 22
+  night_end_hour: 7
+  hr_quantile: 0.25             # participant-relative low-HR threshold
+  window_min: 30                # trailing window (causal)
+
+meals:
+  amount_plausible_max: 100     # % eaten; above this is flagged (see D-016)
+  response_window_min: 120
+  baseline_window_min: 15
+  isolation_min: 180            # no other logged meal within this many minutes before/after
+
+clinical:
+  hypo_mgdl: 70
+  hyper_mgdl: 180
+  secondary_hyper_mgdl: 140
+  hba1c_prediabetes_pct: 5.7
+  hba1c_t2d_pct: 6.5            # page: T2D = HbA1c > 6.4 %

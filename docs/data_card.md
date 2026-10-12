@@ -156,7 +156,44 @@ Only metadata was downloaded; the 4.7 GB zip was deliberately not fetched.
 - PhysioCGM (10 participants, T1D, ECG/PPG; github.com/PSI-TAMU/PhysioCGM) is T1D-only and out of
   scope.
 
-## 6. Synthetic data
+## 6. Harmonized data (Part 1 Steps C-D)
+Built by `make data` into `data/processed/` (gitignored); `manifest.json` records the git hash,
+config and raw-zip hashes. Schema: `src/data/schema.py`. Decisions: D-015 to D-020.
+
+| File | Rows | Patients | Content |
+|---|---|---|---|
+| `cgmacros_ts5.parquet` | 141,300 | 45 | CGMacros, 5-min grid (primary) |
+| `common_ts15.parquet` | 159,621 | 145 (45 + 100) | Both cohorts, 15-min grid (transfer) |
+| `meals.parquet` | 4,769 | 145 | 1,706 CGMacros meals with macros; 3,063 Shanghai meals (timing + grams only) |
+| `static.parquet` | 145 | 145 | Units: HbA1c %, kg, cm, mg/dL; status; Shanghai medication flags |
+
+QC after harmonization (CGM = Dexcom for CGMacros, Libre H for Shanghai;
+`reports/metrics/qc_summary.json`). "Within wear" = between a period's first and last real
+reading. Most CGMacros "missing" is the Fitbit/Libre tail after the 10-day Dexcom sensor ended.
+
+| Cohort / status | Patients (periods) | Rows (grid) | % real | % carried ≤ 30 min | % missing | % missing within wear | % HR | % activity |
+|---|---|---|---|---|---|---|---|---|
+| CGMacros healthy | 15 | 48,418 (5-min) | 87.0 | 0.6 | 12.4 | 6.2 | 81.7 | 90.2 |
+| CGMacros prediabetes | 16 | 49,151 (5-min) | 88.9 | 1.7 | 9.4 | 1.5 | 90.4 | 94.6 |
+| CGMacros T2D | 14 | 43,731 (5-min) | 90.9 | 0.5 | 8.6 | 0.2 | 89.1 | 95.9 |
+| Shanghai T2D | 100 (109) | 112,490 (15-min) | 99.98 | 0.01 | 0.02 | 0.02 | 0 | 0 |
+
+- Per-patient CGMacros:
+  - Missing CGM median 8.2% (max 49.4%, participant 018).
+  - Within-wear missing is highest in 018 (49.2%), 026 (14.8%), 007 (8.8%); everyone else is ≤ 1%.
+  - HR coverage median 91.7% (min 48.1%, 032).
+- Full per-patient tables: `reports/metrics/per_patient_coverage_*.csv`.
+- Validation of the CGM reconstruction (all 45): `reports/metrics/cgm_reconstruction_validation.json`.
+
+Figures (`reports/figures/`, 300 dpi, Okabe-Ito palette):
+- `glucose_distribution.png`
+- `time_in_range.png`
+- `meal_responses.png`
+- `missingness_map.png`
+- `days_and_wearable_coverage.png`
+- `cgm_reconstruction_before_after.png`
+
+## 7. Synthetic data
 None yet. Any synthetic cohort (e.g. India) will be labeled `synthetic=True` and never mixed into a
 real test set.
 

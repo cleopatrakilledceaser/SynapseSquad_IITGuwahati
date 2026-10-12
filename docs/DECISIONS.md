@@ -122,3 +122,126 @@ METs/Intensity) may be derived later. It is never called "sleep" in outputs.
 Snacks are logged (36/45 participants) and some days have fewer than 3 meals. Every meal-timing
 feature is defined on *logged* intake, with a `meal_log_gap` flag. The protocol's ≥3 h fasted
 breakfast-to-lunch and lunch-to-dinner windows are the most trustworthy segments.
+
+## D-015 CGM reconstruction method (Part 1C; implements D-010)
+`src/data/cgm_reconstruct.py` recovers real Dexcom readings from the 1-min interpolated rows:
+1. **Kinks.** A linear interpolant bends only at real readings, so a change in slope per elapsed
+   minute (> 0.001 mg/dL/min) marks a real reading. The slope is per elapsed minute because some
+   files skip rows (007 has 870 timestamp jumps of 2-23 min).
+2. **Collinear readings.** Between two anchors at most 30 min apart, points on the 5-min lattice
+   are accepted if they are integers. Evidence that these interior points are real: 99.98% of
+   11,915 sloped straight spans have integer values at every interior point.
+3. **Every accepted reading must be an integer** (Dexcom reports integer mg/dL). All 668
+   non-integer candidates were run ends where the vendor truncated an interpolation; they are
+   dropped.
+4. **Gridding.** Each grid time t takes the latest real reading at or before t (`merge_asof`
+   backward). If that reading is older than 30 min, the point is MISSING (NaN + flag). Values are
+   never taken from a future reading (unit-tested in `tests/test_cgm_reconstruct.py`).
+
+Validation on all 45 participants (`reports/metrics/cgm_reconstruction_validation.json`):
+- Re-interpolating only the recovered readings reproduces the raw file exactly (max error 0) in
+  43/45.
+- 015: max error 8.7 mg/dL in 0.4% of rows. These are flat "hold" segments that the method
+  correctly leaves missing.
+- 007: 7.7% of rows differ. Irregular rows, jittered reading phase, 49 gaps > 30 min; only 77% of
+  recovered readings are exactly 5 min apart. **007 is flagged lower quality** (candidate for
+  exclusion in sensitivity analyses).
+- Median participant: 99.9% of consecutive real readings are exactly 5 min apart.
+- 018: the 226-hour (9.4-day) bridged span is now fully MISSING (grid: 50.5% real, 49.4% missing).
+- Libre (secondary) uses the same detection without the integer rule (its values are not
+  integers) and only counts a Libre reading within its own 15-min period.
+
+## D-016 "Amount consumed" > 100 %: keep logged macros, flag, never rescale (Part 1C)
+Tested empirically with `data/scripts/amount_consumed_analysis.py`:
+- Sample: isolated CGMacros meals (no other logged meal within 3 h) with carbs > 0 and enough real
+  readings; 1,031 meals from 43 participants.
+- Response: iAUC and peak rise over 0-120 min, real readings only.
+- Compared: logged carbs vs carbs x amount/100.
+
+| subset | meals (patients) | within-patient Spearman: logged carbs | carbs x amount |
+|---|---|---|---|
+| all | 1,031 (43) | 0.346 | 0.334 |
+| amount ≤ 100 % | 965 (43) | 0.354 | 0.374 |
+| amount > 100 % | 66 (15) | 0.201 | 0.272 |
+
+Patient-bootstrap 95% CI of the difference (x amount minus logged), iAUC, 1,000 resamples, seed 42:
+- all: -0.013 [-0.046, 0.021]
+- ≤ 100 %: +0.020 [-0.003, 0.044]
+- > 100 %: +0.069 [-0.091, 0.232]
+
+**Inconclusive.** No definition is reliably better. The >100 % subset (where the two definitions
+differ most) is small and its CI spans 0. 68% of meals are exactly 100 %.
+
+Decision:
+- Keep the dataset's logged macros as the meal fields.
+- Keep `amount_pct_raw` untouched and flag `amount_gt100`. Never rescale.
+- Later parts may try carbs x amount as a sensitivity feature.
+- 028/029 have `amount_missing=True` (the column is absent).
+
+## D-017 Two grids: 5-min CGMacros (primary), 15-min common (transfer) (Part 1C)
+- 5-min = native Dexcom. A 15-min grid would discard 2/3 of the real readings and leave only 2
+  steps before the +30 min horizon.
+- 15-min = native Shanghai Libre H, the coarsest common cadence. Upsampling Shanghai to 5 min
+  would invent readings.
+- Outputs:
+  - `cgmacros_ts5.parquet` for CGMacros modeling;
+  - `common_ts15.parquet` (both cohorts, same schema) for transfer. CGMacros-15 uses the same real
+    readings and the same causal rule (latest reading at or before t), not averaging.
+- Wearables on a grid: mean over (t - step, t], i.e. past samples only.
+
+## D-018 Shanghai: repeated periods, time of day, diet, units (Part 1C)
+- **Repeated periods:**
+  - 100 patients / 109 periods; 8 patients have more than one.
+  - `patient_id` = the split unit; `period_id` = the recording period.
+  - Static values come from the earliest period.
+  - `days_since_start` restarts each period.
+  - Periods are 0.1-154 days apart and are not concatenated.
+  - Tested: all periods of a patient always land in the same partition.
+- **Time of day is real:**
+  - Meal logs peak at 06-07, 11 and 17 h.
+  - Mean glucose is lowest at 03-04 h (114 mg/dL) and highest at 09 h (171).
+  - 99/100 patients are higher at 08-11 h than at 03-05 h.
+  - So clock-time features are allowed for Shanghai. Calendar dates are not.
+- **Diet:** free text is parsed to timing + item count + total grams (ml counted as g). No macros
+  are invented. "data not available" entries are dropped. meal_type = "unknown".
+- **Medications:** class flags (insulin, metformin, sulfonylurea, glinide, AGI, DPP-4, SGLT2,
+  GLP-1, TZD) from the summary text; the raw text is kept. Per-row insulin doses are not yet
+  harmonized.
+- **Units:**
+  - HbA1c mmol/mol -> % (IFCC-NGSP);
+  - cholesterol mmol/L x 38.67 and TG x 88.57 -> mg/dL;
+  - insulin pmol/L / 6 -> uU/mL;
+  - height m -> cm.
+- **Glucose range:** 39.6-468 mg/dL (wider than CGMacros); range checks are per cohort.
+
+## D-019 Activity harmonization and rest proxy (Part 1C)
+- `activity_intensity` on a 0-3 scale (sedentary / light / moderate / vigorous):
+  - Fitbit `Intensity` (11 participants) is already 0-3.
+  - METs (34 participants) use standard cut-points: METs < 1.5, < 3, < 6, ≥ 6 (raw METs ÷ 10).
+  - `activity_source` records which source was used.
+- `rest_proxy` (CGMacros only): clock night (22-07 h) AND 30-min mean HR ≤ the participant's
+  *expanding, past-only* 25th HR percentile AND no activity ≥ light in the window.
+  - NA until one day of HR has been seen; NA for Shanghai.
+  - Never called sleep.
+- 032 (HR 48%): kept, with per-row `hr_missing`; no imputation.
+
+## D-020 Glycemic thresholds kept at 70 / 140 / 180 mg/dL (Part 1D)
+From real readings only (`reports/metrics/eda_summary.json`):
+
+| group | median | 1st-99th pct | <70 | 70-140 | 140-180 | >180 (% time, patient-mean) |
+|---|---|---|---|---|---|---|
+| CGMacros healthy | 118 | 76-206 | 0.5 | 79.8 | 16.7 | 3.0 |
+| CGMacros prediabetes | 129 | 80-246 | 0.4 | 66.7 | 23.9 | 9.0 |
+| CGMacros T2D | 155 | 84-333 | 0.1 | 33.5 | 34.8 | 31.6 |
+| Shanghai T2D | 129.6 | 57.6-298.8 | 2.5 | 54.7 | 23.1 | 19.6 |
+
+- > 180 separates the groups strongly (3% -> 9% -> 32%) and is the international consensus
+  time-in-range bound. Keep it.
+- 140 sits within the healthy upper tail (healthy 95th pct = 169): healthy people spend 17% of
+  time at 140-180, mostly after meals. Keep it as a **post-meal excursion** marker for
+  prediabetes, not as a disease cut-off.
+- < 70 is rare in CGMacros (≤ 0.5%) but present in Shanghai (2.5%). Keep the consensus 70.
+  Note: Libre sensors are known to read low; the cause of Shanghai's higher rate is not verified.
+  - Hypoglycemia is too rare in CGMacros for a standalone hypo model; report this honestly.
+- CGMacros T2D shows less hypo than Shanghai T2D, consistent with fewer insulin users (inferred,
+  not verified: CGMacros has no medication data).

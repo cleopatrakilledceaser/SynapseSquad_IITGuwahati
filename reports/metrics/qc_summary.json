@@ -1,0 +1,1477 @@
+{
+  "name": "qc_summary",
+  "timestamp_utc": "2026-10-12T20:06:22.787098+00:00",
+  "git_hash": "d8636da420bba91918663c5219d42494e02989db-dirty",
+  "seed": 42,
+  "data_hash": "2f3370e812525e2cb218503f2651e294144cbc0b5e47b5b6ebffbe39a7f88829",
+  "config": {
+    "seed": 42,
+    "paths": {
+      "cgmacros_zip": "data/raw/cgmacros/CGMacros_dateshifted365.zip",
+      "shanghai_zip": "data/raw/shanghai/diabetes_datasets.zip",
+      "processed": "data/processed"
+    },
+    "cgm": {
+      "dexcom_period_min": 5,
+      "libre_period_min": 15,
+      "shanghai_period_min": 15,
+      "kink_tol": 0.001,
+      "integer_tol": 1e-06,
+      "max_gap_min": 30,
+      "session_gap_min": 120,
+      "early_wear_hours": 24,
+      "glucose_range_mgdl": {
+        "cgmacros": [
+          40,
+          405
+        ],
+        "shanghai_t2dm": [
+          39,
+          470
+        ]
+      }
+    },
+    "grid": {
+      "primary_min": 5,
+      "common_min": 15
+    },
+    "activity": {
+      "mets_scale": 10,
+      "mets_cutpoints": [
+        1.5,
+        3.0,
+        6.0
+      ]
+    },
+    "rest_proxy": {
+      "night_start_hour": 22,
+      "night_end_hour": 7,
+      "hr_quantile": 0.25,
+      "window_min": 30
+    },
+    "meals": {
+      "amount_plausible_max": 100,
+      "response_window_min": 120,
+      "baseline_window_min": 15,
+      "isolation_min": 180
+    },
+    "clinical": {
+      "hypo_mgdl": 70,
+      "hyper_mgdl": 180,
+      "secondary_hyper_mgdl": 140,
+      "hba1c_prediabetes_pct": 5.7,
+      "hba1c_t2d_pct": 6.5
+    }
+  },
+  "metrics": {
+    "by_cohort_status": [
+      {
+        "dataset": "cgmacros",
+        "diabetes_status": "healthy",
+        "patients": 15,
+        "periods": 15,
+        "rows": 48418,
+        "pct_real": 87.01,
+        "pct_carried": 0.56,
+        "pct_missing": 12.43,
+        "pct_missing_within_wear": 6.160360000886702,
+        "pct_hr_present": 81.65,
+        "pct_activity_present": 90.23,
+        "grid": "5min"
+      },
+      {
+        "dataset": "cgmacros",
+        "diabetes_status": "prediabetes",
+        "patients": 16,
+        "periods": 16,
+        "rows": 49151,
+        "pct_real": 88.94,
+        "pct_carried": 1.66,
+        "pct_missing": 9.4,
+        "pct_missing_within_wear": 1.5432303775047052,
+        "pct_hr_present": 90.44,
+        "pct_activity_present": 94.64,
+        "grid": "5min"
+      },
+      {
+        "dataset": "cgmacros",
+        "diabetes_status": "t2d",
+        "patients": 14,
+        "periods": 14,
+        "rows": 43731,
+        "pct_real": 90.91,
+        "pct_carried": 0.5,
+        "pct_missing": 8.59,
+        "pct_missing_within_wear": 0.17761545004252763,
+        "pct_hr_present": 89.11,
+        "pct_activity_present": 95.94,
+        "grid": "5min"
+      },
+      {
+        "dataset": "cgmacros",
+        "diabetes_status": "healthy",
+        "patients": 15,
+        "periods": 15,
+        "rows": 16150,
+        "pct_real": 87.18,
+        "pct_carried": 0.3,
+        "pct_missing": 12.51,
+        "pct_missing_within_wear": 6.181455633100698,
+        "pct_hr_present": 82.14,
+        "pct_activity_present": 90.24,
+        "grid": "15min"
+      },
+      {
+        "dataset": "cgmacros",
+        "diabetes_status": "prediabetes",
+        "patients": 16,
+        "periods": 16,
+        "rows": 16395,
+        "pct_real": 89.87,
+        "pct_carried": 0.7,
+        "pct_missing": 9.44,
+        "pct_missing_within_wear": 1.539788942722506,
+        "pct_hr_present": 91.33,
+        "pct_activity_present": 95.36,
+        "grid": "15min"
+      },
+      {
+        "dataset": "cgmacros",
+        "diabetes_status": "t2d",
+        "patients": 14,
+        "periods": 14,
+        "rows": 14586,
+        "pct_real": 91.07,
+        "pct_carried": 0.28,
+        "pct_missing": 8.65,
+        "pct_missing_within_wear": 0.18000450011250282,
+        "pct_hr_present": 89.47,
+        "pct_activity_present": 95.94,
+        "grid": "15min"
+      },
+      {
+        "dataset": "shanghai_t2dm",
+        "diabetes_status": "t2d",
+        "patients": 100,
+        "periods": 109,
+        "rows": 112490,
+        "pct_real": 99.98,
+        "pct_carried": 0.01,
+        "pct_missing": 0.02,
+        "pct_missing_within_wear": 0.0151124544403947,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0,
+        "grid": "15min"
+      }
+    ],
+    "cgmacros_per_patient": [
+      {
+        "patient_id": "cgmacros_001",
+        "days": 10.23,
+        "pct_cgm_missing": 2.95,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 96.81,
+        "pct_hr_present": 99.36,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_002",
+        "days": 11.82,
+        "pct_cgm_missing": 19.67,
+        "pct_cgm_missing_within_wear": 0.18274853801169588,
+        "pct_cgm_real": 79.74,
+        "pct_hr_present": 83.91,
+        "pct_activity_present": 85.91
+      },
+      {
+        "patient_id": "cgmacros_003",
+        "days": 10.12,
+        "pct_cgm_missing": 2.61,
+        "pct_cgm_missing_within_wear": 0.700280112044818,
+        "pct_cgm_real": 95.41,
+        "pct_hr_present": 99.45,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_004",
+        "days": 9.91,
+        "pct_cgm_missing": 0.07,
+        "pct_cgm_missing_within_wear": 0.0700770847932726,
+        "pct_cgm_real": 99.68,
+        "pct_hr_present": 99.82,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_005",
+        "days": 10.04,
+        "pct_cgm_missing": 1.14,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 98.69,
+        "pct_hr_present": 98.79,
+        "pct_activity_present": 99.86
+      },
+      {
+        "patient_id": "cgmacros_006",
+        "days": 10.04,
+        "pct_cgm_missing": 2.11,
+        "pct_cgm_missing_within_wear": 0.9807355516637478,
+        "pct_cgm_real": 95.64,
+        "pct_hr_present": 99.2,
+        "pct_activity_present": 99.83
+      },
+      {
+        "patient_id": "cgmacros_007",
+        "days": 7.23,
+        "pct_cgm_missing": 8.93,
+        "pct_cgm_missing_within_wear": 8.802308802308803,
+        "pct_cgm_real": 59.75,
+        "pct_hr_present": 78.63,
+        "pct_activity_present": 78.96
+      },
+      {
+        "patient_id": "cgmacros_008",
+        "days": 10.25,
+        "pct_cgm_missing": 3.18,
+        "pct_cgm_missing_within_wear": 0.03502626970227671,
+        "pct_cgm_real": 96.11,
+        "pct_hr_present": 97.83,
+        "pct_activity_present": 98.21
+      },
+      {
+        "patient_id": "cgmacros_009",
+        "days": 9.98,
+        "pct_cgm_missing": 1.11,
+        "pct_cgm_missing_within_wear": 0.2106002106002106,
+        "pct_cgm_real": 98.3,
+        "pct_hr_present": 98.61,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_010",
+        "days": 11.22,
+        "pct_cgm_missing": 11.51,
+        "pct_cgm_missing_within_wear": 0.03502626970227671,
+        "pct_cgm_real": 88.15,
+        "pct_hr_present": 93.75,
+        "pct_activity_present": 94.59
+      },
+      {
+        "patient_id": "cgmacros_011",
+        "days": 10.28,
+        "pct_cgm_missing": 3.44,
+        "pct_cgm_missing_within_wear": 0.0700280112044818,
+        "pct_cgm_real": 96.22,
+        "pct_hr_present": 99.02,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_012",
+        "days": 10.19,
+        "pct_cgm_missing": 2.52,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 97.27,
+        "pct_hr_present": 91.52,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_013",
+        "days": 11.0,
+        "pct_cgm_missing": 9.78,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 90.06,
+        "pct_hr_present": 96.02,
+        "pct_activity_present": 96.69
+      },
+      {
+        "patient_id": "cgmacros_014",
+        "days": 11.98,
+        "pct_cgm_missing": 17.39,
+        "pct_cgm_missing_within_wear": 0.3502626970227671,
+        "pct_cgm_real": 81.88,
+        "pct_hr_present": 87.88,
+        "pct_activity_present": 88.7
+      },
+      {
+        "patient_id": "cgmacros_015",
+        "days": 11.97,
+        "pct_cgm_missing": 17.34,
+        "pct_cgm_missing_within_wear": 0.28040658955485454,
+        "pct_cgm_real": 81.18,
+        "pct_hr_present": 87.44,
+        "pct_activity_present": 88.6
+      },
+      {
+        "patient_id": "cgmacros_016",
+        "days": 11.31,
+        "pct_cgm_missing": 12.49,
+        "pct_cgm_missing_within_wear": 0.28021015761821366,
+        "pct_cgm_real": 86.9,
+        "pct_hr_present": 93.49,
+        "pct_activity_present": 93.83
+      },
+      {
+        "patient_id": "cgmacros_017",
+        "days": 11.24,
+        "pct_cgm_missing": 11.83,
+        "pct_cgm_missing_within_wear": 0.21015761821366027,
+        "pct_cgm_real": 87.55,
+        "pct_hr_present": 84.34,
+        "pct_activity_present": 94.59
+      },
+      {
+        "patient_id": "cgmacros_018",
+        "days": 19.16,
+        "pct_cgm_missing": 49.37,
+        "pct_cgm_missing_within_wear": 49.236918604651166,
+        "pct_cgm_real": 50.53,
+        "pct_hr_present": 50.78,
+        "pct_activity_present": 51.03
+      },
+      {
+        "patient_id": "cgmacros_019",
+        "days": 10.03,
+        "pct_cgm_missing": 1.18,
+        "pct_cgm_missing_within_wear": 0.14010507880910683,
+        "pct_cgm_real": 97.89,
+        "pct_hr_present": 98.03,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_020",
+        "days": 11.29,
+        "pct_cgm_missing": 12.15,
+        "pct_cgm_missing_within_wear": 0.10507880910683014,
+        "pct_cgm_real": 87.55,
+        "pct_hr_present": 88.44,
+        "pct_activity_present": 94.62
+      },
+      {
+        "patient_id": "cgmacros_021",
+        "days": 11.2,
+        "pct_cgm_missing": 11.47,
+        "pct_cgm_missing_within_wear": 0.14010507880910683,
+        "pct_cgm_real": 88.07,
+        "pct_hr_present": 93.77,
+        "pct_activity_present": 95.16
+      },
+      {
+        "patient_id": "cgmacros_022",
+        "days": 12.24,
+        "pct_cgm_missing": 18.92,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 80.94,
+        "pct_hr_present": 82.47,
+        "pct_activity_present": 87.1
+      },
+      {
+        "patient_id": "cgmacros_023",
+        "days": 11.24,
+        "pct_cgm_missing": 11.77,
+        "pct_cgm_missing_within_wear": 0.10507880910683014,
+        "pct_cgm_real": 87.71,
+        "pct_hr_present": 93.55,
+        "pct_activity_present": 94.66
+      },
+      {
+        "patient_id": "cgmacros_026",
+        "days": 11.33,
+        "pct_cgm_missing": 15.13,
+        "pct_cgm_missing_within_wear": 14.76923076923077,
+        "pct_cgm_real": 84.71,
+        "pct_hr_present": 93.32,
+        "pct_activity_present": 94.03
+      },
+      {
+        "patient_id": "cgmacros_027",
+        "days": 10.09,
+        "pct_cgm_missing": 1.96,
+        "pct_cgm_missing_within_wear": 0.31523642732049034,
+        "pct_cgm_real": 97.52,
+        "pct_hr_present": 99.76,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_028",
+        "days": 13.01,
+        "pct_cgm_missing": 23.83,
+        "pct_cgm_missing_within_wear": 0.17513134851138354,
+        "pct_cgm_real": 75.77,
+        "pct_hr_present": 76.39,
+        "pct_activity_present": 81.96
+      },
+      {
+        "patient_id": "cgmacros_029",
+        "days": 12.31,
+        "pct_cgm_missing": 19.4,
+        "pct_cgm_missing_within_wear": 0.03502626970227671,
+        "pct_cgm_real": 80.32,
+        "pct_hr_present": 85.09,
+        "pct_activity_present": 86.55
+      },
+      {
+        "patient_id": "cgmacros_030",
+        "days": 10.74,
+        "pct_cgm_missing": 8.21,
+        "pct_cgm_missing_within_wear": 0.7352941176470588,
+        "pct_cgm_real": 90.98,
+        "pct_hr_present": 80.28,
+        "pct_activity_present": 89.43
+      },
+      {
+        "patient_id": "cgmacros_031",
+        "days": 9.53,
+        "pct_cgm_missing": 0.22,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 99.6,
+        "pct_hr_present": 98.83,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_032",
+        "days": 9.57,
+        "pct_cgm_missing": 0.65,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 99.02,
+        "pct_hr_present": 48.08,
+        "pct_activity_present": 95.36
+      },
+      {
+        "patient_id": "cgmacros_033",
+        "days": 11.01,
+        "pct_cgm_missing": 9.96,
+        "pct_cgm_missing_within_wear": 0.10511562718990891,
+        "pct_cgm_real": 89.63,
+        "pct_hr_present": 68.92,
+        "pct_activity_present": 78.15
+      },
+      {
+        "patient_id": "cgmacros_034",
+        "days": 10.21,
+        "pct_cgm_missing": 2.75,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 97.08,
+        "pct_hr_present": 54.78,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_035",
+        "days": 10.0,
+        "pct_cgm_missing": 1.01,
+        "pct_cgm_missing_within_wear": 0.28021015761821366,
+        "pct_cgm_real": 98.44,
+        "pct_hr_present": 83.89,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_036",
+        "days": 11.89,
+        "pct_cgm_missing": 16.47,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 83.38,
+        "pct_hr_present": 84.32,
+        "pct_activity_present": 89.05
+      },
+      {
+        "patient_id": "cgmacros_038",
+        "days": 10.07,
+        "pct_cgm_missing": 1.41,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 98.38,
+        "pct_hr_present": 99.07,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_039",
+        "days": 11.95,
+        "pct_cgm_missing": 17.02,
+        "pct_cgm_missing_within_wear": 0.14010507880910683,
+        "pct_cgm_real": 82.68,
+        "pct_hr_present": 83.76,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_041",
+        "days": 9.94,
+        "pct_cgm_missing": 0.49,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 99.51,
+        "pct_hr_present": 68.95,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_042",
+        "days": 10.08,
+        "pct_cgm_missing": 1.51,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 98.28,
+        "pct_hr_present": 91.7,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_043",
+        "days": 10.09,
+        "pct_cgm_missing": 1.62,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 98.11,
+        "pct_hr_present": 96.73,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_044",
+        "days": 10.09,
+        "pct_cgm_missing": 1.93,
+        "pct_cgm_missing_within_wear": 0.31523642732049034,
+        "pct_cgm_real": 97.39,
+        "pct_hr_present": 84.38,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_045",
+        "days": 10.81,
+        "pct_cgm_missing": 12.07,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 87.74,
+        "pct_hr_present": 93.77,
+        "pct_activity_present": 94.03
+      },
+      {
+        "patient_id": "cgmacros_046",
+        "days": 10.2,
+        "pct_cgm_missing": 2.65,
+        "pct_cgm_missing_within_wear": 0.0350140056022409,
+        "pct_cgm_real": 96.83,
+        "pct_hr_present": 92.99,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_047",
+        "days": 10.9,
+        "pct_cgm_missing": 8.92,
+        "pct_cgm_missing_within_wear": 0.07005253940455342,
+        "pct_cgm_real": 90.44,
+        "pct_hr_present": 91.91,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_048",
+        "days": 12.05,
+        "pct_cgm_missing": 17.6,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 82.23,
+        "pct_hr_present": 83.01,
+        "pct_activity_present": 100.0
+      },
+      {
+        "patient_id": "cgmacros_049",
+        "days": 10.64,
+        "pct_cgm_missing": 6.66,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 93.18,
+        "pct_hr_present": 91.42,
+        "pct_activity_present": 99.93
+      }
+    ],
+    "shanghai_per_patient": [
+      {
+        "patient_id": "shanghai_t2dm_2000",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2001",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2002",
+        "days": 5.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2003",
+        "days": 6.96,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2004",
+        "days": 5.03,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2005",
+        "days": 7.19,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2006",
+        "days": 4.99,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2007",
+        "days": 8.65,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2008",
+        "days": 5.54,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2009",
+        "days": 5.14,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2010",
+        "days": 5.6,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2011",
+        "days": 4.8,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2012",
+        "days": 2.99,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2013",
+        "days": 3.64,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2014",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2015",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2016",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2017",
+        "days": 13.92,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2018",
+        "days": 12.81,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2019",
+        "days": 7.81,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2020",
+        "days": 5.6,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2021",
+        "days": 11.81,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2022",
+        "days": 9.83,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2023",
+        "days": 5.66,
+        "pct_cgm_missing": 0.37,
+        "pct_cgm_missing_within_wear": 0.37,
+        "pct_cgm_real": 99.45,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2024",
+        "days": 7.58,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2025",
+        "days": 7.92,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2026",
+        "days": 11.82,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2027",
+        "days": 11.79,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2028",
+        "days": 8.56,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2029",
+        "days": 8.8,
+        "pct_cgm_missing": 1.54,
+        "pct_cgm_missing_within_wear": 1.54,
+        "pct_cgm_real": 98.35,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2030",
+        "days": 9.84,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2031",
+        "days": 9.59,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2032",
+        "days": 2.92,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2033",
+        "days": 7.55,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2034",
+        "days": 4.02,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2035",
+        "days": 2.56,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2036",
+        "days": 5.52,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2037",
+        "days": 13.93,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2038",
+        "days": 5.68,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2039",
+        "days": 6.58,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2040",
+        "days": 10.67,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 99.9,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2041",
+        "days": 4.07,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2042",
+        "days": 4.16,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2043",
+        "days": 8.58,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2044",
+        "days": 6.67,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2045",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2046",
+        "days": 11.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2047",
+        "days": 12.67,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2048",
+        "days": 12.85,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2049",
+        "days": 11.79,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2050",
+        "days": 13.3,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2051",
+        "days": 12.68,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2052",
+        "days": 13.0,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2053",
+        "days": 12.72,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2054",
+        "days": 5.46,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2055",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2056",
+        "days": 5.9,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2057",
+        "days": 12.75,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2058",
+        "days": 13.34,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2059",
+        "days": 13.08,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2060",
+        "days": 13.88,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2061",
+        "days": 9.72,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2062",
+        "days": 12.54,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2063",
+        "days": 12.73,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2064",
+        "days": 12.7,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2065",
+        "days": 8.81,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2066",
+        "days": 12.7,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2067",
+        "days": 12.74,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2068",
+        "days": 13.16,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2069",
+        "days": 12.95,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2070",
+        "days": 12.8,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2071",
+        "days": 13.45,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2072",
+        "days": 12.7,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2073",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2074",
+        "days": 11.92,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2075",
+        "days": 9.76,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2076",
+        "days": 12.68,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2077",
+        "days": 10.65,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2078",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2079",
+        "days": 13.88,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2080",
+        "days": 13.86,
+        "pct_cgm_missing": 0.08,
+        "pct_cgm_missing_within_wear": 0.08,
+        "pct_cgm_real": 99.77,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2081",
+        "days": 12.71,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2082",
+        "days": 10.9,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2083",
+        "days": 13.85,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2084",
+        "days": 6.92,
+        "pct_cgm_missing": 0.15,
+        "pct_cgm_missing_within_wear": 0.15,
+        "pct_cgm_real": 99.7,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2085",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2086",
+        "days": 13.93,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2087",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2088",
+        "days": 13.86,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2089",
+        "days": 13.89,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2090",
+        "days": 13.84,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2091",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2092",
+        "days": 13.88,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2093",
+        "days": 13.94,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2094",
+        "days": 13.93,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2095",
+        "days": 13.89,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 99.63,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2096",
+        "days": 13.82,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2097",
+        "days": 13.92,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2098",
+        "days": 13.79,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      },
+      {
+        "patient_id": "shanghai_t2dm_2099",
+        "days": 13.83,
+        "pct_cgm_missing": 0.0,
+        "pct_cgm_missing_within_wear": 0.0,
+        "pct_cgm_real": 100.0,
+        "pct_hr_present": 0.0,
+        "pct_activity_present": 0.0
+      }
+    ]
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "name": "eda_summary",
+  "timestamp_utc": "2026-10-12T20:03:40.870836+00:00",
+  "git_hash": "d8636da420bba91918663c5219d42494e02989db-dirty",
+  "seed": 42,
+  "data_hash": "2f3370e812525e2cb218503f2651e294144cbc0b5e47b5b6ebffbe39a7f88829",
+  "config": {
+    "seed": 42,
+    "paths": {
+      "cgmacros_zip": "data/raw/cgmacros/CGMacros_dateshifted365.zip",
+      "shanghai_zip": "data/raw/shanghai/diabetes_datasets.zip",
+      "processed": "data/processed"
+    },
+    "cgm": {
+      "dexcom_period_min": 5,
+      "libre_period_min": 15,
+      "shanghai_period_min": 15,
+      "kink_tol": 0.001,
+      "integer_tol": 1e-06,
+      "max_gap_min": 30,
+      "session_gap_min": 120,
+      "early_wear_hours": 24,
+      "glucose_range_mgdl": {
+        "cgmacros": [
+          40,
+          405
+        ],
+        "shanghai_t2dm": [
+          39,
+          470
+        ]
+      }
+    },
+    "grid": {
+      "primary_min": 5,
+      "common_min": 15
+    },
+    "activity": {
+      "mets_scale": 10,
+      "mets_cutpoints": [
+        1.5,
+        3.0,
+        6.0
+      ]
+    },
+    "rest_proxy": {
+      "night_start_hour": 22,
+      "night_end_hour": 7,
+      "hr_quantile": 0.25,
+      "window_min": 30
+    },
+    "meals": {
+      "amount_plausible_max": 100,
+      "response_window_min": 120,
+      "baseline_window_min": 15,
+      "isolation_min": 180
+    },
+    "clinical": {
+      "hypo_mgdl": 70,
+      "hyper_mgdl": 180,
+      "secondary_hyper_mgdl": 140,
+      "hba1c_prediabetes_pct": 5.7,
+      "hba1c_t2d_pct": 6.5
+    }
+  },
+  "metrics": {
+    "glucose_percentiles": {
+      "healthy": {
+        "0.01": 76.0,
+        "0.05": 90.0,
+        "0.5": 118.0,
+        "0.95": 169.0,
+        "0.99": 206.0
+      },
+      "prediabetes": {
+        "0.01": 80.0,
+        "0.05": 97.0,
+        "0.5": 129.0,
+        "0.95": 202.0,
+        "0.99": 246.0
+      },
+      "t2d": {
+        "0.01": 84.0,
+        "0.05": 102.0,
+        "0.5": 155.0,
+        "0.95": 264.0,
+        "0.99": 333.0
+      },
+      "shanghai_t2d": {
+        "0.01": 57.6,
+        "0.05": 77.4,
+        "0.5": 129.6,
+        "0.95": 239.4,
+        "0.99": 298.8
+      }
+    },
+    "time_in_bands_pct": [
+      {
+        "group": "healthy",
+        "<70": 0.5,
+        "70-140": 79.8,
+        "140-180": 16.66,
+        ">180": 3.04
+      },
+      {
+        "group": "prediabetes",
+        "<70": 0.44,
+        "70-140": 66.7,
+        "140-180": 23.87,
+        ">180": 8.99
+      },
+      {
+        "group": "t2d",
+        "<70": 0.14,
+        "70-140": 33.47,
+        "140-180": 34.79,
+        ">180": 31.61
+      },
+      {
+        "group": "shanghai_t2d",
+        "<70": 2.53,
+        "70-140": 54.71,
+        "140-180": 23.13,
+        ">180": 19.63
+      }
+    ],
+    "reconstruction_example": {
+      "pid": "018",
+      "largest_gap_hours": 226.3
+    }
+  }
+}
