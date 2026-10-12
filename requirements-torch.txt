@@ -1,0 +1,11 @@
+# Optional torch stack (neural fusion model, Opacus DP). Install on top of requirements.txt:
+#   python -m pip install -r requirements.txt -r requirements-torch.txt
+# Verified 2026-10-13 in the Python 3.11.9 project venv: import + forward/backward + one Opacus
+# DP-SGD step pass, `pip check` clean, with numpy 2.4.6 / pandas 2.2.3 / scikit-learn 1.5.2.
+# torch 2.14.1 is blocked by Windows Application Control on the dev box (DECISIONS D-008/D-009).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
+opacus==1.5.4
+opt-einsum==3.4.0
+# Flower (flwr) is deliberately NOT pinned here or in requirements.txt: flwr 1.39.0 requires
+# packaging<26, which conflicts with virtualenv (pre-commit). See D-009.

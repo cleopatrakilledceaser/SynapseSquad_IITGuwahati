@@ -78,4 +78,47 @@ Side effects found:
   App Control style), not signature-based. Same pattern as D-006 (older pandas/sklearn passed).
 - Also installed for Step B probing: xlrd 2.0.2, openpyxl 3.1.5 (needed to read Shanghai .xls/.xlsx).
 
-Decision: pending (owner chooses torch/opacus workaround).
+Decision: superseded by D-009.
+
+## D-009 torch 2.5.1 CPU + opacus 1.5.4 run locally; flwr kept out of the project venv (Part 1B)
+Owner decision: no parts are removed; try an older torch first (Option A), fall back to Colab.
+- Throwaway venv (`%TEMP%\gt_torchtest`): torch 2.5.1+cpu + opacus 1.5.2 **pass** import, a
+  forward/backward pass and one Opacus DP-SGD step. The older torch DLLs are not blocked.
+- opacus 1.5.2/1.5.3 require `numpy<2`, which conflicts with our numpy 2.4.6 pin; opacus 1.6.0
+  requires torch>=2.6. **opacus 1.5.4** (numpy>=1.15, torch>=2.0) is the matching version.
+- Project venv: torch 2.5.1+cpu + opacus 1.5.4 pass the same smoke test with numpy 2.4.6 /
+  pandas 2.2.3 / scikit-learn 1.5.2; `pip check` clean; 14/14 tests pass.
+- **Result: torch parts run locally.** Pinned in a separate `requirements-torch.txt` (optional
+  install, CPU wheel index). Colab is not needed for now; if a later torch feature needs a newer
+  version that is blocked, revisit then.
+- Flower: flwr 1.39.0 pins `packaging<26`, which breaks virtualenv/pre-commit (`pip check`). flwr was
+  uninstalled from the project venv and packaging restored to 26.3; `pip check` is clean. For the
+  federated-learning part we will either find a flwr version compatible with packaging>=26.3 or run
+  flwr in its own venv / `requirements-fl.txt`. Decide in that part; nothing pinned now.
+
+## D-010 Reference CGM = Dexcom G6 Pro; recover native readings (Part 1B)
+- CGMacros CSVs are 1-min rows with **both** CGM columns linearly interpolated (verified from the
+  files: kinks of the interpolation give native steps of exactly 5 min for Dexcom and 15 min for
+  Libre in all 45 participants).
+- Dexcom is the reference: native 5 min, closer to the forecast horizons, and the same device
+  family as BIG IDEAs (transfer). Libre is secondary (cross-sensor checks and flagged fallback).
+- Harmonization (Step C) must recover native points and treat anything bridged across a native gap
+  > 30 min as missing. The raw 1-min values hide gaps of up to about 9.4 days (participant 018).
+
+## D-011 CGMacros HbA1c is %, despite the dictionary saying mmol/mol (Part 1B)
+Range 4.6-8.5 with % cut-offs reproduces the page's 15/16/14 group split exactly. Stored as
+`hba1c_pct`; Shanghai's true mmol/mol values are converted to % with the IFCC-NGSP master equation.
+
+## D-012 Time of day is valid in CGMacros; calendar date and weekday are not (Part 1B)
+Meal starts cluster by type (breakfast median 08:12, lunch 12:36, dinner 19:00) and HR is higher by
+day than at night in 44/44 participants, so the shift is by whole days. Circadian and night-window
+features are allowed. Day-of-week and date features are banned (dates shifted 1-2 years).
+
+## D-013 No sleep stream: night-rest proxy only (Part 1B)
+No sleep data in any file. A `rest_proxy` (22:00-07:00, participant-relative low HR + low
+METs/Intensity) may be derived later. It is never called "sleep" in outputs.
+
+## D-014 "Time since last meal" means "last logged meal" (Part 1B)
+Snacks are logged (36/45 participants) and some days have fewer than 3 meals. Every meal-timing
+feature is defined on *logged* intake, with a `meal_log_gap` flag. The protocol's ≥3 h fasted
+breakfast-to-lunch and lunch-to-dinner windows are the most trustworthy segments.

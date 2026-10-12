@@ -36,12 +36,15 @@ test:
 	$(PY) -m pytest
 
 lint:
-	$(PY) -m ruff check src tests
-	$(PY) -m black --check src tests
+	$(PY) -m ruff check src tests data/scripts
+	$(PY) -m black --check src tests data/scripts
 
 format:
-	$(PY) -m ruff check --fix src tests
-	$(PY) -m black src tests
+	$(PY) -m ruff check --fix src tests data/scripts
+	$(PY) -m black src tests data/scripts
+
+download:
+	$(PY) data/scripts/download.py cgmacros shanghai bigideas
 
 smoke:
 	$(PY) -m src.smoke
