@@ -80,10 +80,9 @@ def part3() -> list[str]:
         "## Part 3 — Fusion ablation (tag `part-3-done`)",
         "",
         "Source: `reports/metrics/fusion_{cgmacros,shanghai_t2dm}.json`. MAE in mg/dL with 95%",
-        "patient-bootstrap CIs (1,000 resamples over patients). Patient-grouped 5-fold CV × 5 repeats",
-        "(neural: repeat 0 × 5 seeds). Paired differences: model_1 − model_2,",
-        "negative = model_1",
-        "better, `ns` = CI includes 0. Decisions: D-027 to D-030.",
+        "patient-bootstrap CIs (1,000 resamples over patients). Patient-grouped 5-fold CV ×",
+        "5 repeats (neural: repeat 0 × 5 seeds). Paired differences: model_1 − model_2,",
+        "negative = model_1 better, `ns` = CI includes 0. Decisions: D-027 to D-030.",
         "",
     ]
     for coh, name in COHORTS.items():
