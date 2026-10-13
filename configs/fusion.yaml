@@ -1,0 +1,127 @@
+# Part 3: fusion models, ablation, input tiers. Windows (N), anchors, splits and the nested tuning
+# protocol are reused from Part 2 (configs/features.yaml, baselines.yaml, splits.yaml).
+seed: 42
+n_hours: 6                         # chosen in Part 2 (D-026) for both cohorts
+targets: [abs, delta]              # abs: y(t+h); delta: y(t+h) - base(t), reported as abs error
+
+# Feature groups. Columns are resolved from the cached feature tables by prefix / exact name.
+# Static columns are (re)joined from static.parquet at load time (static_<column>).
+groups:
+  cgmacros:
+    cgm: {prefix: [cgm_]}
+    tod: {exact: [tod_sin, tod_cos, days_since_start]}
+    wearable: {prefix: [hr_, act_], exclude: [act_post_meal]}
+    rest_proxy: {exact: [rest_proxy_prev_night_frac]}
+    meals: {prefix: [meal_], exact: [act_post_meal]}   # post-meal activity needs meal timing
+    static_demo_anthro: {static: [age_years, sex_male, bmi]}
+    static_glycemic: {static: [hba1c_pct, fasting_glucose_mgdl]}
+    static_insulin: {static: [fasting_insulin]}
+    static_lipids: {static: [triglycerides_mgdl, cholesterol_mgdl, hdl_mgdl, ldl_mgdl]}
+  shanghai_t2dm:
+    cgm: {prefix: [cgm_]}
+    tod: {exact: [tod_sin, tod_cos, days_since_start]}
+    static_demo_anthro: {static: [age_years, sex_male, bmi]}
+    static_hba1c: {static: [hba1c_pct, fasting_glucose_mgdl]}
+    static_duration: {static: [diabetes_duration_years]}
+    static_cpeptide: {static: [fasting_c_peptide_nmol_l, fasting_insulin]}
+    static_meds: {static: [med_insulin, med_metformin, med_sulfonylurea, med_glinide, med_agi,
+                           med_dpp4, med_sglt2, med_glp1, med_tzd]}
+    static_kidney: {static: [creatinine_umol_l, egfr_ml_min]}
+    static_lipids: {static: [triglycerides_mgdl, cholesterol_mgdl, hdl_mgdl, ldl_mgdl]}
+
+# Ablation configs = lists of groups. "static" expands to every static_* group of the cohort.
+# Time of day is in every dynamic config (free context, available in every tier); B therefore
+# equals Part 2's strongest pooled model (lgbm_cgm_tod), which makes fusion gains conservative.
+ablation:
+  cgmacros:
+    A_static: [static]
+    B_cgm: [cgm, tod]
+    C_cgm_wear: [cgm, tod, wearable, rest_proxy]
+    D_cgm_wear_meal: [cgm, tod, wearable, rest_proxy, meals]
+    E_full: [cgm, tod, wearable, rest_proxy, meals, static]
+  shanghai_t2dm:
+    A_static: [static]
+    B_cgm: [cgm, tod]
+    E_full: [cgm, tod, static]
+logo:                               # leave-one-group-out from E
+  cgmacros:
+    E_minus_wearable: [wearable, rest_proxy]   # every wearable-derived feature
+    E_minus_meals: [meals]
+    E_minus_rest_proxy: [rest_proxy]
+    E_minus_demo_anthro: [static_demo_anthro]
+    E_minus_glycemic: [static_glycemic]
+    E_minus_insulin: [static_insulin]
+    E_minus_lipids: [static_lipids]
+  shanghai_t2dm:
+    E_minus_hba1c: [static_hba1c]
+    E_minus_duration: [static_duration]
+    E_minus_cpeptide: [static_cpeptide]
+    E_minus_meds: [static_meds]
+    E_minus_kidney: [static_kidney]
+    E_minus_lipids: [static_lipids]
+    E_minus_demo_anthro: [static_demo_anthro]
+
+# Simulated fingersticks (SMBG): the real CGM reading at fixed clock times. A reading at clock
+# time c is used only if a REAL CGM reading exists at c (else that fingerstick is skipped) and
+# becomes known at c (causal: features at t use fingersticks with time <= t).
+fingerstick:
+  schedules:
+    fs4: ["07:00", "11:30", "17:30", "21:30"]   # 4-point profile: fasting, pre-meals, bedtime
+    fs2: ["07:00", "17:30"]                     # fasting + pre-dinner
+  lookback_h: 24
+tiers:
+  cgmacros:
+    T1_full: {groups: [cgm, tod, wearable, rest_proxy, meals, static]}
+    T2_fs4: {groups: [tod, wearable, rest_proxy, meals, static], fingerstick: fs4}
+    T2_fs2: {groups: [tod, wearable, rest_proxy, meals, static], fingerstick: fs2}
+    T3_fs4: {groups: [tod, static], fingerstick: fs4}
+    T3_fs2: {groups: [tod, static], fingerstick: fs2}
+  shanghai_t2dm:
+    T1_full: {groups: [cgm, tod, static]}
+    T3_fs4: {groups: [tod, static], fingerstick: fs4}
+    T3_fs2: {groups: [tod, static], fingerstick: fs2}
+
+# Evaluation subsets
+post_meal_window_min: 180          # CGMacros: within 3 h after a logged meal (at or before t)
+onset:                             # regression "rising onset": start <= 140 and cross 140 within h
+  regression_event: hyper140
+event_classifier:
+  events: [hyper180_any, hyper140_any, hypo70_any]
+  configs: [B_cgm, C_cgm_wear, D_cgm_wear_meal, E_full]
+limited_evidence:                  # owner rule: label, never headline
+  cgmacros: [hypo70]
+
+key_comparisons:                   # paired patient-bootstrap MAE differences (model1 - model2)
+  cgmacros:
+    - [D_cgm_wear_meal, C_cgm_wear]
+    - [E_full, D_cgm_wear_meal]
+    - [E_full, B_cgm]
+    - [C_cgm_wear, B_cgm]
+    - [E_full, ar_per_patient]
+    - [B_cgm, ar_per_patient]
+  shanghai_t2dm:
+    - [E_full, B_cgm]
+    - [E_full, ar_per_patient]
+    - [B_cgm, ar_per_patient]
+
+lgbm:                              # same protocol as Part 2 (inner patient split, early stopping)
+  repeats: [0, 1, 2, 3, 4]
+
+neural:
+  configs: [B_cgm, E_full]          # B vs E isolates fusion inside the neural family
+  seeds: [0, 1, 2, 3, 4]
+  repeats: [0]                      # neural CV = repeat 0 (5 folds) x 5 seeds (cost; see D-028)
+  grid:                             # fixed small grid, chosen once on holdout-train patients
+    hidden: [32, 64]
+    dropout: [0.1]
+  lr: 0.002
+  batch_size: 256
+  max_epochs: 40
+  patience: 5
+  weight_decay: 0.0001
+  threads: 8
+
+shap:
+  config: E_full
+  horizon_min: 60
+  n_rows: 3000

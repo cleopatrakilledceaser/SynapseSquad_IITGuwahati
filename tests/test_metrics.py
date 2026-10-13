@@ -33,6 +33,30 @@ def test_hist_auc_matches_sklearn() -> None:
     assert abs(ap - average_precision_score(y, p)) < 1e-2
 
 
+def test_paired_bootstrap_diff() -> None:
+    from src.eval.metrics import paired_bootstrap_diff
+
+    rng = np.random.default_rng(1)
+    rows = []
+    for i in range(30):
+        y = rng.normal(150, 30, 100)
+        rows.append(
+            pd.DataFrame(
+                {
+                    "patient_id": f"p{i}",
+                    "y": y,
+                    "a": y + rng.normal(0, 10, 100),
+                    "b": y + rng.normal(0, 20, 100),
+                }
+            )
+        )
+    df = pd.concat(rows, ignore_index=True)
+    r = paired_bootstrap_diff(point_stats(df, "y", "a"), point_stats(df, "y", "b"), 500, 0, 0.95)
+    assert r["diff_mae"] < 0 and r["distinguishable_from_zero"]
+    same = paired_bootstrap_diff(point_stats(df, "y", "a"), point_stats(df, "y", "a"), 200, 0, 0.95)
+    assert same["diff_mae"] == 0 and not same["distinguishable_from_zero"]
+
+
 def test_bootstrap_resamples_patients_not_rows() -> None:
     """One patient with many rows and a large error: a ROW bootstrap would give a narrow CI;
     a PATIENT bootstrap must sometimes omit that patient entirely, so its CI is much wider."""

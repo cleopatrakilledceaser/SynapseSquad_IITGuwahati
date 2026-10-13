@@ -111,6 +111,31 @@ def bootstrap_point(stats: pd.DataFrame, n_boot: int, seed: int, ci: float) -> d
     return out
 
 
+def paired_bootstrap_diff(
+    s1: pd.DataFrame, s2: pd.DataFrame, n_boot: int, seed: int, ci: float
+) -> dict[str, Any]:
+    """Paired patient bootstrap of MAE(model 1) - MAE(model 2) on the same rows.
+
+    ``s1``/``s2`` are per-patient sufficient statistics (``point_stats``) over identical rows.
+    The same resampled patients are used for both models in every draw (paired).
+    """
+    pids = s1.index.intersection(s2.index)
+    a = s1.loc[pids, ["n", "abs"]].to_numpy()
+    b = s2.loc[pids, ["n", "abs"]].to_numpy()
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(pids), (n_boot, len(pids)))
+    sa, sb = a[idx].sum(axis=1), b[idx].sum(axis=1)
+    d = sa[:, 1] / sa[:, 0] - sb[:, 1] / sb[:, 0]
+    est = a[:, 1].sum() / a[:, 0].sum() - b[:, 1].sum() / b[:, 0].sum()
+    lo, hi = _ci(list(d), ci)
+    return {
+        "diff_mae": float(est),
+        "diff_mae_ci": [lo, hi],
+        "distinguishable_from_zero": bool(lo > 0 or hi < 0),
+        "n_patients": int(len(pids)),
+    }
+
+
 def event_hist(df: pd.DataFrame, y: str, p: str, bins: int) -> tuple[np.ndarray, ...]:
     """Per-patient histograms of positive / negative scores, plus per-patient Brier sums."""
     d = df[[y, p, "patient_id"]].dropna()

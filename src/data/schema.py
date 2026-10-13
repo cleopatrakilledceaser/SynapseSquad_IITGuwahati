@@ -54,6 +54,8 @@ STATIC_COLUMNS: dict[str, str] = {
     "ldl_mgdl": "float64",
     "diabetes_duration_years": "float64",
     "fasting_c_peptide_nmol_l": "float64",  # Shanghai only
+    "creatinine_umol_l": "float64",  # Shanghai only (kidney function)
+    "egfr_ml_min": "float64",  # Shanghai only, ml/min/1.73 m2
     "n_periods": "Int64",
     "synthetic": "bool",
 }

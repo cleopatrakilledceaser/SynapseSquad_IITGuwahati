@@ -23,6 +23,8 @@ class LGBMForecaster:
     cfg: dict[str, Any]
     name: str = "lgbm"
     seed: int = 42
+    target: str = "delta"  # "delta": y - base (Part 2 default); "abs": y
+    base: str = "cgm_now"  # anchor value for the delta target (Part 3 tiers: fs_last)
     models: dict = field(default_factory=dict)
     classifiers: dict = field(default_factory=dict)
     chosen: dict = field(default_factory=dict)
@@ -55,10 +57,8 @@ class LGBMForecaster:
     def fit(self, tab, grid=None, val=None, horizons=None, events=True, **_):  # type: ignore[no-untyped-def]
         xt, xv = tab[self.features], val[self.features]
         for h in horizons:
-            ok_t = tab[f"y_{h}"].notna().to_numpy()
-            ok_v = val[f"y_{h}"].notna().to_numpy()
-            yt = (tab[f"y_{h}"] - tab["cgm_now"]).to_numpy()
-            yv = (val[f"y_{h}"] - val["cgm_now"]).to_numpy()
+            yt, yv = self.encode(tab, h), self.encode(val, h)
+            ok_t, ok_v = ~np.isnan(yt), ~np.isnan(yv)
             self.models[h], self.chosen[f"reg_{h}"] = self._fit_best(
                 lgb.LGBMRegressor, xt[ok_t], yt[ok_t], xv[ok_v], yv[ok_v]
             )
@@ -75,9 +75,18 @@ class LGBMForecaster:
                 )
         return self
 
+    def encode(self, tab: pd.DataFrame, h: int) -> np.ndarray:
+        """Training target for horizon h (NaN where the target or the delta base is missing)."""
+        y = tab[f"y_{h}"].to_numpy(dtype=float)
+        return y - tab[self.base].to_numpy(dtype=float) if self.target == "delta" else y
+
+    def decode(self, tab: pd.DataFrame, raw: np.ndarray) -> np.ndarray:
+        """Model output -> absolute glucose forecast (inverse of :meth:`encode`)."""
+        return tab[self.base].to_numpy(dtype=float) + raw if self.target == "delta" else raw
+
     def predict(self, tab, grid=None, horizons=None):  # type: ignore[no-untyped-def]
         x = tab[self.features]
-        return {h: tab["cgm_now"].to_numpy() + self.models[h].predict(x) for h in horizons}
+        return {h: self.decode(tab, self.models[h].predict(x)) for h in horizons}
 
     def predict_events(self, tab: pd.DataFrame) -> dict[str, np.ndarray]:
         x = tab[self.features]

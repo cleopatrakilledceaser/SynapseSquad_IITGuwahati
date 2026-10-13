@@ -353,3 +353,130 @@ From real readings only (`reports/metrics/eda_summary.json`):
   quote onset-only metrics (`reports/metrics/baselines_event_onset.json`).
 - **Holdout test vs CV:** the CGMacros holdout test (9 patients) is about 1.5-2.5 mg/dL worse than
   CV, within its wide CIs. Headline numbers are the CV results; the holdout is a confirmation only.
+
+## D-027 Part 3 ablation protocol (configs/fusion.yaml)
+- **Reuse:** cached Part 2 anchor tables (N = 6 h), the same 5×5 patient-grouped CV folds, the
+  same nested inner 80/20 patient split (seed 42 + repeat) for early stopping and leaves. Part 2
+  persistence / per-patient AR predictions are merged in, never rerun. The holdout test is unused
+  in Part 3 (nothing here is a final-test claim).
+- **Two targets for every LightGBM config:** `abs` = y(t+h); `delta` = y(t+h) - base(t), with
+  base = current CGM (T2/T3 tiers: the last fingerstick). Errors are always reported on absolute
+  glucose. Reconstruction is unit-tested.
+- **"A_static, delta"** uses the current CGM value as its base, so it means "current glucose +
+  static". It is labeled that way and is not a static-only model. The pure static-only result is
+  "A_static, abs".
+- **Feature groups** are disjoint and resolved by prefix (tested; dropping a group removes
+  exactly its columns).
+  - Time of day is in every dynamic config, so B = Part 2's lgbm_cgm_tod. Fusion gains are
+    measured against the strongest pooled CGM model, not a weaker CGM-only one.
+  - `act_post_meal` belongs to the meals group because it needs meal timing.
+  - "Drop wearable" removes HR, activity and rest_proxy. "Drop rest_proxy" alone is a separate
+    run.
+- **Static groups:**
+  - CGMacros: demographics/anthropometrics (age, sex, BMI), glycemic (HbA1c, fasting glucose),
+    insulin (fasting insulin), lipids (TG, total cholesterol, HDL, LDL).
+  - Shanghai: same demo/anthro and lipids; HbA1c (+ fasting glucose); diabetes duration;
+    C-peptide (fasting C-peptide + fasting insulin, both beta-cell function); 9 medication
+    flags; kidney function (creatinine, eGFR).
+  - Creatinine and eGFR were added to the static table from Shanghai_T2DM_Summary.xlsx
+    (78 / 77 of 100 patients). The dynamic grids were unchanged (file hashes identical).
+- **Evaluation subsets:**
+  - post-meal = a logged meal ≤ 180 min before t (CGMacros);
+  - rising onset = glucose at t ≤ 140 and a real reading > 140 within h (regression);
+  - event onset-only = windows starting below the threshold (above for hypo), as in D-026.
+- **Paired comparisons:** per-patient MAE sums on IDENTICAL rows for both models, the same
+  resampled patients in each of 1,000 draws. "Not distinguishable" = 95% CI includes 0.
+- **CGMacros hypo** is computed and labeled "limited evidence" (19 patients with events) in every
+  table, never headlined (owner).
+
+## D-028 Neural fusion model (src/models/neural.py)
+- **Architecture:** GRU over the last 6 h at 15-min resolution (24 steps), channels:
+  - glucose (real only) + real-mask;
+  - HR, activity;
+  - meal macros logged in each 15-min bin;
+  - time of day sin/cos.
+
+  Static vector + NaN mask → FiLM (gamma, beta) on the final GRU state → MLP head with 3 outputs
+  (30/60/120), delta target, L1 loss.
+- **Causality:** sequences end AT t; meals are binned to the first grid row at/after the meal
+  (tested by perturbing the future).
+- **Fitted on training patients only:** scalers and imputation (fold mean; NaN → 0 after
+  standardising, plus mask channels).
+- **Configs:** B (CGM + time) and E (full; Shanghai: CGM + time + static).
+- **Hidden size** {32, 64} chosen once on the holdout-train inner split (seed 0); dropout 0.1,
+  lr 2e-3, batch 256, ≤ 40 epochs, patience 5 on the inner patient validation split.
+- **Cost:** CV repeat 0 only (5 folds) × 5 seeds. Full 5×5 × 5 seeds would be 5× the measured
+  ~105 min. Neural, LightGBM and ensemble comparisons are therefore made on repeat 0 rows only
+  (paired).
+- **Ensemble:** mean of LightGBM E (delta) and the seed-averaged neural E.
+
+## D-029 Input tiers and simulated fingersticks
+- **Tier 1:** full fusion (E). **Tier 2:** no CGM (wearable + meals + static + time) +
+  fingersticks. **Tier 3:** static + time + fingersticks.
+- **Fingersticks:** the REAL CGM value at fixed clock times, `fs4` = 07:00, 11:30, 17:30, 21:30
+  (fasting, pre-lunch, pre-dinner, bedtime; a typical 4-point SMBG profile) and `fs2` = 07:00,
+  17:30.
+  - If no real reading exists at that clock time, the stick is skipped (no imputation).
+  - Features: last value, minutes since it, previous value, last change, 24-h mean and count.
+  - Only sticks with time ≤ t are used (tested).
+- **Limitations:**
+  - Clock times are valid but days are shifted (D-012), which does not matter here.
+  - Real fingersticks have larger meter error (ISO 15197 allows ±15%) than the CGM values used,
+    so tiers 2/3 are optimistic.
+  - Shanghai has no wearables, so only T1 and T3 are run there.
+- **Delta target in T2/T3** uses the last fingerstick as its base (training-fold mean before the
+  first stick). The "last fingerstick only" persistence is reported as the tier baseline.
+
+## D-030 Part 3 findings that shape later parts
+Source: `reports/metrics/fusion_<cohort>.json` (MAE mg/dL, mean [95% patient-bootstrap CI];
+paired diffs m1 - m2, < 0 = m1 better; out-of-fold, patient-grouped CV, train patients only).
+- **CGMacros (45 patients).**
+  - Meals are the only added stream with a clear gain: D vs C delta -0.74 / -0.93 / -0.91 at
+    +30/+60/+120. The gain is larger post-meal (-0.97 / -1.57 / -1.76) and at hyper-140 onset
+    (-3.14 / -2.16 / -1.17). Leave-meals-out costs +0.75 / +0.92 / +0.96.
+  - Wearables add nothing at +30/+60 (ns) and slightly hurt at +120 (C - B delta +0.16).
+  - Static: only the glycemic group helps (leave-out +0.33 / +0.61 / +0.90). E vs D is ns
+    at all horizons.
+  - Best LightGBM is `D_delta` / `E_delta` (11.7 / 17.0 / 21.8). It beats per-patient AR at
+    +30/+60 (-0.46 / -0.41) and ties it at +120 (0.00 ns). At hyper-140 onset it is much better
+    (-4.07 / -2.95 / -1.74).
+  - Delta beats absolute targets. E_abs at +120 is worse than D_abs (+1.68).
+  - Excluding patient 007 changes nothing (largest shift 0.1 mg/dL).
+- **Shanghai T2DM (100 patients).** CGM-only LightGBM (`B_delta`, 9.2 / 16.5 / 24.6) beats AR
+  (-0.30 / -0.69 / -1.75). Adding static (E) is slightly worse (+0.09 / +0.22 / +0.27 ns). No
+  leave-one-group-out static group helps, except a tiny demo/anthro effect at +120 (+0.24).
+- **Neural (GRU + FiLM, CV repeat 0, 5 seeds).**
+  - `nn_B_cgm` has the best overall MAE in both cohorts:
+    - CGMacros 12.1 / 16.9 / 20.9;
+    - Shanghai 8.9 / 15.8 / 23.6;
+    - vs LightGBM B: -0.27 / -0.60 / -0.99 on Shanghai.
+  - It is clearly WORSE at hyper-140 onset (Shanghai vs LightGBM B: +1.21 / +3.08 / +2.99;
+    CGMacros: +2.64 / +3.08 / +2.24). Working hypothesis: it predicts conservatively, toward
+    the mean. Better on average, worse at the clinically important excursions.
+  - `nn_E_full` is worse than `nn_B_cgm` (static overfits with 45-100 patients) and less stable
+    across seeds (sd up to 0.5 vs ≤ 0.12).
+  - Leakage probe (Shanghai):
+    - the gain holds in all 5 folds and for 88 / 82 / 72 of 100 patients;
+    - corrupting all glucose after the anchor left 300/300 input sequences unchanged;
+    - effect size is about 3-4%, plausible rather than suspicious.
+  - The ensemble (`ens_E_full`) helps on Shanghai (-0.16 / -0.36 / -0.43 vs LightGBM E) and is
+    neutral on CGMacros.
+- **Tiers.** Without CGM, fingersticks beat fingerstick persistence by a wide margin, but stay
+  far from CGM. Examples:
+  - CGMacros T2 fs4 delta: 21.7 / 22.6 / 24.0 vs T1 11.7 / 17.0 / 21.8.
+  - Shanghai T3 fs4 delta: 26.8 / 28.0 / 29.1, worse than CGM persistence at +30/+60.
+  - These numbers are optimistic (no meter error, D-029).
+- **Events (+60 min, onset-only).** LightGBM beats value persistence:
+  - hyper-180 onset AUROC: CGMacros 0.879 vs 0.775; Shanghai 0.910 vs 0.815.
+  - Hypo < 70 is "limited evidence" on CGMacros (19 patients with events) and reliable on
+    Shanghai (65 patients, onset AUROC 0.955).
+- **Groups.** Error scales with dysglycemia: CGMacros at +60 is healthy 13.3, prediabetes 16.1,
+  T2D 21.8.
+- **Consequences:**
+  - Part 4 uses meals + CGM (+ glycemic static) with a delta target as the ML residual on top of
+    the mechanistic model. Wearables and the remaining static groups are optional inputs only.
+  - Always report onset / post-meal subsets next to overall MAE. Do not select models on overall
+    MAE alone.
+  - The neural model is kept as a candidate, but not adopted as the default forecaster until its
+    onset weakness is addressed.
+
