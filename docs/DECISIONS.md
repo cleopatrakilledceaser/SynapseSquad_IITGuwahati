@@ -480,3 +480,180 @@ paired diffs m1 - m2, < 0 = m1 better; out-of-fold, patient-grouped CV, train pa
   - The neural model is kept as a candidate, but not adopted as the default forecaster until its
     onset weakness is addressed.
 
+
+## D-031 Mechanistic model structure and solver (Part 4)
+- **States:** two-compartment gut (Q1, Q2, g of carbohydrate), glucose G (mg/dL), insulin
+  surrogate U, insulin action X, smoothed activity E. Equations: `src/mech/model.py` docstring.
+- **Gastric slowing:** k = kabs / (1 + β·r), with r = (fat + 0.5·protein + fiber) / (carbs + 1) of
+  the most recent meal.
+- **Insulin surrogate (insulin is not measured):** driven by softplus(G − Gb) (owner change: smooth,
+  not a hard rectifier) plus a feed-forward from gut appearance. X is offset so that rest (G = Gb,
+  empty gut, no activity) is an exact fixed point (tested).
+  - **Limitation:** it cannot represent exogenous insulin, sulfonylureas or β-cell failure beyond
+    what SI/SG absorb.
+- **Activity:** G' gains −α_E·E·(G − Gb), which speeds the return to basal and never pushes
+  glucose below it.
+- **Parameters:**
+  - Fitted on a log scale within bounds: Gb, SG, SI, fc, kabs, β.
+  - Fixed: p2, τI, cR, τE, softplus width (values in `configs/mech.yaml`).
+  - α_E is population level (D-033).
+- **Solver:** fixed-step RK4 on the native grid (5 min; 3 sub-steps on the Shanghai 15-min grid),
+  with states clipped to physical ranges.
+  - Compiled with numba 0.68.0 / llvmlite 0.50.0 (pinned; verified to install and compile in the
+    venv). A no-op fallback decorator keeps the code runnable with plain numpy.
+  - Tests: bound corners stay finite; RK4 step halving converges.
+- **Fitting:** MAP via `scipy.optimize.least_squares` (bounded) on real readings only.
+  - Glucose is reset to the observed reading every 6 h, so each segment is an open-loop run from a
+    known value, which avoids long-horizon drift.
+  - Gaussian prior on log parameters.
+- **Forecast:** an EKF assimilates CGM ≤ t, then runs open-loop with no future meals and activity
+  0. Predictive variance = P_GG + R.
+
+## D-032 Nested selection for the twin (Part 4, owner change 2)
+Folds are Part 2/3 CV repeat 0, the same patient folds for the twin, the static prior, LightGBM
+and AR (owner change 4). Inside each fold, everything chosen uses training patients only:
+1. **α_E:** grid search over 3-day fits of training patients, scored by their forecast MAE after
+   day 3.
+2. **Population prior:** mean and sd (with floor) of the training patients' 3-day log estimates.
+3. **Static ridge prior:** ridge alpha per parameter by leave-one-out over training patients;
+   missing values imputed with the training median.
+4. **EKF (Q scale, R), per k:** training patients get parameters exactly as a test patient would
+   at that k. The lowest mean Gaussian NLL wins.
+   - **At k = 0** the training patients use the population mean (owner change 2).
+   - Selection uses a subsample of training anchors.
+- **Grids widened once, before the full run:** the timing fold hit the grid edges (α_E 0.0005 =
+  lowest; Q/R corner 4/64). The new grids are α_E 0.0001–0.008, q_scale {1, 4, 16, 64},
+  R {25, 64, 144, 256}. This decision used training-patient scores only, and the timing fold was
+  recomputed in the full run.
+- **Choices made in the full run:**
+  - α_E = 0.0001 in 4/5 folds and 0.00025 in 1/5, again the lowest value. The data support no
+    meaningful activity effect (D-036). Fold-0 MAE across the α_E grid spans only 18.84–19.22.
+  - Q scale = 16 in all folds (interior of the grid).
+  - R = 25 at k = 0/3, R = 144–256 at k = 1 (noisier 1-day parameters → the filter trusts the
+    model less). R = 25 is the lower grid edge; at fold 0, k = 3, its NLL differs from R = 64 by
+    0.005, so the surface is flat there and the edge choice is immaterial.
+- **Test patients:** parameters use only their first k days. The EKF state uses their real CGM
+  ≤ t at every k, like persistence and AR. LightGBM uses none of the patient's own days
+  (owner change 1); AR is refit on exactly the first k days, so it does not exist at k = 0.
+
+## D-033 Activity input and resting levels (Part 4, owner change 3)
+- **Input:** A(t) = (intensity − rest)+ + (HR − HR_rest)+ / 20 bpm. Missing parts count as 0.
+- **Resting level:** a past-only expanding 25th percentile of the patient's own samples before t.
+- **No past data:** until 72 samples exist, defaults are used (HR 70 bpm, intensity 0). Tested:
+  values after t never change the resting level at t.
+- **Ablation:** α_E is population level only. The ablation is reported separately for the METs
+  (34) and Fitbit-intensity (11) patients.
+
+
+## D-034 Identifiability: structural vs practical (Part 4)
+Run on CGMacros with the first 3 days of each patient. Figures: `mech_parameter_recovery.png`,
+`mech_profile_likelihood.png`. Metrics: `reports/metrics/mech_identifiability.json`.
+
+| param | synthetic r(true, est) | Laplace contraction (real, median) | test-retest r (real, 45 pts) | median abs Δlog (retest) | verdict |
+|---|---|---|---|---|---|
+| Gb | 1.00 | 1.00 | 0.62 | 0.08 | practically identifiable |
+| SG | 0.77 | 0.86 | 0.22 | 0.92 | structurally only |
+| SI | 0.98 | 1.00 | 0.24 | 1.07 | structurally only |
+| fc | 0.80 | 0.99 | 0.19 | 0.84 | structurally only |
+| kabs | 0.83 | 0.96 | 0.18 | 0.61 | structurally only |
+| β | 0.89 | 0.69 | 0.14 | 1.82 | structurally only |
+
+- **The test-retest check was added after the first verdict.** The original 3-criterion rule
+  (contraction, profile, recovery) called all 6 parameters identifiable. The k = 1 vs k = 3 fits of
+  the same patients disagreed badly (log-scale r 0.24–0.43, Gb 0.75), so I treated the verdict as
+  suspicious. Test-retest compares MAP fits on two disjoint 3-day windows (days 0–3 vs 3–6) per
+  patient; the verdict is "practical" only if r ≥ `retest_min` = 0.5.
+- **With ideal data**, all 6 parameters are recoverable: the model is structurally identifiable
+  from CGM plus logged meals.
+- **On real data, only Gb is stable.** For the other parameters, two windows of the same patient
+  differ by a median factor of e^0.6–e^1.8 (≈ 2–6×).
+- **Laplace contraction overstates information** because it assumes independent residuals, while
+  real CGM residuals are autocorrelated (lag-1 0.82, D-035). It is reported but not trusted.
+- **Posterior correlations (median, real):** kabs–β 0.76, fc–kabs −0.52, SG–SI −0.49, Gb–SI 0.46.
+  These trade-offs plus meal-log error (timing, portions) and day-to-day physiology explain the
+  poor retest agreement.
+- **Consequence:** per-patient SG, SI, fc, kabs and β must NOT be shown to clinicians as patient
+  characteristics. Only Gb (basal glucose) is stable enough to display, with its uncertainty.
+
+## D-035 Simulator (Part 4)
+- **Parameters:** a multivariate normal fitted to the log estimates of real patients
+  (twin_pop_actoff_k3 fits, out-of-fold).
+- **Schedules:** whole real days resampled, so meal timing, macros and activity stay consistent.
+- **Noise:** white sd 1.3 + AR(1) (sd 7.2, φ = 0.82), estimated from real CGMacros readings minus a
+  centred 1-h mean. This is a rough proxy, not a validated sensor-error model.
+- **Labeling:** ids `synthetic_*`, `synthetic = True`, files in `data/synthetic/` (gitignored).
+  Never mixed with real data or real test sets.
+- **`phenotype: indian`** is a documented placeholder that raises NotImplementedError (Part 11).
+- **Realism, per-patient quartiles** (real → synthetic, figure `mech_simulator_realism.png`):
+  - Mean glucose median 130 → 135 mg/dL, IQR 120–152 → 116–160.
+  - CV median 19 → 13%, IQR 16–23 → 9–18.
+  - Time >180% median 5.0 → 1.4, but the synthetic upper tail is heavier (several patients
+    > 60%).
+  - Post-meal rise median 60 → 34 mg/dL.
+  - Time to peak median 75 → 86 min, IQR 60–88 → 70–116.
+- **Verdict:**
+  - Within a patient, the simulator is too smooth: lower CV, smaller post-meal rises, later and
+    more spread-out peaks.
+  - Between patients, it is too spread out: the multivariate normal over poorly identified
+
+## D-036 Part 4 findings (mechanistic twin)
+CGMacros: 45 patients, 29,321 identical test windows (anchors on day ≥ 3), 5 patient folds, paired
+patient bootstrap 95% CIs. "ns" = CI includes 0. Metrics: `reports/metrics/mech_cgmacros.json`.
+
+- **k = 3, overall MAE +30/+60/+120 (mg/dL):**
+
+  | model | +30 | +60 | +120 |
+  |---|---|---|---|
+  | twin (pop prior, activity on) | 12.7 | 18.1 | 23.2 |
+  | AR, first 3 days | 12.2 | 17.4 | 21.5 |
+  | LightGBM (none of the patient's own days) | 11.4 | 16.6 | 20.8 |
+  | persistence | 13.2 | 19.4 | 26.6 |
+
+  - Twin − persistence: −0.5 ns / −1.3 / −3.4. The twin beats persistence at +60 and +120.
+  - Twin − AR: +0.5 ns / +0.7 ns / +1.7. Not better than AR anywhere; worse at +120.
+  - Twin − LightGBM: +1.3 / +1.5 / +2.5. Worse at every horizon, in every subset.
+- **Subsets at k = 3:**
+  - Hyper-140 onset: twin − LightGBM is +4.4 / +5.5 / +7.3.
+  - Twin − AR at onset: −0.6 ns at +30, +4.0 at +120.
+  - Post-meal 3 h: twin 17.2 / 22.1 / 24.4 vs LightGBM 15.5 / 20.6 / 21.9.
+- **Adaptation days:**
+  - k = 3 vs k = 0: −1.9 / −4.3 / −6.8 (helps).
+  - k = 1 vs k = 0: +1.1 ns / +0.2 ns / −1.6 ns overall, and +2.1 at +30 post-meal (hurts). One day
+    of data gives noisy parameters, consistent with D-034.
+- **Static prior:**
+  - At k = 0, the static ridge prior beats the population prior by −1.4 / −2.6 / −3.6. This is the
+    only clear benefit of static data in Part 4, and it brings the twin up to persistence level.
+  - At k ≥ 1 its effect is |Δ| ≤ 0.3 mg/dL.
+- **Activity on vs off:** |Δ| ≤ 0.12 mg/dL in both the METs (34) and Intensity (11) subgroups at
+  every k. Some differences are statistically non-zero but clinically zero. α_E was selected at the
+  grid floor (D-032), so the data support no walk effect in this model.
+- **Interval coverage, twin_pop_acton_k3:**
+  - 80% intervals cover 89 / 88 / 88% (over-wide).
+  - 95% intervals cover 96 / 95 / 95% (well calibrated).
+  - 95% widths: 89 / 123 / 159 mg/dL, too wide for clinical use.
+- **Shanghai T2DM** (97 patients, meal timing only, pooled 50 g dose, k = 3, no activity):
+  - MAE: twin 11.4 / 18.6 / 27.3, persistence 11.4 / 19.3 / 29.8, AR 9.3 / 16.9 / 25.8,
+    LightGBM 8.9 / 15.9 / 23.7.
+  - The twin is worse than AR and LightGBM at every horizon; it beats persistence only at +120.
+  - 80% / 95% intervals under-cover: 84 / 79 / 75% and 93 / 90 / 88%. Q/R were selected nested on
+    Shanghai training patients (Q scale 16, R = 25 in all 5 folds; R is the lower grid edge). The
+    NLL criterion did not produce calibrated longer-horizon intervals here; treat Shanghai
+    intervals as not calibrated.
+- **What-if (SIMULATED, median fitted patient):**
+  - Peak 143 mg/dL for 30 g vs 160 mg/dL for 60 g.
+  - Time above 140: 80 vs 145 min.
+  - A 30-min walk changes the peak by < 0.1 mg/dL, as the figure states.
+- **Leakage check:** the twin is worse than LightGBM and AR, so the results are not suspiciously
+  good. Tests cover the guarantees: `test_fit_uses_only_first_k_days`, `test_ekf_forecast_causal`,
+  `test_rest_level_is_past_only_with_default`, `test_simulation_causal_in_meals_and_activity`.
+- **Implications for Part 5 (hybrid):**
+  - The mechanistic twin alone is not a competitive forecaster.
+  - Its usable contributions are a stable Gb, physiological structure for what-if scaffolding, and
+    possibly its states or forecasts as LightGBM features or a residual base.
+  - Per-patient kinetic parameters are not reliable (D-034).
+  - Activity needs a different representation, e.g. learned in the ML part.
+
+    parameters (D-034) produces extreme combinations.
+  - Acceptable for code tests and illustrating what-if mechanics; NOT a realistic synthetic cohort.
+    Revisit in Part 11.
+

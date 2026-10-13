@@ -10,3 +10,9 @@ matplotlib==3.11.2
 # Part 2 (verified to install + import in the 3.11 venv, D-008)
 lightgbm==4.7.0
 statsmodels==0.15.0
+# Part 4 mechanistic twin: JIT for the ODE / EKF kernels (verified to import + compile, D-031;
+# the code falls back to plain numpy if numba is unavailable)
+numba==0.68.0
+llvmlite==0.50.0
+# Used since Part 3 for parallel folds (came in via scikit-learn; now pinned explicitly)
+joblib==1.6.0

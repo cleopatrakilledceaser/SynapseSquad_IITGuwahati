@@ -123,6 +123,90 @@ def part3() -> list[str]:
     return s
 
 
+def coverage(rows: list[dict], model: str) -> pd.DataFrame:
+    """Twin interval coverage [CI] and mean width per level x horizon."""
+    c = pd.DataFrame(rows)
+    c = c[c.model == model].copy()
+    c["v"] = [
+        f"{ci(a, b, 3)} (width {w:.0f})"
+        for a, b, w in zip(c.coverage, c.coverage_ci, c.mean_width, strict=True)
+    ]
+    t = c.pivot_table(index="level", columns="horizon_min", values="v", aggfunc="first")
+    t.columns = [f"+{x} min" for x in t.columns]
+    return t
+
+
+def part4() -> list[str]:
+    """Part 4 section (mechanistic twin)."""
+    s = [
+        "## Part 4 — Mechanistic twin (tag `part-4-done`)",
+        "",
+        "Source: `reports/metrics/mech_{cgmacros,shanghai_t2dm,identifiability}.json`. Identical",
+        "test windows (anchors on day ≥ 3) for every model; CV repeat 0 patient folds; 95%",
+        "patient-bootstrap CIs. k = days of the patient's own data used for parameters (twin) or",
+        "refitting (AR). LightGBM uses none of the patient's own days. At k = 0 there is no AR.",
+        "Decisions: D-031 to D-036.",
+        "",
+    ]
+    for coh, name in COHORTS.items():
+        f = M / f"mech_{coh}.json"
+        if not f.exists():
+            s += [f"### {name}: not run", ""]
+            continue
+        r = json.loads(f.read_text())["metrics"]
+        s += [f"### {name} ({r['n_test_patients']} patients, {r['n_test_windows']} windows)", ""]
+        for key in sorted(k for k in r if k.startswith("regression_k")):
+            s += [f"**MAE, {key.split('_')[1]}** (overall)", "", md(reg(r[key])), ""]
+        subs = ("overall", "post_meal_3h", "onset_hyper140")
+        for key in sorted(k for k in r if k.startswith("paired_") and r[k]):
+            s += [f"**Paired, {key[7:]}**", "", md(paired(r[key], subs)), ""]
+        cm = "twin_pop_acton_k3" if coh == "cgmacros" else "twin_pop_actoff_k3"
+        s += [f"**Interval coverage, {cm}**", "", md(coverage(r["coverage"], cm)), ""]
+        for src, d in r.get("activity_by_source", {}).items():
+            s += [
+                f"**Activity on − off, {src} patients (n = {d['n_patients']})**",
+                "",
+                md(paired(d["paired"])),
+                "",
+            ]
+        if "simulator" in r:
+            sm = r["simulator"]
+            q = pd.concat(
+                {
+                    "real": pd.DataFrame(sm["real_quartiles"]),
+                    "SYNTHETIC": pd.DataFrame(sm["synthetic_quartiles"]),
+                }
+            ).round(1)
+            s += [
+                f"**Simulator realism** (per-patient quartiles; {sm['n_synthetic_patients']}",
+                "SYNTHETIC patients vs real CGMacros)",
+                "",
+                md(q),
+                "",
+                "**What-if (SIMULATED, median fitted patient; not a forecast)**",
+                "",
+                md(pd.DataFrame(r["whatif_simulated"]).T.round(1)),
+                "",
+            ]
+    f = M / "mech_identifiability.json"
+    if f.exists():
+        p = pd.DataFrame(json.loads(f.read_text())["metrics"]["params"]).T
+        cols = [
+            "recovery_corr_true_est",
+            "contraction_median_real",
+            "profile_flat_fraction",
+            "retest_corr_log",
+            "retest_abs_log_diff_median",
+            "structurally_identifiable",
+            "practically_identifiable",
+        ]
+        t = p[cols].copy()
+        for c in cols[:5]:
+            t[c] = t[c].astype(float).round(2)
+        s += ["### Identifiability (CGMacros, first 3 days; D-034)", "", md(t), ""]
+    return s
+
+
 def main() -> None:
     """Write docs/RESULTS.md."""
     head = [
@@ -132,7 +216,7 @@ def main() -> None:
         "by hand. Research prototype, decision support only, not a medical device.",
         "",
     ]
-    OUT.write_text("\n".join(head + part3()) + "\n", encoding="utf-8")
+    OUT.write_text("\n".join(head + part3() + part4()) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

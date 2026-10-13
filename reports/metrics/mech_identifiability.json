@@ -1,0 +1,310 @@
+{
+  "name": "mech_identifiability",
+  "timestamp_utc": "2026-10-13T14:01:29.149047+00:00",
+  "git_hash": "811a328e7c58c73a239b69cf585b4cf2b026b1a0-dirty",
+  "seed": 42,
+  "data_hash": "dfbd88835c87e3585b7a4e2084a71e116c43044b9cedb1c1eeefa797ca67f478",
+  "config": {
+    "seed": 42,
+    "horizons_min": [
+      30,
+      60,
+      120
+    ],
+    "adapt_days": [
+      0,
+      1,
+      3
+    ],
+    "test_from_day": 3,
+    "cv_repeat": 0,
+    "solver": {
+      "dt_min": 5.0,
+      "n_sub": 1,
+      "g_bounds": [
+        20.0,
+        600.0
+      ],
+      "x_bounds": [
+        -0.05,
+        0.2
+      ]
+    },
+    "params": {
+      "fit": {
+        "Gb": {
+          "mean": 115.0,
+          "sd": 0.3,
+          "lo": 60.0,
+          "hi": 250.0
+        },
+        "SG": {
+          "mean": 0.01,
+          "sd": 1.0,
+          "lo": 0.001,
+          "hi": 0.1
+        },
+        "SI": {
+          "mean": 0.0002,
+          "sd": 1.5,
+          "lo": 1e-06,
+          "hi": 0.01
+        },
+        "fc": {
+          "mean": 4.0,
+          "sd": 1.0,
+          "lo": 0.3,
+          "hi": 30.0
+        },
+        "kabs": {
+          "mean": 0.03,
+          "sd": 0.7,
+          "lo": 0.005,
+          "hi": 0.2
+        },
+        "beta": {
+          "mean": 0.5,
+          "sd": 1.0,
+          "lo": 0.01,
+          "hi": 10.0
+        }
+      },
+      "fixed": {
+        "p2": 0.02,
+        "tauI": 20.0,
+        "cR": 20.0,
+        "tauE": 30.0,
+        "soft_s": 10.0
+      },
+      "slow_protein_weight": 0.5
+    },
+    "activity": {
+      "alpha_grid": [
+        0.0001,
+        0.00025,
+        0.0005,
+        0.001,
+        0.002,
+        0.004,
+        0.008
+      ],
+      "hr_scale_bpm": 20.0,
+      "rest_quantile": 0.25,
+      "min_rest_samples": 72,
+      "hr_rest_default_bpm": 70.0,
+      "intensity_rest_default": 0.0
+    },
+    "fit": {
+      "sigma_obs": 15.0,
+      "segment_hours": 6,
+      "max_nfev": 300,
+      "stage1_days": 3,
+      "prior_sd_floor": 0.15
+    },
+    "prior": {
+      "static_features": [
+        "bmi",
+        "hba1c_pct",
+        "fasting_glucose_mgdl",
+        "fasting_insulin",
+        "age_years",
+        "sex_male"
+      ],
+      "ridge_alphas": [
+        0.1,
+        1.0,
+        10.0,
+        100.0,
+        1000.0
+      ]
+    },
+    "ekf": {
+      "q_base": {
+        "Q1": 1.0,
+        "Q2": 1.0,
+        "G": 4.0,
+        "U": 4.0,
+        "X": 1e-07,
+        "E": 0.0
+      },
+      "q_scale_grid": [
+        1.0,
+        4.0,
+        16.0,
+        64.0
+      ],
+      "r_grid": [
+        25.0,
+        64.0,
+        144.0,
+        256.0
+      ],
+      "p0": {
+        "Q1": 100.0,
+        "Q2": 100.0,
+        "G": 100.0,
+        "U": 100.0,
+        "X": 1e-06,
+        "E": 0.01
+      },
+      "train_eval_stride": 4,
+      "default": {
+        "q_scale": 1.0,
+        "r": 25.0
+      }
+    },
+    "patient_ar": {
+      "ridge_lambda": 50.0,
+      "min_pairs": 50
+    },
+    "lgbm": {
+      "groups": [
+        "cgm",
+        "tod",
+        "meals"
+      ]
+    },
+    "intervals": [
+      0.8,
+      0.95
+    ],
+    "identifiability": {
+      "n_synthetic": 200,
+      "noise_sd": 8.0,
+      "contraction_min": 0.5,
+      "retest_min": 0.5,
+      "profile_patients": 5,
+      "profile_points": 9,
+      "profile_halfwidth_log": 1.0
+    },
+    "shanghai": {
+      "enabled": true,
+      "k": 3,
+      "pooled_dose_g": 50.0,
+      "free": [
+        "Gb",
+        "SG",
+        "SI",
+        "fc",
+        "kabs"
+      ],
+      "n_sub": 3
+    },
+    "simulate": {
+      "n_patients": 100,
+      "days": 7,
+      "noise_ar1": null,
+      "phenotype": "default"
+    },
+    "whatif": {
+      "meals_g": [
+        30,
+        60
+      ],
+      "walk": {
+        "start_after_meal_min": 15,
+        "duration_min": 30,
+        "intensity": 2.0
+      },
+      "hours": 5
+    }
+  },
+  "metrics": {
+    "alpha_E_used": 0.001,
+    "n_synthetic": 200,
+    "n_real": 45,
+    "n_profile_patients": 5,
+    "params": {
+      "Gb": {
+        "retest_corr_log": 0.6150820825116124,
+        "retest_abs_log_diff_median": 0.08411164209062605,
+        "structurally_identifiable": true,
+        "practically_identifiable": true,
+        "recovery_abs_log_err_median": 0.004660275949339265,
+        "recovery_abs_log_err_p90": 0.013161615330983078,
+        "recovery_corr_true_est": 0.9981430344937119,
+        "contraction_median_synthetic": 0.9994553906912836,
+        "contraction_median_real": 0.9992627173384537,
+        "profile_flat_fraction": 0.0
+      },
+      "SG": {
+        "retest_corr_log": 0.22031720524609796,
+        "retest_abs_log_diff_median": 0.9214658543324195,
+        "structurally_identifiable": true,
+        "practically_identifiable": false,
+        "recovery_abs_log_err_median": 0.17224868106203672,
+        "recovery_abs_log_err_p90": 0.6990792968797526,
+        "recovery_corr_true_est": 0.7706882872448316,
+        "contraction_median_synthetic": 0.9712522847709362,
+        "contraction_median_real": 0.8637251806852473,
+        "profile_flat_fraction": 0.2
+      },
+      "SI": {
+        "retest_corr_log": 0.24226286657974244,
+        "retest_abs_log_diff_median": 1.0701111565476875,
+        "structurally_identifiable": true,
+        "practically_identifiable": false,
+        "recovery_abs_log_err_median": 0.05968141341697253,
+        "recovery_abs_log_err_p90": 0.28789661212621276,
+        "recovery_corr_true_est": 0.9800048549805379,
+        "contraction_median_synthetic": 0.9961577559294382,
+        "contraction_median_real": 0.9962277012221041,
+        "profile_flat_fraction": 0.2
+      },
+      "fc": {
+        "retest_corr_log": 0.18988322522954515,
+        "retest_abs_log_diff_median": 0.8425921679313474,
+        "structurally_identifiable": true,
+        "practically_identifiable": false,
+        "recovery_abs_log_err_median": 0.13542394845223105,
+        "recovery_abs_log_err_p90": 0.5985466476943598,
+        "recovery_corr_true_est": 0.8024835267594216,
+        "contraction_median_synthetic": 0.9754270753062395,
+        "contraction_median_real": 0.9904102317651552,
+        "profile_flat_fraction": 0.0
+      },
+      "kabs": {
+        "retest_corr_log": 0.1784248567987102,
+        "retest_abs_log_diff_median": 0.6120032138029465,
+        "structurally_identifiable": true,
+        "practically_identifiable": false,
+        "recovery_abs_log_err_median": 0.08284173996685507,
+        "recovery_abs_log_err_p90": 0.3600540484995691,
+        "recovery_corr_true_est": 0.8264630884449908,
+        "contraction_median_synthetic": 0.9630971007907507,
+        "contraction_median_real": 0.9567030298684966,
+        "profile_flat_fraction": 0.0
+      },
+      "beta": {
+        "retest_corr_log": 0.14224601096167255,
+        "retest_abs_log_diff_median": 1.8248597750590938,
+        "structurally_identifiable": true,
+        "practically_identifiable": false,
+        "recovery_abs_log_err_median": 0.09719080508978423,
+        "recovery_abs_log_err_p90": 0.372184400459459,
+        "recovery_corr_true_est": 0.8919548317932832,
+        "contraction_median_synthetic": 0.9504884034294143,
+        "contraction_median_real": 0.6915110458165501,
+        "profile_flat_fraction": 0.4
+      }
+    },
+    "n_retest_patients": 45,
+    "posterior_corr_median_real": {
+      "Gb_SG": -0.23162914201925483,
+      "Gb_SI": 0.45672368567877425,
+      "Gb_fc": -0.2083577173877313,
+      "Gb_kabs": -0.02842536787255609,
+      "Gb_beta": -0.004699021165780189,
+      "SG_SI": -0.49023312880381775,
+      "SG_fc": 0.158803847400552,
+      "SG_kabs": 0.017083291271932317,
+      "SG_beta": 0.036087784856338186,
+      "SI_fc": 0.3402384917132982,
+      "SI_kabs": -0.34303038715428946,
+      "SI_beta": -0.06896879039138254,
+      "fc_kabs": -0.5247456441894727,
+      "fc_beta": -0.03582728245943904,
+      "kabs_beta": 0.7630300711553937
+    }
+  }
+}

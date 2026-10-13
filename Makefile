@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: all setup data features models fusion figures app test lint format smoke clean help
+.PHONY: all setup data features models fusion mech figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -35,6 +35,10 @@ models:
 fusion:  ## Part 3 (about 4 h CPU, resumable: cached runs in data/processed/fusion are skipped)
 	$(PY) -W ignore -u -m src.models.run_fusion all
 	$(PY) -W ignore -m src.eval.fusion_report
+
+mech:  ## Part 4 mechanistic twin (about 10 min CPU, resumable: cached in data/processed/mech)
+	$(PY) -W ignore -u -m src.mech.run_mech all
+	$(PY) -W ignore -m src.mech.report
 
 figures:
 	$(PY) -m src.eval.eda

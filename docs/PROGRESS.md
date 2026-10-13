@@ -89,7 +89,23 @@
   neural seed variance, feature importance, SHAP summaries).
 - Static table: + Shanghai creatinine / eGFR (D-027).
 
+## Part 4 outputs (done, tag `part-4-done`)
+- Code: `src/mech/` (model, inputs, fit, prior, protocol, baselines_k, run_mech, identify,
+  simulate, report, figures); `configs/mech.yaml`; `tests/test_mech.py` (16 tests).
+- `make mech`: the full run took about 10 min of CPU time (twin, AR, LightGBM, identify,
+  Shanghai) and is cached in `data/processed/mech/` (gitignored).
+- `reports/metrics/`: `mech_cgmacros.json`, `mech_shanghai_t2dm.json`,
+  `mech_identifiability.json`.
+- `reports/figures/mech_*.png` (9 figures).
+- `data/synthetic/synthetic_mech_*.parquet` (gitignored, labeled SYNTHETIC).
+- Pinned: numba 0.68.0, llvmlite 0.50.0, joblib 1.6.0.
+- Headline (D-036):
+  - At k = 3 the twin beats persistence at +60/+120.
+  - It is not better than AR and is worse than LightGBM everywhere.
+  - Only Gb is practically identifiable (D-034).
+  - Activity has no measurable effect.
+  - The static prior helps only at k = 0.
+
 ## Next steps
-1. Part 4 (mechanistic ODE twin, approved plan): gut + minimal model + insulin surrogate +
-   activity, per-patient MAP on first k days, EKF nowcasting, static ridge prior, simulator.
-   No hybrid/ML residual (Part 5).
+1. Part 5 (hybrid): use twin states/forecasts as LightGBM features or a residual base. The
+   twin alone is not competitive. Do not expose per-patient kinetic parameters (D-034).

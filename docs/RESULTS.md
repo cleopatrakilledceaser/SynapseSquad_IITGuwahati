@@ -277,3 +277,217 @@ these numbers are optimistic)
 | hypo70_any_60 | lgbm_B_cgm | 1584 | 65 | 0.955 [0.945, 0.963] | 0.330 [0.280, 0.390] | reliable |
 | hypo70_any_60 | lgbm_E_full | 1584 | 65 | 0.951 [0.940, 0.959] | 0.314 [0.276, 0.354] | reliable |
 
+## Part 4 — Mechanistic twin (tag `part-4-done`)
+
+Source: `reports/metrics/mech_{cgmacros,shanghai_t2dm,identifiability}.json`. Identical
+test windows (anchors on day ≥ 3) for every model; CV repeat 0 patient folds; 95%
+patient-bootstrap CIs. k = days of the patient's own data used for parameters (twin) or
+refitting (AR). LightGBM uses none of the patient's own days. At k = 0 there is no AR.
+Decisions: D-031 to D-036.
+
+### CGMacros (45 patients, 29321 windows)
+
+**MAE, k0** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| persistence | 13.2 [12.4, 14.2] | 19.4 [17.7, 21.3] | 26.6 [23.8, 29.9] |
+| lgbm | 11.4 [10.6, 12.2] | 16.6 [15.3, 18.1] | 20.8 [18.8, 23.1] |
+| twin_pop_actoff_k0 | 14.6 [12.8, 16.9] | 22.4 [18.8, 27.0] | 30.0 [24.5, 37.1] |
+| twin_pop_acton_k0 | 14.5 [12.7, 16.9] | 22.3 [18.8, 26.9] | 29.9 [24.5, 37.1] |
+| twin_static_actoff_k0 | 13.2 [12.2, 14.3] | 19.7 [17.7, 22.0] | 26.4 [22.9, 30.7] |
+| twin_static_acton_k0 | 13.2 [12.2, 14.2] | 19.7 [17.7, 21.9] | 26.4 [22.9, 30.7] |
+
+**MAE, k1** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| persistence | 13.2 [12.4, 14.2] | 19.4 [17.7, 21.3] | 26.6 [23.8, 29.9] |
+| lgbm | 11.4 [10.6, 12.2] | 16.6 [15.3, 18.1] | 20.8 [18.8, 23.1] |
+| ar_k1 | 13.7 [12.7, 14.8] | 19.2 [17.4, 21.3] | 24.4 [21.5, 27.8] |
+| twin_pop_actoff_k1 | 15.7 [14.0, 17.7] | 22.5 [19.7, 25.8] | 28.4 [24.7, 32.7] |
+| twin_pop_acton_k1 | 15.6 [13.9, 17.6] | 22.5 [19.7, 25.7] | 28.5 [24.9, 32.7] |
+| twin_static_actoff_k1 | 15.8 [14.0, 18.0] | 22.6 [19.7, 26.0] | 28.3 [24.7, 32.6] |
+| twin_static_acton_k1 | 15.8 [14.0, 17.9] | 22.6 [19.7, 26.0] | 28.3 [24.7, 32.6] |
+
+**MAE, k3** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| persistence | 13.2 [12.4, 14.2] | 19.4 [17.7, 21.3] | 26.6 [23.8, 29.9] |
+| lgbm | 11.4 [10.6, 12.2] | 16.6 [15.3, 18.1] | 20.8 [18.8, 23.1] |
+| ar_k3 | 12.2 [11.4, 13.1] | 17.4 [15.8, 19.0] | 21.5 [19.2, 24.2] |
+| twin_pop_actoff_k3 | 12.7 [11.8, 13.7] | 18.1 [16.4, 20.0] | 23.2 [20.9, 26.0] |
+| twin_pop_acton_k3 | 12.7 [11.8, 13.7] | 18.1 [16.5, 20.0] | 23.2 [20.9, 26.0] |
+| twin_static_actoff_k3 | 12.7 [11.8, 13.8] | 18.2 [16.5, 20.0] | 23.2 [20.9, 26.0] |
+| twin_static_acton_k3 | 12.7 [11.8, 13.7] | 18.1 [16.5, 20.0] | 23.2 [20.9, 26.0] |
+
+**Paired, k0**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_acton_k0 − lgbm | 3.12 [1.86, 5.03] | 5.65 [3.06, 9.41] | 9.16 [5.13, 14.43] |
+| overall | twin_pop_acton_k0 − persistence | 1.31 [0.01, 3.07] | 2.89 [0.24, 6.53] | 3.32 [-0.75, 8.77] ns |
+| overall | twin_pop_acton_k0 − twin_pop_actoff_k0 | -0.04 [-0.08, -0.01] | -0.07 [-0.13, -0.02] | -0.05 [-0.11, -0.00] |
+| overall | twin_static_acton_k0 − twin_pop_acton_k0 | -1.35 [-3.02, -0.27] | -2.61 [-5.77, -0.51] | -3.58 [-7.71, -0.54] |
+| post_meal_3h | twin_pop_acton_k0 − lgbm | 3.71 [2.42, 5.59] | 6.24 [3.74, 9.63] | 8.90 [5.63, 13.38] |
+| post_meal_3h | twin_pop_acton_k0 − persistence | 0.33 [-1.02, 2.01] ns | 0.99 [-1.83, 4.33] ns | -0.93 [-5.00, 3.98] ns |
+| post_meal_3h | twin_pop_acton_k0 − twin_pop_actoff_k0 | -0.04 [-0.08, -0.01] | -0.07 [-0.15, -0.02] | -0.06 [-0.14, 0.00] ns |
+| post_meal_3h | twin_static_acton_k0 − twin_pop_acton_k0 | -1.36 [-2.94, -0.23] | -2.69 [-5.66, -0.60] | -3.32 [-6.92, -0.54] |
+| onset_hyper140 | twin_pop_acton_k0 − lgbm | 2.50 [1.69, 3.20] | 4.64 [3.66, 5.66] | 8.07 [6.78, 9.69] |
+| onset_hyper140 | twin_pop_acton_k0 − persistence | -4.38 [-5.50, -3.37] | -3.78 [-5.23, -2.51] | -2.14 [-3.35, -1.02] |
+| onset_hyper140 | twin_pop_acton_k0 − twin_pop_actoff_k0 | 0.02 [0.01, 0.03] | 0.03 [0.01, 0.05] | 0.10 [0.08, 0.12] |
+| onset_hyper140 | twin_static_acton_k0 − twin_pop_acton_k0 | 1.09 [-0.02, 2.19] ns | 1.15 [-0.47, 2.65] ns | 1.19 [-0.74, 2.97] ns |
+
+**Paired, k1**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_acton_k1 − ar_k1 | 1.91 [0.81, 3.23] | 3.26 [1.39, 5.56] | 4.06 [1.91, 6.50] |
+| overall | twin_pop_acton_k1 − lgbm | 4.19 [2.88, 5.72] | 5.83 [3.90, 8.16] | 7.70 [5.33, 10.45] |
+| overall | twin_pop_acton_k1 − persistence | 2.38 [1.11, 3.88] | 3.08 [1.03, 5.41] | 1.86 [-0.40, 4.41] ns |
+| overall | twin_pop_acton_k1 − twin_pop_actoff_k1 | -0.09 [-0.15, -0.03] | -0.04 [-0.10, -0.00] | 0.09 [0.01, 0.28] |
+| overall | twin_static_acton_k1 − twin_pop_acton_k1 | 0.16 [-0.03, 0.49] ns | 0.13 [-0.04, 0.41] ns | -0.14 [-0.34, -0.00] |
+| post_meal_3h | twin_pop_acton_k1 − ar_k1 | 3.03 [1.56, 4.97] | 4.59 [1.96, 7.70] | 5.37 [2.19, 8.71] |
+| post_meal_3h | twin_pop_acton_k1 − lgbm | 5.77 [4.06, 7.97] | 7.87 [5.27, 11.19] | 10.32 [7.23, 13.91] |
+| post_meal_3h | twin_pop_acton_k1 − persistence | 2.38 [0.66, 4.46] | 2.62 [-0.07, 5.72] ns | 0.49 [-2.85, 4.07] ns |
+| post_meal_3h | twin_pop_acton_k1 − twin_pop_actoff_k1 | -0.07 [-0.15, 0.00] ns | -0.00 [-0.06, 0.06] ns | 0.10 [0.02, 0.23] |
+| post_meal_3h | twin_static_acton_k1 − twin_pop_acton_k1 | 0.20 [-0.08, 0.71] ns | 0.12 [-0.11, 0.48] ns | -0.17 [-0.43, 0.01] ns |
+| onset_hyper140 | twin_pop_acton_k1 − ar_k1 | -0.62 [-2.45, 1.48] ns | 1.26 [-0.84, 3.97] ns | 5.10 [2.65, 8.11] |
+| onset_hyper140 | twin_pop_acton_k1 − lgbm | 5.01 [3.17, 7.25] | 6.86 [4.50, 10.11] | 10.70 [8.14, 14.00] |
+| onset_hyper140 | twin_pop_acton_k1 − persistence | -1.87 [-3.86, 0.55] ns | -1.56 [-4.12, 1.76] ns | 0.50 [-2.26, 3.90] ns |
+| onset_hyper140 | twin_pop_acton_k1 − twin_pop_actoff_k1 | -0.01 [-0.14, 0.16] ns | 0.11 [-0.04, 0.39] ns | 0.37 [-0.01, 1.35] ns |
+| onset_hyper140 | twin_static_acton_k1 − twin_pop_acton_k1 | -0.07 [-0.25, 0.02] ns | -0.12 [-0.41, 0.04] ns | -0.09 [-1.15, 0.82] ns |
+
+**Paired, k3**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_acton_k3 − ar_k3 | 0.46 [-0.05, 1.04] ns | 0.74 [-0.10, 1.60] ns | 1.68 [0.76, 2.62] |
+| overall | twin_pop_acton_k3 − lgbm | 1.29 [0.76, 1.92] | 1.47 [0.60, 2.45] | 2.45 [1.28, 3.68] |
+| overall | twin_pop_acton_k3 − persistence | -0.52 [-1.10, 0.07] ns | -1.28 [-2.30, -0.28] | -3.39 [-4.86, -2.00] |
+| overall | twin_pop_acton_k3 − twin_pop_actoff_k3 | -0.01 [-0.02, 0.01] ns | 0.00 [-0.03, 0.04] ns | 0.06 [-0.01, 0.17] ns |
+| overall | twin_static_acton_k3 − twin_pop_acton_k3 | -0.00 [-0.01, 0.01] ns | -0.00 [-0.02, 0.01] ns | -0.01 [-0.04, 0.02] ns |
+| post_meal_3h | twin_pop_acton_k3 − ar_k3 | 0.60 [0.03, 1.20] | 0.32 [-0.63, 1.19] ns | 0.90 [-0.10, 1.85] ns |
+| post_meal_3h | twin_pop_acton_k3 − lgbm | 1.64 [0.97, 2.29] | 1.52 [0.56, 2.51] | 2.46 [1.15, 3.83] |
+| post_meal_3h | twin_pop_acton_k3 − persistence | -1.75 [-2.55, -1.02] | -3.73 [-5.18, -2.43] | -7.38 [-9.53, -5.38] |
+| post_meal_3h | twin_pop_acton_k3 − twin_pop_actoff_k3 | -0.01 [-0.03, 0.02] ns | 0.01 [-0.05, 0.07] ns | 0.07 [-0.03, 0.22] ns |
+| post_meal_3h | twin_static_acton_k3 − twin_pop_acton_k3 | 0.00 [-0.01, 0.01] ns | -0.00 [-0.02, 0.02] ns | -0.00 [-0.05, 0.05] ns |
+| onset_hyper140 | twin_pop_acton_k3 − ar_k3 | -0.59 [-1.89, 0.71] ns | 0.63 [-0.67, 2.01] ns | 3.98 [2.74, 5.37] |
+| onset_hyper140 | twin_pop_acton_k3 − lgbm | 4.41 [3.08, 6.03] | 5.48 [3.98, 7.28] | 7.33 [5.83, 8.99] |
+| onset_hyper140 | twin_pop_acton_k3 − persistence | -2.47 [-4.15, -0.65] | -2.93 [-5.12, -0.69] | -2.88 [-5.15, -0.60] |
+| onset_hyper140 | twin_pop_acton_k3 − twin_pop_actoff_k3 | -0.01 [-0.05, 0.02] ns | 0.00 [-0.03, 0.06] ns | 0.07 [0.00, 0.22] |
+| onset_hyper140 | twin_static_acton_k3 − twin_pop_acton_k3 | -0.02 [-0.03, -0.00] | -0.02 [-0.03, -0.01] | -0.02 [-0.04, -0.01] |
+
+**Paired, k_and_prior**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_actoff_k1 − twin_pop_actoff_k0 | 1.12 [-0.53, 2.76] ns | 0.16 [-2.89, 3.04] ns | -1.60 [-6.45, 2.31] ns |
+| overall | twin_pop_actoff_k3 − twin_pop_actoff_k0 | -1.87 [-3.89, -0.40] | -4.25 [-8.16, -1.40] | -6.81 [-12.27, -2.74] |
+| overall | twin_static_actoff_k0 − twin_pop_actoff_k0 | -1.37 [-3.06, -0.28] | -2.64 [-5.83, -0.50] | -3.59 [-7.74, -0.54] |
+| overall | twin_static_actoff_k1 − twin_pop_actoff_k1 | 0.14 [-0.03, 0.46] ns | 0.10 [-0.05, 0.38] ns | -0.08 [-0.22, 0.01] ns |
+| overall | twin_static_actoff_k3 − twin_pop_actoff_k3 | 0.03 [-0.01, 0.11] ns | 0.05 [-0.01, 0.21] ns | 0.04 [-0.01, 0.13] ns |
+| post_meal_3h | twin_pop_actoff_k1 − twin_pop_actoff_k0 | 2.09 [0.33, 4.15] | 1.56 [-1.41, 4.84] ns | 1.26 [-2.82, 5.28] ns |
+| post_meal_3h | twin_pop_actoff_k3 − twin_pop_actoff_k0 | -2.11 [-4.22, -0.71] | -4.80 [-8.54, -2.07] | -6.57 [-11.48, -2.80] |
+| post_meal_3h | twin_static_actoff_k0 − twin_pop_actoff_k0 | -1.37 [-2.98, -0.23] | -2.71 [-5.69, -0.61] | -3.30 [-6.91, -0.52] |
+| post_meal_3h | twin_static_actoff_k1 − twin_pop_actoff_k1 | 0.22 [-0.04, 0.73] ns | 0.14 [-0.06, 0.50] ns | -0.13 [-0.37, 0.02] ns |
+| post_meal_3h | twin_static_actoff_k3 − twin_pop_actoff_k3 | 0.03 [-0.01, 0.12] ns | 0.08 [-0.01, 0.30] ns | 0.12 [-0.01, 0.42] ns |
+| onset_hyper140 | twin_pop_actoff_k1 − twin_pop_actoff_k0 | 2.54 [0.60, 4.99] | 2.15 [-0.28, 5.44] ns | 2.36 [-0.61, 5.79] ns |
+| onset_hyper140 | twin_pop_actoff_k3 − twin_pop_actoff_k0 | 1.95 [0.31, 3.72] | 0.87 [-1.03, 2.95] ns | -0.71 [-2.74, 1.32] ns |
+| onset_hyper140 | twin_static_actoff_k0 − twin_pop_actoff_k0 | 1.12 [-0.00, 2.22] ns | 1.17 [-0.46, 2.66] ns | 1.23 [-0.72, 3.02] ns |
+| onset_hyper140 | twin_static_actoff_k1 − twin_pop_actoff_k1 | -0.01 [-0.05, 0.03] ns | -0.01 [-0.06, 0.05] ns | 0.26 [-0.05, 0.87] ns |
+| onset_hyper140 | twin_static_actoff_k3 − twin_pop_actoff_k3 | 0.03 [-0.02, 0.14] ns | 0.02 [-0.03, 0.13] ns | -0.19 [-0.69, -0.00] |
+
+**Interval coverage, twin_pop_acton_k3**
+
+| level | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| 0.8 | 0.886 [0.862, 0.906] (width 58) | 0.875 [0.837, 0.902] (width 80) | 0.875 [0.834, 0.905] (width 104) |
+| 0.95 | 0.957 [0.944, 0.967] (width 89) | 0.950 [0.928, 0.965] (width 123) | 0.949 [0.921, 0.969] (width 159) |
+
+**Activity on − off, intensity patients (n = 11)**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_acton_k0 − twin_pop_actoff_k0 | -0.07 [-0.16, -0.01] | -0.12 [-0.28, -0.01] | -0.09 [-0.24, 0.02] ns |
+| overall | twin_pop_acton_k1 − twin_pop_actoff_k1 | -0.03 [-0.09, 0.01] ns | -0.03 [-0.08, 0.02] ns | 0.01 [-0.03, 0.07] ns |
+| overall | twin_pop_acton_k3 − twin_pop_actoff_k3 | 0.00 [-0.03, 0.03] ns | 0.00 [-0.05, 0.07] ns | 0.03 [-0.03, 0.11] ns |
+
+**Activity on − off, mets patients (n = 34)**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_acton_k0 − twin_pop_actoff_k0 | -0.03 [-0.06, -0.01] | -0.05 [-0.11, -0.01] | -0.03 [-0.09, 0.01] ns |
+| overall | twin_pop_acton_k1 − twin_pop_actoff_k1 | -0.10 [-0.18, -0.03] | -0.05 [-0.12, -0.00] | 0.12 [0.01, 0.32] |
+| overall | twin_pop_acton_k3 − twin_pop_actoff_k3 | -0.01 [-0.02, 0.01] ns | 0.00 [-0.04, 0.05] ns | 0.07 [-0.02, 0.19] ns |
+
+**Simulator realism** (per-patient quartiles; 100
+SYNTHETIC patients vs real CGMacros)
+
+| level_0 | level_1 | mean | sd | cv_pct | pct_lt70 | pct_70_140 | pct_140_180 | pct_gt180 | meal_peak_rise | meal_time_to_peak_min |
+|---|---|---|---|---|---|---|---|---|---|---|
+| real | 0.25 | 119.7 | 19.5 | 16.4 | 0.0 | 35.1 | 13.6 | 1.2 | 40.5 | 60.0 |
+| real | 0.5 | 129.7 | 24.9 | 19.3 | 0.0 | 70.3 | 22.9 | 5.0 | 59.5 | 75.0 |
+| real | 0.75 | 151.6 | 34.0 | 22.8 | 0.3 | 83.9 | 33.2 | 16.8 | 74.0 | 87.5 |
+| SYNTHETIC | 0.25 | 115.5 | 12.1 | 9.3 | 0.0 | 17.9 | 4.3 | 0.0 | 22.1 | 70.0 |
+| SYNTHETIC | 0.5 | 134.5 | 18.2 | 13.3 | 0.0 | 62.4 | 22.2 | 1.4 | 34.1 | 86.2 |
+| SYNTHETIC | 0.75 | 160.3 | 26.3 | 18.3 | 0.0 | 91.9 | 50.8 | 19.9 | 54.6 | 115.6 |
+
+**What-if (SIMULATED, median fitted patient; not a forecast)**
+
+| index | peak_mgdl | min_to_peak | min_above_140 |
+|---|---|---|---|
+| 30 g meal, no walk | 143.3 | 100.0 | 80.0 |
+| 30 g meal, 30-min walk | 143.2 | 100.0 | 80.0 |
+| 60 g meal, no walk | 159.8 | 95.0 | 145.0 |
+| 60 g meal, 30-min walk | 159.7 | 95.0 | 145.0 |
+
+### Shanghai T2DM (97 patients, 81106 windows)
+
+**MAE, k3** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| persistence | 11.4 [10.9, 12.0] | 19.3 [18.3, 20.4] | 29.8 [28.0, 31.7] |
+| lgbm | 8.9 [8.5, 9.3] | 15.9 [15.2, 16.6] | 23.7 [22.5, 25.0] |
+| ar_k3 | 9.3 [8.9, 9.8] | 16.9 [16.1, 17.8] | 25.8 [24.3, 27.4] |
+| twin_pop_actoff_k3 | 11.4 [10.9, 12.1] | 18.6 [17.6, 19.8] | 27.3 [25.5, 29.3] |
+| twin_static_actoff_k3 | 11.4 [10.8, 12.1] | 18.6 [17.6, 19.8] | 27.3 [25.5, 29.3] |
+
+**Paired, k3**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_pop_actoff_k3 − ar_k3 | 2.11 [1.71, 2.55] | 1.72 [1.06, 2.49] | 1.54 [0.70, 2.60] |
+| overall | twin_pop_actoff_k3 − lgbm | 2.59 [2.16, 3.07] | 2.76 [2.01, 3.63] | 3.64 [2.36, 5.14] |
+| overall | twin_pop_actoff_k3 − persistence | 0.01 [-0.44, 0.55] ns | -0.68 [-1.50, 0.24] ns | -2.49 [-3.75, -1.11] |
+| onset_hyper140 | twin_pop_actoff_k3 − ar_k3 | 0.68 [-0.34, 1.77] ns | -2.12 [-3.25, -1.03] | 1.37 [0.07, 2.88] |
+| onset_hyper140 | twin_pop_actoff_k3 − lgbm | 2.43 [1.40, 3.57] | 1.98 [0.69, 3.39] | 7.64 [5.52, 10.06] |
+| onset_hyper140 | twin_pop_actoff_k3 − persistence | -7.00 [-8.37, -5.84] | -9.36 [-10.87, -7.90] | -8.25 [-10.05, -6.21] |
+
+**Paired, k_and_prior**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | twin_static_actoff_k3 − twin_pop_actoff_k3 | 0.00 [-0.00, 0.00] ns | 0.00 [-0.00, 0.01] ns | -0.00 [-0.01, 0.01] ns |
+| onset_hyper140 | twin_static_actoff_k3 − twin_pop_actoff_k3 | -0.01 [-0.02, 0.00] ns | -0.01 [-0.02, 0.00] ns | -0.01 [-0.03, 0.01] ns |
+
+**Interval coverage, twin_pop_actoff_k3**
+
+| level | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| 0.8 | 0.837 [0.819, 0.854] (width 42) | 0.787 [0.765, 0.808] (width 59) | 0.749 [0.727, 0.773] (width 79) |
+| 0.95 | 0.933 [0.923, 0.942] (width 63) | 0.900 [0.886, 0.912] (width 90) | 0.878 [0.859, 0.893] (width 121) |
+
+### Identifiability (CGMacros, first 3 days; D-034)
+
+| index | recovery_corr_true_est | contraction_median_real | profile_flat_fraction | retest_corr_log | retest_abs_log_diff_median | structurally_identifiable | practically_identifiable |
+|---|---|---|---|---|---|---|---|
+| Gb | 1.0 | 1.0 | 0.0 | 0.62 | 0.08 | True | True |
+| SG | 0.77 | 0.86 | 0.2 | 0.22 | 0.92 | True | False |
+| SI | 0.98 | 1.0 | 0.2 | 0.24 | 1.07 | True | False |
+| fc | 0.8 | 0.99 | 0.0 | 0.19 | 0.84 | True | False |
+| kabs | 0.83 | 0.96 | 0.0 | 0.18 | 0.61 | True | False |
+| beta | 0.89 | 0.69 | 0.4 | 0.14 | 1.82 | True | False |
+
