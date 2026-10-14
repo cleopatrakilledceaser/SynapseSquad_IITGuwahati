@@ -293,7 +293,13 @@ def main() -> None:
         "by hand. Research prototype, decision support only, not a medical device.",
         "",
     ]
-    OUT.write_text("\n".join(head + part3() + part4()) + "\n", encoding="utf-8")
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from results_part5 import part5
+
+    p5 = part5(md, reg, paired, ci)
+    OUT.write_text("\n".join(head + part3() + part4() + p5) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: all setup data features models fusion mech figures app test lint format smoke clean help
+.PHONY: all setup data features models fusion mech hybrid personalize figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -40,6 +40,14 @@ mech:  ## Part 4 mechanistic twin (about 9.5 min elapsed, folds in parallel; cac
 	$(PY) -W ignore -u -m src.mech.run_mech all
 	$(PY) -W ignore -m src.mech.report
 	$(PY) -W ignore -m src.mech.report rev
+
+hybrid:  ## Part 5.1 twin features + hybrids A0/A/B/C + neural onset fix (cached in data/processed/hybrid; about 2.5 h CPU)
+	$(PY) -W ignore -u -m src.hybrid.run_hybrid all
+	$(PY) -W ignore -m src.hybrid.report
+
+personalize:  ## Part 5.2 cold-start personalization, both cohorts (needs make hybrid features; about 2 h CPU)
+	$(PY) -W ignore -u -m src.personalize.run all
+	$(PY) -W ignore -m src.personalize.report
 
 figures:
 	$(PY) -m src.eval.eda

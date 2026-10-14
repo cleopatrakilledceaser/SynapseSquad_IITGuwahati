@@ -153,8 +153,19 @@ class NeuralForecaster:
     def _y(self, y: np.ndarray, base: np.ndarray) -> np.ndarray:
         return y - base[:, None] if self.target == "delta" else y
 
-    def fit(self, tr: tuple[np.ndarray, ...], va: tuple[np.ndarray, ...]) -> NeuralForecaster:
-        """Fit with early stopping. ``tr``/``va`` = (seq, static, y, base) arrays."""
+    def fit(
+        self,
+        tr: tuple[np.ndarray, ...],
+        va: tuple[np.ndarray, ...],
+        w_tr: np.ndarray | None = None,
+        w_va: np.ndarray | None = None,
+    ) -> NeuralForecaster:
+        """Fit with early stopping. ``tr``/``va`` = (seq, static, y, base) arrays.
+
+        ``w_tr`` / ``w_va``: optional (n, n_horizons) loss weights (Part 5 onset-weighted loss,
+        D-042); the validation loss for early stopping is then the weighted L1 as well. None
+        (default) = the unweighted Part 3 loss, identical code path.
+        """
         import torch
 
         seq_tr, st_tr, y_tr, base_tr = tr
@@ -183,6 +194,8 @@ class NeuralForecaster:
         opt = torch.optim.AdamW(
             self.model.parameters(), lr=self.cfg["lr"], weight_decay=self.cfg["weight_decay"]
         )
+        wt_tr = None if w_tr is None else t(w_tr)
+        wt_va = None if w_va is None else t(w_va)
         gen = torch.Generator().manual_seed(self.seed)
         best, state, bad, bs = np.inf, None, 0, self.cfg["batch_size"]
         self.best_epoch, self.val_curve = 0, []
@@ -193,12 +206,17 @@ class NeuralForecaster:
                 b = perm[i : i + bs]
                 y = yz_tr[b]
                 ok = ~torch.isnan(y)
-                loss = torch.nn.functional.l1_loss(self.model(xs_tr[b], ss_tr[b])[ok], y[ok])
+                p = self.model(xs_tr[b], ss_tr[b])
+                if wt_tr is None:
+                    loss = torch.nn.functional.l1_loss(p[ok], y[ok])
+                else:
+                    wb = wt_tr[b][ok]
+                    loss = (wb * torch.abs(p[ok] - y[ok])).sum() / wb.sum().clamp_min(1e-6)
                 opt.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                 opt.step()
-            v = self._val_loss(xs_va, ss_va, yz_va)
+            v = self._val_loss(xs_va, ss_va, yz_va, wt_va)
             self.val_curve.append(v)
             if v < best - 1e-4:
                 best, bad, self.best_epoch = v, 0, epoch
@@ -211,18 +229,23 @@ class NeuralForecaster:
         self.best_val = best
         return self
 
-    def _val_loss(self, xs: Any, ss: Any, yz: Any) -> float:
+    def _val_loss(self, xs: Any, ss: Any, yz: Any, w: Any = None) -> float:
         import torch
 
         self.model.eval()
-        tot, n = 0.0, 0
+        tot, n = 0.0, 0.0
         with torch.no_grad():
             for i in range(0, len(xs), 4096):
                 y = yz[i : i + 4096]
                 ok = ~torch.isnan(y)
                 p = self.model(xs[i : i + 4096], ss[i : i + 4096])
-                tot += float(torch.abs(p[ok] - y[ok]).sum())
-                n += int(ok.sum())
+                if w is None:
+                    tot += float(torch.abs(p[ok] - y[ok]).sum())
+                    n += int(ok.sum())
+                else:
+                    wb = w[i : i + 4096][ok]
+                    tot += float((wb * torch.abs(p[ok] - y[ok])).sum())
+                    n += float(wb.sum())
         return tot / max(n, 1)
 
     def predict(self, seq: np.ndarray, st: np.ndarray, base: np.ndarray) -> np.ndarray:

@@ -116,6 +116,19 @@
   8.4 min elapsed; results in `mech_revision.json`.
 - Verdict (D-037): the revision does not help; the original spec stays the default.
 
+## Part 5 outputs (hybrid twin + fast personalization)
+| Step | Status |
+|---|---|
+| Causal twin features, train/test-consistent scheme (D-038) | ✅ `src/hybrid/twin_features.py`, `build.py`; both cohorts, k ∈ {0, 0.5, 1, 2, 3, 5, 7}; about 20 min |
+| Hybrids A0 / A / A_noact / B (D-039) | ✅ `src/hybrid/models.py`; about 3 min |
+| Hybrid C, physics-informed GRU (D-041) | ✅ `src/hybrid/pinn.py`; k = 3, 5 seeds; about 8.5 min |
+| Neural onset-weighted loss (D-042) | ✅ `src/hybrid/onset.py`, `NeuralForecaster.fit(w_tr, w_va)`; both cohorts |
+| Personalization, 7 methods ± static, 2 bases (D-043) | ✅ `src/personalize/`; 47 min CGMacros + 59 min Shanghai |
+| Reports / figures | ✅ `hybrid_cgmacros.json`, `hybrid_neural.json`, `personalize_{cohort}.json`; `hybrid_*.png`, `personalize_*.png` |
+| Tests | ✅ `tests/test_hybrid.py`, `tests/test_personalize.py` |
+| Make | ✅ `make hybrid`, `make personalize` |
+| Findings (D-044) | ✅ |
+
 ## Next steps
-1. Part 5 (hybrid): use twin states/forecasts as LightGBM features or a residual base. The
-   twin alone is not competitive. Do not expose per-patient kinetic parameters (D-034).
+1. Part 6 (uncertainty / conformal) on the A hybrid at k = 3 or LightGBM + fine-tuning.
+   Keep the onset-weighting trade-off (D-044) in mind.

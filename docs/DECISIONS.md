@@ -745,3 +745,169 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
     reference.
   - For Part 5, treat SG and beta as non-identifiable; do not expose them.
 
+## D-038 Part 5: causal twin features and the train/test-consistent scheme
+- **Twin spec:** the original Part 4 twin (D-037), α_E = 0 (activity effect ≤ 0.12 mg/dL, D-036).
+  - The twin forecasts equal Part 4 `twin_pop_actoff_k<k>` (max |diff| < 2e-5 mg/dL; checked for
+    every fold at k = 0/1/3 CGMacros and k = 3 Shanghai).
+  - The activity input A(t) and E state are still computed and passed to the ML layer.
+- **Feature kernel** `src/hybrid/twin_features.ekf_features`: the Part 4 EKF, unchanged, plus at
+  each anchor t (after the update with the reading at t):
+  - forecast and SD at +30/+60/+120 (deltas to the current CGM value);
+  - filtered gut (Q1, Q2), insulin surrogate (U) and insulin action (X), E, and glucose
+    appearance Ra;
+  - filter residual, last innovation and its z-score, and its 1-h causal mean;
+  - activity input and its 1-h causal mean;
+  - the open-loop rollout of X, Ra and S_eff (Hybrid C only).
+
+  Tests: equals `ekf_forecast` to 1e-9; perturbing CGM, meals, activity or slowing after t
+  leaves every feature at t identical; changing data before t changes them.
+- **Scheme (no parameter ever comes from a patient's own data after day k):**
+  - Population prior = stage-1 (first 3 days) fits of TRAINING patients (identical to Part 4).
+  - Test patients: MAP on their first k days (k = 0: prior mean), with a population-prior and a
+    static-prior variant.
+  - Training patients: MAP on their OWN first k days with a leave-one-out population prior, so
+    their own stage-1 fit is excluded.
+  - Hybrids are trained only on training-patient rows at day ≥ k.
+  - Tested with a fake fitter: the leave-one-out prior equals the other patients' mean; the test
+    prior equals the full training mean.
+- **EKF (q, r):** the Part 4 choice where it exists; otherwise chosen on training patients'
+  windows at day ≥ max(3, k) by Gaussian NLL (the Part 4 rule).
+- **Grid:** k ∈ {0, 0.5, 1, 2, 3, 5, 7}, both cohorts (about 20 min), cached in
+  `data/processed/hybrid/`.
+
+## D-039 Part 5: Hybrids A0 / A / A_noact / B (CGMacros)
+- **A0** = Part 3's best LightGBM content: CGM + time of day + meals + glycemic static, delta
+  target, Part 3 protocol (inner patient split, leaf grid, early stopping).
+  - A0 is trained on EXACTLY the same rows as A (training patients, day ≥ k), so A − A0 isolates
+    the twin features.
+  - The Part 4 population LightGBM (all training rows, no static) is kept as `lgbm`.
+- **A** = A0 + the 18 twin features. **A_noact** = A without the activity features (tw_E, tw_act,
+  tw_act_mean_1h), which separates the activity effect (owner choice 3).
+- **B** = LightGBM on (truth − twin forecast) with A's features, added back to the twin forecast.
+- **Test windows:** the Part 4 windows (day ≥ 3), 45 patients, 29,321 rows at every k; identical
+  rows for every model within a k.
+
+## D-040 Part 5: choosing the "best hybrid" for personalization
+- The choice is made per (fold, k, with/without static) between A and B, by the mean inner-validation
+  MAE on training patients. It is never based on the comparison table or on test patients.
+
+## D-041 Part 5: Hybrid C (physics-informed GRU)
+- **Network:** the Part 3 GRU + FiLM. FiLM input = glycemic static plus the twin state at t (k = 3).
+  Output = the 5-min trajectory out to +120 min (24 steps).
+- **Loss:**
+  - L1 on real CGM readings.
+  - Plus λ · mean |r|, the trapezoid residual of dG/dt = −S(G − Gb) − X·G + Ra.
+  - S, X and Ra come from the twin's open-loop rollout from t, so the physics term uses only
+    information available at t.
+  - Test: the residual is about 0 on the twin's own trajectory and large on a shifted one.
+- **Selection and runs:**
+  - λ ∈ {0, 0.1, 1, 10}, chosen per fold on inner-validation patients with seed 0.
+  - Then 5 seeds.
+  - λ = 0 is also run, as a same-network, no-physics ablation.
+  - Hidden size = Part 3 E_full choice (64).
+
+
+## D-042 Part 5: neural onset-weighted loss
+- **Weight:** w on (window, horizon) pairs with cgm_now < 140 and y(t + h) > 140 mg/dL, else 1.
+  - It uses the training target only, as a loss weight; it is never an input.
+  - Early stopping uses the weighted validation L1.
+- **Choice of w:** w ∈ {3, 10}, chosen once per (cohort, config) on holdout-train patients
+  (inner split, seed 0) by the mean of overall and onset validation MAE (mg/dL).
+- **Kept identical to Part 3:** channels, hidden size, folds (repeat 0), inner split and seeds.
+- **Code:** `NeuralForecaster.fit(w_tr, w_va)`. With None it runs the identical unweighted Part 3
+  code path.
+
+## D-043 Part 5: personalization protocol
+- **k grid:** {0, 0.5, 1, 2, 3, 5, 7} days of the FIRST period.
+- **Test region:** ONE common region for every k (first period, day ≥ 7), so every method and k is
+  paired on identical rows.
+- **Exclusion:** fewer than 96 evaluable anchors (1 day) at day ≥ 7.
+  - Shanghai later periods are excluded from adaptation and test (owner choice 2).
+- **Adaptation pairs:** target time t + h < day k (tested never to overlap the test region).
+  - Below 24 pairs, methods 2–5 and 7 use the population model.
+- **Bases:**
+  - `lgbm`: A0 content, fitted on all training-patient rows.
+  - `hybrid`: best of A/B (D-040), refitted per k with twin features from each patient's first
+    k days.
+  - Each base is run with and without static features.
+- **Selection:** every adaptation hyperparameter is chosen on TRAINING patients.
+  - Their forecasts are out-of-fold: inner 3-fold patient refits with the outer model's leaves and
+    trees.
+  - Scored on their day-≥ 7 region.
+  - Tested: an inner model never predicts a patient it was fitted on.
+- **Methods:**
+  1. none;
+  2. per-patient ridge from scratch (CGM / time / meal inputs);
+  3. ridge on population residuals;
+  4. shrinkage blend, w = n / (n + n0);
+  5. LightGBM fine-tuning (`init_model` on the trimmed population booster; 7 leaves; lr × trees
+     grid);
+  6. Part 4 twin, population vs static prior;
+  7. RLS on residuals with forgetting, a Page-Hinkley drift detector (boosts P) and a
+     trace(P) ≤ d·p0 cap. Reported frozen at day k and continuous (a pair is used only once
+     t + h ≤ the anchor; tested).
+- **Grid changes made on training-patient smoke runs (fold 0, k = 1/5) before any full run:**
+  - The ridge λ and n0 grids were widened (the upper edge was picked).
+  - RLS with p0 = 100 overfit badly: smoke MAE 29–116 vs 15 mg/dL for no adaptation. Replaced by
+    a p0 grid {0.001, 0.01, 0.1} plus the trace cap, which removes covariance wind-up after drift
+    boosts.
+- **Crossover k\*:** first k (linear interpolation) at which the best no-static adapted method
+  reaches the with-static population model's k = 0 MAE.
+  - The method is picked by mean MAE over k > 0 (a reporting choice).
+  - Patient bootstrap (1,000 resamples) with the share of resamples with no crossover by k = 7.
+
+## D-044 Part 5 findings (hybrid twin, onset fix, personalization)
+- **Leakage and causality checks:**
+  - Hybrid training rows start at day ≥ k in every fold (recorded in `hybrid_cgmacros.json`
+    checks).
+  - Twin features are causal (future-perturbation test) and reproduce Part 4.
+  - The test windows are identical to Part 4: 45 patients, 29,321 rows per k.
+  - No result was suspiciously good. The largest gain (onset-weighted neural, −4 to −9 mg/dL on
+    onsets) comes with a matching overall loss, which is the expected trade-off of loss
+    reweighting, not leakage.
+- **Hybrid, CGMacros** (paired A − A0, mg/dL, +30/+60/+120; * = CI excludes 0):
+  - k = 0: −0.21* / −0.10 / −0.26.
+  - k = 1: about 0.
+  - k = 3: −0.18 / −0.55* / −0.85 (post-meal −0.41* / −0.75*).
+  - Without 007: same pattern.
+  - The twin's value is small and needs about 3 days of patient data. It does not help onset
+    windows at any k.
+  - A − A_noact is ≤ 0.2 mg/dL (activity is negligible, consistent with D-036).
+- **Hybrid B and C:**
+  - B is never better than A0 (k = 1: +0.9* / +1.7* worse at +60/+120).
+  - C (k = 3): λ chosen 0.1 in 2 folds and 0 in 3 folds.
+  - C − A0 overall is ns. Onset is +2.1* / +3.0* / +3.3* (worse). C − C_lam0 is ≤ 0.1 overall
+    (ns).
+  - Seed SD is 0.04–0.26 mg/dL. **The physics-informed loss does not help.**
+- **Neural onset fix, CGMacros** (w = 10 chosen for both configs):
+  - nnw − nn onset: B −9.1* / −9.0* / −4.1*; E −5.5* / −6.1* / −3.4*.
+  - nnw − nn overall: B +3.1* / +4.9* / +4.8*; E +1.5* / +2.8* / +2.2*.
+  - The weakness at rising glucose can be moved, but only by trading overall accuracy. It is not
+    fixed for free.
+  - nnw_E beats LightGBM E on onsets (−3.1* / −3.3*) but loses overall (+2.2* / +3.6*).
+- **Neural onset fix, Shanghai** (w = 10 for both configs):
+  - nnw − nn onset: B −5.7* / −11.7* / −10.0*; E −5.3* / −9.1* / −6.9*.
+  - nnw − nn overall: B +0.8* / +3.2* / +4.5*; E +1.4* / +3.9* / +4.3*.
+  - The same trade-off as CGMacros.
+- **Personalization (+60 min; CGMacros 44 / Shanghai 71 patients; day ≥ 7 region):**
+  - **Static head start (ML), k = 0:** −0.13 [−0.86, 0.48] CGMacros and −0.23 [−0.50, 0.04]
+    Shanghai. These are not positive, so the crossover is trivially k\* = 0 and uninformative.
+  - **Twin static prior, k = 0:** CGMacros +2.17 [−0.06, 5.12], crossover k\* = 1.93 d
+    [0, 3.12]; Shanghai +0.19 (ns).
+  - **Best k-day adapter: LightGBM fine-tuning.**
+    - CGMacros with static: −0.25* / −0.89* / −1.28* at k = 1/3/5.
+    - Shanghai: −0.18 / −0.36* / −0.82*.
+  - Shrinkage and frozen RLS give −0.2 to −0.9. Continuous RLS gives −0.7* to −1.1*.
+  - Per-patient ridge from scratch is worse at every k (+0.5 to +3.8). Residual ridge is worse at
+    k = 1 and neutral by k = 5.
+  - **Twin in personalization:** hybrid − lgbm with the same method is within ±0.5 (ns) on
+    CGMacros. Shanghai: hybrid none is −0.3 to −0.5* better; after fine-tuning it is ns.
+- **Thesis check:**
+  - "Clinical profile gives a head start" is not supported for the ML twin in either cohort. It
+    holds only for the mechanistic twin's prior, which is itself not competitive.
+  - "The wearable stream keeps it current" is supported for the CGM stream, by about 1 mg/dL over
+    3–5 days of adaptation.
+  - Activity / HR adds nothing measurable (D-036, A − A_noact).
+
+
+

@@ -38,6 +38,56 @@ k = 3 days of the patient's own data:
   clinicians as patient characteristics. SG sits at its lower bound in about 40–50% of fits.
 - The simulator and what-if outputs are SYNTHETIC illustrations, not forecasts.
 
+## Part 5 results: hybrid twin and fast personalization (honest summary)
+Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-038 to D-044.
+`make hybrid`, `make personalize`.
+
+**Hybrid twin (CGMacros, 45 patients, same Part 4 windows; MAE mg/dL at +30 / +60 / +120):**
+
+| model (k = 3 days) | overall | onset (rising past 140) |
+|---|---|---|
+| A0: LightGBM, CGM + meals + glycemic static | 11.4 / 16.8 / 21.1 | 19.5 / 24.0 / 24.7 |
+| A: A0 + causal twin features | 11.2 / 16.2 / 20.2 | 19.0 / 23.9 / 25.0 |
+| B: LightGBM on the twin's residual | 11.5 / 16.6 / 20.7 | 19.0 / 24.3 / 25.0 |
+| C: physics-informed GRU (5 seeds) | 11.5 / 16.3 / 20.8 | 21.6 / 27.0 / 28.0 |
+| twin alone | 12.7 / 18.1 / 23.2 | 23.9 / 29.6 / 31.8 |
+
+- **The twin adds a small amount beyond A0 once it has 3 days of data:**
+  - A − A0 = −0.18 / −0.55 / −0.85 mg/dL. Only +60 has a CI excluding 0; post-meal is −0.41 / −0.75.
+  - At k = 0 the gain is −0.21 mg/dL at +30 only. At k = 1 there is no gain.
+  - Activity features contribute about 0.1 mg/dL.
+  - It does not help onset windows.
+- **Hybrid B (residual) and C (physics loss) do not help.**
+  - B is never better than A0 overall, and is worse at k = 1.
+  - C is no better than A0 overall, and is 2–3 mg/dL worse on onsets.
+  - The physics term was chosen in only 2 of 5 folds, and only at its smallest weight.
+  - With λ = 0, C is equally good overall, so the physics loss itself adds nothing.
+- **Neural onset-weighted loss:** a trade-off, not a fix.
+  - The Part 3 GRU's onset MAE improves by 3–12 mg/dL in both cohorts.
+  - Overall MAE gets worse by 1–5 mg/dL.
+
+**Personalization (both cohorts; common test region day ≥ 7; 44 CGMacros / 71 Shanghai patients):**
+- **No static head start for the ML models:**
+  - At k = 0, adding static features changes +60 MAE by −0.13 (CGMacros) and −0.23 (Shanghai) mg/dL.
+  - Both CIs include 0, and the sign is "slightly worse with static".
+  - The crossover is therefore trivial (k\* = 0). There is no static advantage to overtake.
+- **The static prior helps only the mechanistic twin at k = 0** (CGMacros: +1.2 / +2.2 / +2.6
+  mg/dL head start). Its patient data overtake it at about 2 days (k\* 1.6–2.3 d).
+  - But the twin is 3–5 mg/dL worse than LightGBM at every k.
+- **Patient data do help, modestly:**
+  - LightGBM fine-tuning on the patient's own days improves +60 MAE by 0.3 / 0.9 / 1.3 mg/dL at
+    k = 1 / 3 / 5 (CGMacros, with static) and by 0.2 / 0.4 / 0.8 on Shanghai.
+  - At k = 3, 30 of 44 CGMacros patients improve.
+  - Continuous RLS correction (it keeps learning from every past reading) gives −0.7 to −1.1 mg/dL.
+  - Per-patient models from scratch are worse than the population model at every k.
+- **The twin does not make personalization better:** hybrid − LightGBM after adaptation is within
+  ±0.5 mg/dL on CGMacros. On Shanghai the hybrid is 0.2–0.5 mg/dL better without adaptation.
+- **What the data do and do not support:**
+  - "The wearable stream keeps it current" is supported in the narrow sense that the patient's
+    own CGM history improves the model by about 1 mg/dL over days.
+  - "The clinical profile gives it a head start" is NOT supported for the ML models in these two
+    cohorts.
+
 ## Quick start (Windows, PowerShell)
 ```powershell
 py -3.11 -m venv .venv

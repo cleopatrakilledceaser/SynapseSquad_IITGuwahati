@@ -1,0 +1,49 @@
+# Part 5.2: fast personalization / cold start (both cohorts). Decisions: D-043 onwards.
+# Units: glucose mg/dL, time days / min. Folds = CV repeat 0 (identical to every other model).
+seed: 42
+horizons_min: [30, 60, 120]
+cv_repeat: 0
+k_grid: [0, 0.5, 1, 2, 3, 5, 7]     # days of the patient's FIRST period used for adaptation
+test_from_day: 7                    # ONE common test region for every k (paired across the curve)
+min_test_anchors: 96                # exclusion: >= 96 evaluable anchors (1 day) with day >= 7
+periods: first_only                 # Shanghai later periods excluded from adaptation and test
+table_k: [1, 3, 5]
+inner_folds: 3                      # patient folds inside the training patients for selection
+sensitivity_exclude: [cgmacros_007]
+
+bases:                              # population models that are adapted
+  lgbm: {twin: false}               # plain LightGBM (A0 content)
+  hybrid: {twin: true}              # best hybrid (chosen on training patients, D-040)
+
+ridge:                              # methods 2 / 3 / 4: per-patient linear models
+  features: [cgm_now, cgm_delta_15, cgm_delta_30, cgm_delta_60, cgm_mean_60, cgm_std_60,
+             tod_sin, tod_cos, meal_minutes_since_last_capped, meal_carbs_g_3h, meal_count_3h]
+  meal_cap_min: 360                 # minutes-since-meal capped (no meal = 360)
+  # widened after a smoke run picked the upper edge (1000); large lambda = offset-only model
+  lambda_grid: [10.0, 100.0, 1000.0, 10000.0, 100000.0]
+  min_pairs: 24                     # fewer adaptation pairs -> method falls back to population
+
+shrink:
+  n0_grid: [96, 288, 1152, 4608, 18432]   # weight w = n / (n + n0), n = adaptation pairs
+
+finetune:                           # method 5: continue boosting on the k days (init_model)
+  trees_grid: [10, 30, 100]
+  lr_grid: [0.01, 0.05]
+  num_leaves: 7
+  min_child_samples: 20
+  threads: 2
+
+rls:                                # method 7: residual correction, recursive least squares
+  features: [cgm_now, cgm_delta_30, tod_sin, tod_cos]   # + intercept; standardized (train rows)
+  forgetting_grid: [0.99, 0.995, 0.999]
+  p0_grid: [0.001, 0.01, 0.1]       # prior variance (noise units); p0 = 100 overfit in a smoke run
+  ph_delta: 2.0                     # Page-Hinkley drift detector on |residual| (mg/dL)
+  ph_lambda_grid: [50.0, 200.0]
+  boost: 10.0                       # on drift: P <- boost * P (faster re-adaptation)
+
+hybrid_variants: [A, B]             # best hybrid per (fold, static, k) by inner-val MAE (D-040)
+
+twin:                               # method 6: Part 4 twin with population / static prior
+  source: twinfeat                  # forecasts from the S1 twin features (tw_mu_h)
+
+bootstrap: {n_boot: 1000, ci: 0.95}
