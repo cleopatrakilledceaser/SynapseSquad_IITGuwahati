@@ -846,11 +846,19 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
   7. RLS on residuals with forgetting, a Page-Hinkley drift detector (boosts P) and a
      trace(P) ≤ d·p0 cap. Reported frozen at day k and continuous (a pair is used only once
      t + h ≤ the anchor; tested).
-- **Grid changes made on training-patient smoke runs (fold 0, k = 1/5) before any full run:**
-  - The ridge λ and n0 grids were widened (the upper edge was picked).
-  - RLS with p0 = 100 overfit badly: smoke MAE 29–116 vs 15 mg/dL for no adaptation. Replaced by
-    a p0 grid {0.001, 0.01, 0.1} plus the trace cap, which removes covariance wind-up after drift
-    boosts.
+- **Grid changes made after smoke runs, before any full run (disclosure):**
+  - The smoke runs (fold 0, k = 1/5) printed MAE on fold 0's TEST patients.
+  - The ridge λ and n0 grids were widened because the TRAINING-patient selection picked the grid
+    edge; this is legitimate.
+  - The RLS change was triggered by the test-patient MAE: 29–116 vs 15 mg/dL for no adaptation,
+    an obvious bug (covariance wind-up / no regularization). It was diagnosed on one fold-0 test
+    patient's persistence residuals.
+  - The fix (p0 grid {0.001, 0.01, 0.1} plus the trace cap) is a design correction. Within every
+    fold, p0 / forgetting / PH λ are still chosen on training patients only.
+  - Still, fold 0's test patients informed the RLS grid design. The RLS rows should be read with
+    that caveat; fold-0 test patients are 8–15 of the 44 / 71 evaluated.
+  - The crossover's "best method" excludes continuous RLS. That rule was added after seeing that
+    continuous RLS uses post-k data, which makes it a reporting fix, not a model choice.
 - **Crossover k\*:** first k (linear interpolation) at which the best no-static adapted method
   reaches the with-static population model's k = 0 MAE.
   - The method is picked by mean MAE over k > 0 (a reporting choice).
