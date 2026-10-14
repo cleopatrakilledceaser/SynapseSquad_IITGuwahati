@@ -15,6 +15,29 @@ simulation.
 See [docs/PROGRESS.md](docs/PROGRESS.md). Design choices: [docs/DECISIONS.md](docs/DECISIONS.md).
 Project rules: [docs/RULES.md](docs/RULES.md).
 
+## Part 4 results: mechanistic twin (honest summary)
+Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-031 to D-037.
+CGMacros: 45 patients, identical test windows from day 3 on. MAE in mg/dL at +30 / +60 / +120 min,
+k = 3 days of the patient's own data:
+
+| model | +30 | +60 | +120 |
+|---|---|---|---|
+| mechanistic twin | 12.7 | 18.1 | 23.2 |
+| per-patient AR (same 3 days) | 12.2 | 17.4 | 21.5 |
+| LightGBM (none of the patient's own days) | 11.4 | 16.6 | 20.8 |
+| persistence | 13.2 | 19.4 | 26.6 |
+
+- **The twin alone is not a competitive forecaster.** It beats persistence at +60/+120, is no
+  better than AR, and is worse than LightGBM at every horizon. The Shanghai T2DM cohort shows the
+  same pattern.
+- **Static clinical data help only without the patient's own data:** at k = 0 the static prior
+  improves MAE by 1.4 / 2.6 / 3.6; with 1 or more days its effect is 0.3 mg/dL or less.
+- **Activity has no measurable effect** in this model: MAE changes by 0.12 mg/dL or less.
+- **Only Gb (basal glucose) is stable per patient.** SG, SI, fc, kabs and beta are not
+  reproducible between two 3-day windows (test-retest r 0.14–0.24) and must not be shown to
+  clinicians as patient characteristics. SG sits at its lower bound in about 40–50% of fits.
+- The simulator and what-if outputs are SYNTHETIC illustrations, not forecasts.
+
 ## Quick start (Windows, PowerShell)
 ```powershell
 py -3.11 -m venv .venv

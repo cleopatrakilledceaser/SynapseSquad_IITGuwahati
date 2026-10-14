@@ -12,6 +12,7 @@ Synthetic records are labeled ``_synthetic`` and never mixed with real evaluatio
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import numpy as np
@@ -226,4 +227,100 @@ def run_identify(alpha: float | None = None) -> dict[str, Any]:
     summary = summarize(rec_df, lap, prof, rt, mc, alpha)
     dh = file_hash([PROC / "cgmacros_ts5.parquet", PROC / "meals.parquet"])
     write_metrics("mech_identifiability", summary, mc, mc["seed"], dh)
+    return summary
+
+
+def run_retest_revised() -> dict[str, Any]:
+    """Test-retest (days 0-3 vs 3-6) under the Part 4b revised spec (D-037), all CGMacros patients.
+
+    Same procedure as ``retest`` (config prior, stage-1 alpha), but SG's lower bound widened and
+    the parameters in ``revision.fix`` held at the mean of all patients' days 0-3 fits. Merged
+    into mech_identifiability.json as "retest_rev" next to the original retest correlations.
+    """
+    mc0 = load_config("mech")
+    r = mc0["revision"]
+    mc = json.loads(json.dumps(mc0))
+    mc["params"]["fit"]["SG"]["lo"] = r["sg_lo"]
+    path = PROJECT_ROOT / "reports" / "metrics" / "mech_identifiability.json"
+    payload = json.loads(path.read_text())
+    alpha = float(payload["metrics"]["alpha_E_used"])
+    grid = load_grid("cgmacros")
+    meals = pd.read_parquet(PROC / "meals.parquet")
+    meals = meals[meals.dataset == "cgmacros"]
+    w = mc["params"]["slow_protein_weight"]
+    recs = list(build_records(grid, meals, mc["activity"], w).values())
+    pr = config_prior(mc["params"])
+    k = mc["fit"]["stage1_days"]
+    long = [x for x in recs if x.days[-1] >= 2 * k]
+    st = np.array([fit_patient(x, k, pr, mc, alpha).logp for x in long])
+    base = pr.mu.copy()
+    fi = [FIT_PARAMS.index(p) for p in r["fix"]]
+    base[fi] = st[:, fi].mean(0)
+    free = [p for p in FIT_PARAMS if p not in r["fix"]]
+    a = np.array([fit_patient(x, k, pr, mc, alpha, free, base).logp for x in long])
+    b = np.array([fit_patient(shifted(x, k), k, pr, mc, alpha, free, base).logp for x in long])
+    out = {"n_retest_patients": len(long), "fixed": r["fix"], "sg_lo": r["sg_lo"], "params": {}}
+    for j, p in enumerate(FIT_PARAMS):
+        if p in free:
+            out["params"][p] = {
+                "retest_corr_log": float(np.corrcoef(a[:, j], b[:, j])[0, 1]),
+                "retest_abs_log_diff_median": float(np.median(np.abs(a[:, j] - b[:, j]))),
+                "retest_corr_log_original": payload["metrics"]["params"][p]["retest_corr_log"],
+            }
+    payload["metrics"]["retest_rev"] = out
+    dh = payload["data_hash"]
+    write_metrics("mech_identifiability", payload["metrics"], mc0, mc0["seed"], dh)
+    return out
+
+
+def at_bound_rows(fits: pd.DataFrame, mc: dict[str, Any], free: list[str]) -> list[dict]:
+    """Fraction of per-patient fits at the lower / upper bound, per model x k x parameter.
+
+    ``fits`` = evaluated-patient fits (twinfits_*; each patient once per model). k = 0 has no fit
+    (prior centre) and is skipped. "At a bound" = within at_bound_tol_log on the log scale.
+    """
+    ic = mc["identifiability"]
+    tol, flag = ic["at_bound_tol_log"], ic["at_bound_flag"]
+    lo, hi = log_bounds(mc["params"])
+    rows = []
+    for (model, k), g in fits[fits.k > 0].groupby(["model", "k"]):
+        for j, p in enumerate(FIT_PARAMS):
+            if p not in free:
+                continue
+            v = np.log(g[p].to_numpy(dtype=float))
+            f_lo, f_hi = float(np.mean(v - lo[j] < tol)), float(np.mean(hi[j] - v < tol))
+            rows.append(
+                {"model": model, "k": int(k), "param": p, "n_patients": int(len(v)),
+                 "frac_at_lower": f_lo, "frac_at_upper": f_hi,
+                 "lower_bound": float(np.exp(lo[j])), "upper_bound": float(np.exp(hi[j])),
+                 "flag_gt_threshold": bool(max(f_lo, f_hi) > flag)}
+            )  # fmt: skip
+    return rows
+
+
+def write_at_bound(
+    cohorts: dict[str, list[str]], tag: str = "", mc: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """At-bound fractions for each cohort's evaluated-patient fits -> committed outputs.
+
+    ``mc`` must carry the bounds the fits were made with (the revised spec widens SG's lower
+    bound). Writes reports/metrics/mech_fitted_params<tag>.csv (per-patient fitted values,
+    derived, small) and merges the summary into mech_identifiability.json under "at_bound<tag>".
+    """
+    mc = mc or load_config("mech")
+    mdir = PROJECT_ROOT / "reports" / "metrics"
+    allfits, summary = [], {}
+    for cohort, free in cohorts.items():
+        files = sorted(OUT.glob(f"twinfits{tag}_{cohort}_fold*.parquet"))
+        if not files:
+            continue
+        fits = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+        allfits.append(fits.assign(cohort=cohort))
+        summary[cohort] = at_bound_rows(fits, mc, free)
+    pd.concat(allfits).round(8).to_csv(mdir / f"mech_fitted_params{tag}.csv", index=False)
+    path = mdir / "mech_identifiability.json"
+    payload = json.loads(path.read_text())
+    payload["metrics"][f"at_bound{tag}"] = summary
+    dh = payload["data_hash"]
+    write_metrics("mech_identifiability", payload["metrics"], payload["config"], mc["seed"], dh)
     return summary

@@ -245,3 +245,20 @@ def test_noise_and_simulation_reproducible_by_seed() -> None:
     s1 = synthetic_record(rec, true, MC, 0.002, 5.0, np.random.default_rng(7))
     s2 = synthetic_record(rec, true, MC, 0.002, 5.0, np.random.default_rng(7))
     assert np.array_equal(s1.y, s2.y)
+
+
+def test_fixed_params_held_at_population_value() -> None:
+    """Revised spec (D-037): fixed params equal the training-population value; others are fitted."""
+    from src.mech.fit import Prior
+    from src.mech.protocol import Ctx, fix_to_population
+
+    pr = config_prior(MC["params"])
+    c = Ctx("toy", MC, {}, pd.DataFrame(), pd.DataFrame(), 1, list(FIT_PARAMS), pr.mu.copy())
+    pop = Prior(pr.mu + 0.3, pr.sd)
+    c2 = fix_to_population(c, pop, ["beta"])
+    assert c2.free == [p for p in FIT_PARAMS if p != "beta"] and c.free == list(FIT_PARAMS)
+    ib = FIT_PARAMS.index("beta")
+    assert c2.base_logp[ib] == pop.mu[ib]
+    rec = _toy_record()
+    fr = fit_patient(rec, 1, pr, MC, 0.002, c2.free, c2.base_logp)
+    assert fr.logp[ib] == pop.mu[ib]

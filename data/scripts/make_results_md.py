@@ -203,7 +203,84 @@ def part4() -> list[str]:
         t = p[cols].copy()
         for c in cols[:5]:
             t[c] = t[c].astype(float).round(2)
-        s += ["### Identifiability (CGMacros, first 3 days; D-034)", "", md(t), ""]
+        ident = json.loads(f.read_text())["metrics"]
+        s += [
+            "### Identifiability (CGMacros, first 3 days; D-034)",
+            "",
+            "**Limitation: only Gb (basal glucose) is stable per patient. SG, SI, fc, kabs and",
+            "beta must not be shown to clinicians as patient characteristics** (test-retest",
+            "r < 0.5; two disjoint 3-day windows of the same patient differ about 2–6×).",
+            "",
+            md(t),
+            "",
+        ]
+        for tag, lab in (("", "original spec"), ("_rev", "revised spec, D-037")):
+            if f"at_bound{tag}" in ident:
+                s += [
+                    f"**Fitted parameters at a bound ({lab})**: fraction of evaluated patients'",
+                    "fits within 1% (log) of the lower / upper bound; k = 0 has no fit.",
+                    "`FLAG` = more than 20%. Per-patient values:",
+                    f"`reports/metrics/mech_fitted_params{tag}.csv`.",
+                    "",
+                    md(at_bound_table(ident[f"at_bound{tag}"])),
+                    "",
+                ]
+    s += part4b()
+    return s
+
+
+def at_bound_table(ab: dict[str, list[dict]]) -> pd.DataFrame:
+    """Cohort x model x k rows, one 'lower / upper' column per parameter."""
+    rows = [dict(r, cohort=c) for c, rs in ab.items() for r in rs]
+    d = pd.DataFrame(rows)
+    d["v"] = [
+        f"{a:.0%} / {b:.0%}" + (" FLAG" if fl else "")
+        for a, b, fl in zip(d.frac_at_lower, d.frac_at_upper, d.flag_gt_threshold, strict=True)
+    ]
+    t = d.pivot_table(index=["cohort", "model", "k"], columns="param", values="v", aggfunc="first")
+    return t[[p for p in ("Gb", "SG", "SI", "fc", "kabs", "beta") if p in t.columns]]
+
+
+def part4b() -> list[str]:
+    """Part 4b section: original vs revised specification (D-037)."""
+    f = M / "mech_revision.json"
+    if not f.exists():
+        return []
+    r = json.loads(f.read_text())["metrics"]
+    s = [
+        "## Part 4b — SG / beta bound revision (tag `part-4b-done`, D-037)",
+        "",
+        f"Revised spec: SG lower bound {r['spec']['sg_lo']:g} (was 0.001); fixed at the",
+        f"training-population mean: {', '.join(r['spec']['fix'])}. Chosen on training patients'",
+        "first 3 days only (`reports/metrics/mech_bounds_diagnosis.json`). Original and revised",
+        "twins are compared on identical rows; `rev_` = revised. Paired: rev − original",
+        "(negative = revision better). The original specification remains the Part 4 default.",
+        "",
+    ]
+    subs = ("overall", "post_meal_3h", "onset_hyper140")
+    for coh, name in COHORTS.items():
+        if coh not in r:
+            continue
+        s += [f"### {name}", ""]
+        for key in sorted(k for k in r[coh] if k.startswith("regression_k")):
+            kk = key.split("_")[1]
+            s += [f"**MAE, {kk}** (overall)", "", md(reg(r[coh][key])), ""]
+            s += [
+                f"**Paired rev − original, {kk}**",
+                "",
+                md(paired(r[coh][f"paired_{kk}"], subs)),
+                "",
+            ]
+    f2 = M / "mech_identifiability.json"
+    rt = json.loads(f2.read_text())["metrics"].get("retest_rev")
+    if rt:
+        t = pd.DataFrame(rt["params"]).T.astype(float).round(2)
+        s += [
+            f"**Test-retest, revised spec** ({rt['n_retest_patients']} patients, days 0–3 vs 3–6)",
+            "",
+            md(t),
+            "",
+        ]
     return s
 
 

@@ -1,4 +1,4 @@
-"""Part 4 evaluation: identical test windows (day >= 3), paired patient-bootstrap CIs.
+﻿"""Part 4 evaluation: identical test windows (day >= 3), paired patient-bootstrap CIs.
 
 Reuses the Part 3 row filter / bootstrap code (src.eval.fusion_report): per horizon, rows where
 every compared model has a prediction; CIs resample PATIENTS (1,000 draws). Models:
@@ -26,6 +26,48 @@ from src.utils.config import PROJECT_ROOT, load_config
 PROC = PROJECT_ROOT / "data" / "processed"
 MECH = PROC / "mech"
 HORIZONS = [30, 60, 120]
+
+
+def add_twins(w: pd.DataFrame, cohort: str, tag: str, prefix: str) -> pd.DataFrame:
+    """Merge twin forecasts from twin<tag>_<cohort>_fold*.parquet as columns <prefix><model>|h."""
+    key = ["period_id", "t"]
+    tw = pd.concat(
+        [pd.read_parquet(f) for f in sorted(MECH.glob(f"twin{tag}_{cohort}_fold*.parquet"))],
+        ignore_index=True,
+    )
+    clip = load_config("data")["cgm"]["glucose_range_mgdl"][cohort]
+    for m, g in tw.groupby("model"):
+        cols = {f"mu_{h}": f"{prefix}{m}|{h}" for h in HORIZONS}
+        cols |= {f"var_{h}": f"{prefix}{m}|var{h}" for h in HORIZONS}
+        w = w.merge(g[key + list(cols)].rename(columns=cols), on=key, how="left")
+        for h in HORIZONS:
+            w[f"{prefix}{m}|{h}"] = w[f"{prefix}{m}|{h}"].clip(*clip)
+    return w
+
+
+def revision_eval(cohort: str, tag: str) -> dict[str, Any]:
+    """Original vs revised spec (D-037) on IDENTICAL rows: MAE per k and paired differences."""
+    mc, fc, bc = load_config("mech"), load_config("fusion"), load_config("baselines")
+    w = add_twins(build_wide(cohort, mc, fc), cohort, tag, "rev_")
+    ks = mc["adapt_days"] if cohort == "cgmacros" else [mc["shanghai"]["k"]]
+    act = "on" if cohort == "cgmacros" else "off"
+    out: dict[str, Any] = {}
+    for k in ks:
+        pairs = [
+            (f"rev_twin_{i}_act{act}_k{k}", f"twin_{i}_act{act}_k{k}") for i in ("pop", "static")
+        ]
+        ms = [m for p in pairs for m in p]
+        base = ["persistence", "lgbm"] + ([f"ar_k{k}"] if k >= 1 else [])
+        wk = common_rows(w, ms + base)
+        out[f"regression_k{k}"] = regression_rows(wk, ms + base, cohort, fc, bc)
+        out[f"paired_k{k}"] = paired_rows(wk, pairs, cohort, fc, bc)
+    out["coverage"] = coverage_rows(
+        w, [f"rev_twin_pop_act{act}_k{max(ks)}"], mc["intervals"], bc["bootstrap"]["n_boot"]
+    )
+    out["fold_choices"] = [
+        json.loads(f.read_text()) for f in sorted(MECH.glob(f"twin{tag}_{cohort}_fold*.json"))
+    ]
+    return out
 
 
 def build_wide(cohort: str, mc: dict[str, Any], fc: dict[str, Any]) -> pd.DataFrame:
@@ -313,5 +355,63 @@ def main() -> None:
     print("mech report written", flush=True)
 
 
+def sg_below(mc: dict[str, Any]) -> dict[str, Any]:
+    """Revised fits: fraction with SG below the ORIGINAL lower bound, and median SG (k >= 1)."""
+    lo0 = 0.99 * mc["params"]["fit"]["SG"]["lo"]  # original bound, 1% tolerance
+    tag = mc["revision"]["tag"]
+    out = {}
+    for cohort in ("cgmacros", "shanghai_t2dm"):
+        files = sorted(MECH.glob(f"twinfits{tag}_{cohort}_fold*.parquet"))
+        if not files:
+            continue
+        f = pd.concat([pd.read_parquet(x) for x in files])
+        f = f[f.k > 0]
+        out[cohort] = {
+            m: {
+                "frac_below_orig_lo": float(g["SG"].lt(lo0).mean()),
+                "median": float(g.SG.median()),
+            }
+            for m, g in f.groupby("model")
+        }
+    return out
+
+
+def main_rev() -> None:
+    """Part 4b (D-037): original vs revised spec -> reports/metrics/mech_revision.json.
+
+    The original Part 4 metrics files are not rewritten. At-bound fractions for both specs are
+    merged into mech_identifiability.json (keys at_bound, at_bound_rev) with per-patient fitted
+    values in reports/metrics/mech_fitted_params{,_rev}.csv.
+    """
+    from src.mech.identify import write_at_bound
+    from src.mech.run_mech import revised
+    from src.utils.provenance import file_hash, write_metrics
+
+    mc = load_config("mech")
+    tag = mc["revision"]["tag"]
+    files = ["cgmacros_ts5", "common_ts15", "meals", "static"]
+    dh = file_hash([PROC / f"{f}.parquet" for f in files])
+    res: dict[str, Any] = {"spec": mc["revision"]}
+    for cohort in ("cgmacros", "shanghai_t2dm"):
+        if (MECH / f"twin{tag}_{cohort}_fold0.parquet").exists():
+            res[cohort] = revision_eval(cohort, tag)
+    sh = mc["shanghai"]["free"]
+    fix = mc["revision"]["fix"]
+    write_at_bound({"cgmacros": list(FIT_PARAMS), "shanghai_t2dm": sh})
+    write_at_bound(
+        {
+            "cgmacros": [p for p in FIT_PARAMS if p not in fix],
+            "shanghai_t2dm": [p for p in sh if p not in fix],
+        },
+        tag,
+        revised(mc)[0],
+    )
+    res["sg_below_original_bound"] = sg_below(mc)
+    write_metrics("mech_revision", res, mc, mc["seed"], dh)
+    print("mech revision report written", flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main_rev() if len(sys.argv) > 1 and sys.argv[1] == "rev" else main()

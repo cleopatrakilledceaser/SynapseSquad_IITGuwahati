@@ -574,6 +574,21 @@ Run on CGMacros with the first 3 days of each patient. Figures: `mech_parameter_
   poor retest agreement.
 - **Consequence:** per-patient SG, SI, fc, kabs and β must NOT be shown to clinicians as patient
   characteristics. Only Gb (basal glucose) is stable enough to display, with its uncertainty.
+- **Fitted parameters at a bound** (added in Part 4b; evaluated patients' out-of-fold fits, within
+  1% on the log scale; source `reports/metrics/mech_identifiability.json` key `at_bound`,
+  per-patient values `reports/metrics/mech_fitted_params.csv`; flag threshold 20%):
+
+  | param | CGMacros k = 1 (lower / upper) | CGMacros k = 3 | Shanghai k = 3 |
+  |---|---|---|---|
+  | Gb | 2–4% / 0% | 0% / 0% | below 20% |
+  | **SG** | **44–51% / 0% FLAG** | **40–44% / 0% FLAG** | **43% / 0% FLAG** |
+  | SI | 0–2% / 0% | 0–2% / 0% | below 20% |
+  | fc | 7–9% / 2% | 11% / 0% | below 20% |
+  | kabs | 9% / 4% | 9% / 2% | below 20% |
+  | **beta** | 0% / **24–27% FLAG** | 2% / 16% | not fitted (Shanghai has no macros) |
+
+  Ranges cover the four twin variants (pop/static prior × activity on/off). These fractions were
+  missing from the first Part 4 report; they motivated the Part 4b diagnosis (D-037).
 
 ## D-035 Simulator (Part 4)
 - **Parameters:** a multivariate normal fitted to the log estimates of real patients
@@ -595,6 +610,9 @@ Run on CGMacros with the first 3 days of each patient. Figures: `mech_parameter_
   - Within a patient, the simulator is too smooth: lower CV, smaller post-meal rises, later and
     more spread-out peaks.
   - Between patients, it is too spread out: the multivariate normal over poorly identified
+    parameters (D-034) produces extreme combinations.
+  - Acceptable for code tests and illustrating what-if mechanics; NOT a realistic synthetic cohort.
+    Revisit in Part 11.
 
 ## D-036 Part 4 findings (mechanistic twin)
 CGMacros: 45 patients, 29,321 identical test windows (anchors on day ≥ 3), 5 patient folds, paired
@@ -644,7 +662,9 @@ patient bootstrap 95% CIs. "ns" = CI includes 0. Metrics: `reports/metrics/mech_
   - Time above 140: 80 vs 145 min.
   - A 30-min walk changes the peak by < 0.1 mg/dL, as the figure states.
 - **Leakage check:** the twin is worse than LightGBM and AR, so the results are not suspiciously
-  good. Tests cover the guarantees: `test_fit_uses_only_first_k_days`, `test_ekf_forecast_causal`,
+  good. AR's ridge lambda (50) is a fixed carry-over from Part 2 (D-024), not reselected per fold,
+  so AR is not tuned more than the twin. Tests cover the guarantees:
+  `test_fit_uses_only_first_k_days`, `test_ekf_forecast_causal`,
   `test_rest_level_is_past_only_with_default`, `test_simulation_causal_in_meals_and_activity`.
 - **Implications for Part 5 (hybrid):**
   - The mechanistic twin alone is not a competitive forecaster.
@@ -653,7 +673,75 @@ patient bootstrap 95% CIs. "ns" = CI includes 0. Metrics: `reports/metrics/mech_
   - Per-patient kinetic parameters are not reliable (D-034).
   - Activity needs a different representation, e.g. learned in the ML part.
 
-    parameters (D-034) produces extreme combinations.
-  - Acceptable for code tests and illustrating what-if mechanics; NOT a realistic synthetic cohort.
-    Revisit in Part 11.
+## D-037 Part 4b: SG / beta bound diagnosis and revised specification
+**Diagnosis on TRAINING patients only** (each fold's 36 training patients, first 3 days only,
+stage-1 fits; `src/mech/diagnose_bounds.py` → `reports/metrics/mech_bounds_diagnosis.json`).
+No test window or evaluated patient was used to choose the revision. Ranges are over the 5 folds.
+- **The SG bound is binding, not just touched.** 33–39% of training fits sit at SG = 0.001.
+  - With the bound widened to 1e-5, the same share moves below 0.001 (median of those fits
+    3.2–3.5e-4). None reach the new bound.
+  - Data-only −2 log L improves by a median of 16–21 for those patients.
+  - Fold-0 profile (SG fixed, others refit): 42% of patients are best at SG ≤ 0.001. Only 3% are
+    flat between 1e-5 and 1e-3.
+  - So the data push SG toward zero; the old bound was cutting fits off.
+- **Not a segment-length effect:** 12-h instead of 6-h simulation segments leave the at-bound share
+  unchanged (33–36%).
+- **Interpretation:** SG trades off against the insulin-surrogate pathway: posterior corr(SG, SI)
+  −0.49 (D-034), corr(log SG, log Gb) −0.30 to −0.42. Return to baseline is attributed to X rather
+  than to glucose effectiveness. SG near zero is a model-structure trade-off, not a physiological
+  estimate.
+- **beta is not identifiable within a patient:**
+  - Split-half (days 0–1.5 vs 1.5–3) correlation −0.20 to 0.20.
+  - Widening its upper bound to 100: 6–14% go above 10, 0–3% reach 100.
+  - corr(log kabs, log beta) 0.16–0.42.
+  - The slowing ratio varies a lot within a patient (median CV 0.86–0.91), so the data have
+    contrast, but it does not translate into a stable beta.
+- **Candidate specs, split-half stability** (training patients, days < 3; mean over folds):
+
+  | spec | Gb | SG | SI | fc | kabs | beta |
+  |---|---|---|---|---|---|---|
+  | original | 0.71 | 0.51 | 0.30 | 0.05 | −0.13 | 0.00 |
+  | SG lo 1e-5 | 0.71 | 0.52 | 0.27 | 0.04 | −0.13 | 0.00 |
+  | SG lo 1e-5 + beta fixed | 0.72 | 0.53 | 0.23 | 0.02 | −0.13 | fixed |
+  | SG + beta fixed | 0.72 | fixed | 0.35 | −0.18 | −0.06 | fixed |
+
+  None of the candidates clearly improves stability.
+- **Choice (made before any test-window run):** widen SG's lower bound to 1e-5 and fix beta at the
+  training-population mean (the stage-1 mean of each fold's training patients).
+  - Rationale: remove a binding bound, and stop fitting a parameter with zero within-patient
+    stability.
+  - Fixing SG instead was rejected: it made fc unstable (−0.18).
+  - Config `revision` in `configs/mech.yaml`. Outputs are tagged `_rev`; the original outputs are
+    unchanged.
+- **Result** (identical rows; `reports/metrics/mech_revision.json`; rev − original, * = CI excludes
+  0):
+  - **CGMacros k = 3:**
+    - overall −0.16 / −0.22 / −0.13 (ns)
+    - post-meal −0.22 / −0.28 / −0.34 (ns)
+    - hyper-140 onset +0.07 / +0.18 / +0.43 (ns)
+  - **CGMacros k = 1:** overall +0.27 / +0.01 / −0.14 (ns); onset +0.90* / +1.14* / +0.72 (worse).
+  - **CGMacros k = 0:** overall −0.09* / −0.07 / +0.10*; onset +0.27* / +0.66* at +60/+120 (worse).
+  - **Shanghai k = 3:** overall ≤ 0.03; onset +0.11* / +0.27* (worse).
+  - **Coverage** (twin_pop_acton_k3): unchanged, 80%: 88–89%, 95%: 95–96%.
+  - **Q/R choice:** R = 256 at k = 1 in all folds (originally 144–256); k = 3 unchanged.
+- **At bounds, revised fits:**
+  - SG: 0% at the new bound. However, 42–56% of CGMacros fits (47–50% on Shanghai) fall below the
+    old bound 0.001; median SG is 0.0008–0.002.
+  - fc 9–13% and kabs 9–13% at the lower bound; nothing above 20%.
+- **Test-retest, revised** (days 0–3 vs 3–6, 45 patients; original in brackets):
+  - Gb 0.67 (0.62)
+  - SG 0.24 (0.22)
+  - SI 0.26 (0.24)
+  - fc 0.24 (0.19)
+  - kabs 0.17 (0.18)
+
+  Still only Gb is above 0.5.
+- **Verdict: the revision does not help.**
+  - Overall MAE changes are within ±0.3 mg/dL and not distinguishable from zero at k = 3.
+  - Onset windows get slightly worse at k = 0/1 and on Shanghai.
+  - Stability is essentially unchanged.
+  - The bound artifact is gone, but the underlying identifiability problem (D-034) remains.
+  - **The original specification stays the Part 4 default.** The revised outputs are kept for
+    reference.
+  - For Part 5, treat SG and beta as non-identifiable; do not expose them.
 

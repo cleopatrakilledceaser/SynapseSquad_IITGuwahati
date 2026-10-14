@@ -76,6 +76,8 @@ identifiability:
   noise_sd: 8.0                    # synthetic CGM noise for recovery (mg/dL)
   contraction_min: 0.5             # 1 - post_var/prior_var below this = not identifiable
   retest_min: 0.5                  # corr of log estimates, days 0-3 vs days 3-6 (D-034)
+  at_bound_tol_log: 0.01           # a fit is "at a bound" within 1% (log scale) of it
+  at_bound_flag: 0.2               # flag a parameter if more than 20% of fits sit at a bound
   profile_patients: 5
   profile_points: 9
   profile_halfwidth_log: 1.0
@@ -86,6 +88,11 @@ shanghai:                          # meal timing only (no macros): pooled dose x
   pooled_dose_g: 50.0              # nominal carbohydrate per logged meal; only fc*dose is
   free: [Gb, SG, SI, fc, kabs]     # identifiable, so the dose is fixed and fc absorbs the scale
   n_sub: 3
+
+revision:                          # Part 4b (D-037), chosen on training patients / days < 3 only
+  tag: _rev                        # output suffix; the original outputs are kept unchanged
+  sg_lo: 1.0e-5                    # SG lower bound widened from 0.001 (binding, see diagnosis)
+  fix: [beta]                      # beta = training-population mean (not identifiable per patient)
 
 simulate:
   n_patients: 100

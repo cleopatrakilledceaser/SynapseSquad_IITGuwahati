@@ -36,9 +36,10 @@ fusion:  ## Part 3 (about 4 h CPU, resumable: cached runs in data/processed/fusi
 	$(PY) -W ignore -u -m src.models.run_fusion all
 	$(PY) -W ignore -m src.eval.fusion_report
 
-mech:  ## Part 4 mechanistic twin (about 10 min CPU, resumable: cached in data/processed/mech)
+mech:  ## Part 4 mechanistic twin (about 9.5 min elapsed, folds in parallel; cached in data/processed/mech)
 	$(PY) -W ignore -u -m src.mech.run_mech all
 	$(PY) -W ignore -m src.mech.report
+	$(PY) -W ignore -m src.mech.report rev
 
 figures:
 	$(PY) -m src.eval.eda

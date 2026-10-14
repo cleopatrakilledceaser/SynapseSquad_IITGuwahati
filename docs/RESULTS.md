@@ -482,6 +482,10 @@ SYNTHETIC patients vs real CGMacros)
 
 ### Identifiability (CGMacros, first 3 days; D-034)
 
+**Limitation: only Gb (basal glucose) is stable per patient. SG, SI, fc, kabs and
+beta must not be shown to clinicians as patient characteristics** (test-retest
+r < 0.5; two disjoint 3-day windows of the same patient differ about 2–6×).
+
 | index | recovery_corr_true_est | contraction_median_real | profile_flat_fraction | retest_corr_log | retest_abs_log_diff_median | structurally_identifiable | practically_identifiable |
 |---|---|---|---|---|---|---|---|
 | Gb | 1.0 | 1.0 | 0.0 | 0.62 | 0.08 | True | True |
@@ -490,4 +494,151 @@ SYNTHETIC patients vs real CGMacros)
 | fc | 0.8 | 0.99 | 0.0 | 0.19 | 0.84 | True | False |
 | kabs | 0.83 | 0.96 | 0.0 | 0.18 | 0.61 | True | False |
 | beta | 0.89 | 0.69 | 0.4 | 0.14 | 1.82 | True | False |
+
+**Fitted parameters at a bound (original spec)**: fraction of evaluated patients'
+fits within 1% (log) of the lower / upper bound; k = 0 has no fit.
+`FLAG` = more than 20%. Per-patient values:
+`reports/metrics/mech_fitted_params.csv`.
+
+| cohort | model | k | Gb | SG | SI | fc | kabs | beta |
+|---|---|---|---|---|---|---|---|---|
+| cgmacros | twin_pop_actoff_k1 | 1 | 4% / 0% | 49% / 0% FLAG | 0% / 0% | 7% / 2% | 9% / 4% | 0% / 27% FLAG |
+| cgmacros | twin_pop_actoff_k3 | 3 | 0% / 0% | 42% / 0% FLAG | 2% / 0% | 11% / 0% | 9% / 2% | 2% / 16% |
+| cgmacros | twin_pop_acton_k1 | 1 | 4% / 0% | 51% / 0% FLAG | 2% / 0% | 7% / 2% | 9% / 4% | 0% / 24% FLAG |
+| cgmacros | twin_pop_acton_k3 | 3 | 0% / 0% | 40% / 0% FLAG | 2% / 0% | 11% / 0% | 9% / 2% | 2% / 16% |
+| cgmacros | twin_static_actoff_k1 | 1 | 2% / 0% | 44% / 0% FLAG | 0% / 0% | 9% / 2% | 9% / 4% | 0% / 27% FLAG |
+| cgmacros | twin_static_actoff_k3 | 3 | 0% / 0% | 44% / 0% FLAG | 0% / 0% | 11% / 0% | 9% / 2% | 2% / 16% |
+| cgmacros | twin_static_acton_k1 | 1 | 2% / 0% | 47% / 0% FLAG | 0% / 0% | 9% / 2% | 9% / 4% | 0% / 27% FLAG |
+| cgmacros | twin_static_acton_k3 | 3 | 0% / 0% | 40% / 0% FLAG | 2% / 0% | 11% / 0% | 9% / 2% | 2% / 16% |
+| shanghai_t2dm | twin_pop_actoff_k3 | 3 | 1% / 2% | 43% / 0% FLAG | 1% / 0% | 6% / 1% | 0% / 0% |  |
+| shanghai_t2dm | twin_static_actoff_k3 | 3 | 1% / 2% | 43% / 0% FLAG | 1% / 0% | 6% / 1% | 0% / 0% |  |
+
+**Fitted parameters at a bound (revised spec, D-037)**: fraction of evaluated patients'
+fits within 1% (log) of the lower / upper bound; k = 0 has no fit.
+`FLAG` = more than 20%. Per-patient values:
+`reports/metrics/mech_fitted_params_rev.csv`.
+
+| cohort | model | k | Gb | SG | SI | fc | kabs |
+|---|---|---|---|---|---|---|---|
+| cgmacros | twin_pop_actoff_k1 | 1 | 2% / 0% | 0% / 0% | 0% / 0% | 13% / 0% | 13% / 0% |
+| cgmacros | twin_pop_actoff_k3 | 3 | 0% / 0% | 0% / 0% | 2% / 0% | 13% / 0% | 9% / 0% |
+| cgmacros | twin_pop_acton_k1 | 1 | 2% / 0% | 0% / 0% | 0% / 0% | 11% / 0% | 13% / 0% |
+| cgmacros | twin_pop_acton_k3 | 3 | 0% / 0% | 0% / 0% | 2% / 0% | 13% / 0% | 9% / 0% |
+| cgmacros | twin_static_actoff_k1 | 1 | 0% / 0% | 0% / 0% | 0% / 0% | 11% / 0% | 13% / 0% |
+| cgmacros | twin_static_actoff_k3 | 3 | 0% / 0% | 0% / 0% | 2% / 0% | 13% / 0% | 9% / 0% |
+| cgmacros | twin_static_acton_k1 | 1 | 0% / 0% | 0% / 0% | 0% / 0% | 9% / 0% | 13% / 0% |
+| cgmacros | twin_static_acton_k3 | 3 | 0% / 0% | 0% / 0% | 2% / 0% | 13% / 0% | 9% / 0% |
+| shanghai_t2dm | twin_pop_actoff_k3 | 3 | 1% / 2% | 0% / 0% | 1% / 0% | 5% / 0% | 1% / 2% |
+| shanghai_t2dm | twin_static_actoff_k3 | 3 | 1% / 2% | 0% / 0% | 1% / 0% | 6% / 0% | 0% / 2% |
+
+## Part 4b — SG / beta bound revision (tag `part-4b-done`, D-037)
+
+Revised spec: SG lower bound 1e-05 (was 0.001); fixed at the
+training-population mean: beta. Chosen on training patients'
+first 3 days only (`reports/metrics/mech_bounds_diagnosis.json`). Original and revised
+twins are compared on identical rows; `rev_` = revised. Paired: rev − original
+(negative = revision better). The original specification remains the Part 4 default.
+
+### CGMacros
+
+**MAE, k0** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| rev_twin_pop_acton_k0 | 14.5 [12.7, 16.7] | 22.2 [18.8, 26.7] | 30.0 [24.6, 37.2] |
+| twin_pop_acton_k0 | 14.5 [12.7, 16.9] | 22.3 [18.8, 26.9] | 29.9 [24.5, 37.1] |
+| rev_twin_static_acton_k0 | 13.2 [12.2, 14.2] | 19.8 [17.7, 22.1] | 26.6 [23.0, 30.8] |
+| twin_static_acton_k0 | 13.2 [12.2, 14.2] | 19.7 [17.7, 21.9] | 26.4 [22.9, 30.7] |
+| persistence | 13.2 [12.4, 14.2] | 19.4 [17.7, 21.3] | 26.6 [23.8, 29.9] |
+| lgbm | 11.4 [10.6, 12.2] | 16.6 [15.3, 18.1] | 20.8 [18.8, 23.1] |
+
+**Paired rev − original, k0**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | rev_twin_pop_acton_k0 − twin_pop_acton_k0 | -0.09 [-0.19, -0.01] | -0.07 [-0.20, 0.03] ns | 0.10 [0.02, 0.19] |
+| overall | rev_twin_static_acton_k0 − twin_static_acton_k0 | 0.02 [-0.04, 0.08] ns | 0.08 [-0.04, 0.20] ns | 0.22 [0.10, 0.33] |
+| post_meal_3h | rev_twin_pop_acton_k0 − twin_pop_acton_k0 | -0.01 [-0.14, 0.07] ns | 0.08 [-0.09, 0.21] ns | 0.27 [0.16, 0.38] |
+| post_meal_3h | rev_twin_static_acton_k0 − twin_static_acton_k0 | 0.06 [-0.04, 0.16] ns | 0.18 [-0.03, 0.38] ns | 0.34 [0.14, 0.54] |
+| onset_hyper140 | rev_twin_pop_acton_k0 − twin_pop_acton_k0 | 0.01 [-0.03, 0.05] ns | 0.27 [0.21, 0.34] | 0.66 [0.56, 0.76] |
+| onset_hyper140 | rev_twin_static_acton_k0 − twin_static_acton_k0 | 0.34 [0.16, 0.57] | 0.52 [0.31, 0.76] | 0.77 [0.53, 1.05] |
+
+**MAE, k1** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| rev_twin_pop_acton_k1 | 15.9 [14.1, 18.1] | 22.5 [19.6, 25.9] | 28.3 [24.5, 32.6] |
+| twin_pop_acton_k1 | 15.6 [13.9, 17.6] | 22.5 [19.7, 25.7] | 28.5 [24.9, 32.7] |
+| rev_twin_static_acton_k1 | 15.9 [14.1, 18.1] | 22.5 [19.6, 25.8] | 28.3 [24.5, 32.6] |
+| twin_static_acton_k1 | 15.8 [14.0, 17.9] | 22.6 [19.7, 26.0] | 28.3 [24.7, 32.6] |
+| persistence | 13.2 [12.4, 14.2] | 19.4 [17.7, 21.3] | 26.6 [23.8, 29.9] |
+| lgbm | 11.4 [10.6, 12.2] | 16.6 [15.3, 18.1] | 20.8 [18.8, 23.1] |
+| ar_k1 | 13.7 [12.7, 14.8] | 19.2 [17.4, 21.3] | 24.4 [21.5, 27.8] |
+
+**Paired rev − original, k1**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | rev_twin_pop_acton_k1 − twin_pop_acton_k1 | 0.27 [-0.17, 0.75] ns | 0.01 [-0.56, 0.60] ns | -0.14 [-0.87, 0.55] ns |
+| overall | rev_twin_static_acton_k1 − twin_static_acton_k1 | 0.12 [-0.46, 0.66] ns | -0.12 [-0.78, 0.50] ns | -0.03 [-0.76, 0.71] ns |
+| post_meal_3h | rev_twin_pop_acton_k1 − twin_pop_acton_k1 | 0.36 [-0.22, 0.98] ns | -0.09 [-1.02, 0.75] ns | -0.57 [-2.00, 0.65] ns |
+| post_meal_3h | rev_twin_static_acton_k1 − twin_static_acton_k1 | 0.16 [-0.64, 0.94] ns | -0.21 [-1.26, 0.72] ns | -0.45 [-1.86, 0.83] ns |
+| onset_hyper140 | rev_twin_pop_acton_k1 − twin_pop_acton_k1 | 0.90 [0.07, 1.79] | 1.14 [0.16, 2.25] | 0.72 [-0.46, 2.00] ns |
+| onset_hyper140 | rev_twin_static_acton_k1 − twin_static_acton_k1 | 0.99 [0.11, 1.96] | 1.26 [0.24, 2.37] | 0.79 [-0.43, 2.14] ns |
+
+**MAE, k3** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| rev_twin_pop_acton_k3 | 12.5 [11.7, 13.5] | 17.9 [16.4, 19.6] | 23.1 [20.8, 25.8] |
+| twin_pop_acton_k3 | 12.7 [11.8, 13.7] | 18.1 [16.5, 20.0] | 23.2 [20.9, 26.0] |
+| rev_twin_static_acton_k3 | 12.6 [11.6, 13.6] | 18.0 [16.3, 19.8] | 23.1 [20.8, 25.8] |
+| twin_static_acton_k3 | 12.7 [11.8, 13.7] | 18.1 [16.5, 20.0] | 23.2 [20.9, 26.0] |
+| persistence | 13.2 [12.4, 14.2] | 19.4 [17.7, 21.3] | 26.6 [23.8, 29.9] |
+| lgbm | 11.4 [10.6, 12.2] | 16.6 [15.3, 18.1] | 20.8 [18.8, 23.1] |
+| ar_k3 | 12.2 [11.4, 13.1] | 17.4 [15.8, 19.0] | 21.5 [19.2, 24.2] |
+
+**Paired rev − original, k3**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | rev_twin_pop_acton_k3 − twin_pop_acton_k3 | -0.16 [-0.41, 0.02] ns | -0.22 [-0.69, 0.13] ns | -0.13 [-0.65, 0.29] ns |
+| overall | rev_twin_static_acton_k3 − twin_static_acton_k3 | -0.10 [-0.26, 0.03] ns | -0.12 [-0.40, 0.15] ns | -0.11 [-0.54, 0.29] ns |
+| post_meal_3h | rev_twin_pop_acton_k3 − twin_pop_acton_k3 | -0.22 [-0.50, 0.01] ns | -0.28 [-0.78, 0.14] ns | -0.34 [-0.78, 0.07] ns |
+| post_meal_3h | rev_twin_static_acton_k3 − twin_static_acton_k3 | -0.13 [-0.32, 0.02] ns | -0.11 [-0.42, 0.20] ns | -0.28 [-0.70, 0.10] ns |
+| onset_hyper140 | rev_twin_pop_acton_k3 − twin_pop_acton_k3 | 0.07 [-0.58, 0.76] ns | 0.18 [-0.62, 1.07] ns | 0.43 [-0.41, 1.43] ns |
+| onset_hyper140 | rev_twin_static_acton_k3 − twin_static_acton_k3 | 0.01 [-0.65, 0.74] ns | 0.14 [-0.67, 1.07] ns | 0.44 [-0.40, 1.43] ns |
+
+### Shanghai T2DM
+
+**MAE, k3** (overall)
+
+| model | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| rev_twin_pop_actoff_k3 | 11.4 [10.8, 12.1] | 18.7 [17.6, 19.8] | 27.4 [25.5, 29.3] |
+| twin_pop_actoff_k3 | 11.4 [10.9, 12.1] | 18.6 [17.6, 19.8] | 27.3 [25.5, 29.3] |
+| rev_twin_static_actoff_k3 | 11.4 [10.8, 12.1] | 18.6 [17.6, 19.8] | 27.4 [25.5, 29.3] |
+| twin_static_actoff_k3 | 11.4 [10.8, 12.1] | 18.6 [17.6, 19.8] | 27.3 [25.5, 29.3] |
+| persistence | 11.4 [10.9, 12.0] | 19.3 [18.3, 20.4] | 29.8 [28.0, 31.7] |
+| lgbm | 8.9 [8.5, 9.3] | 15.9 [15.2, 16.6] | 23.7 [22.5, 25.0] |
+| ar_k3 | 9.3 [8.9, 9.8] | 16.9 [16.1, 17.8] | 25.8 [24.3, 27.4] |
+
+**Paired rev − original, k3**
+
+| subset | pair | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| overall | rev_twin_pop_actoff_k3 − twin_pop_actoff_k3 | 0.00 [-0.03, 0.03] ns | 0.01 [-0.04, 0.06] ns | 0.03 [-0.04, 0.08] ns |
+| overall | rev_twin_static_actoff_k3 − twin_static_actoff_k3 | -0.00 [-0.03, 0.03] ns | 0.01 [-0.04, 0.06] ns | 0.02 [-0.05, 0.07] ns |
+| onset_hyper140 | rev_twin_pop_actoff_k3 − twin_pop_actoff_k3 | 0.06 [-0.00, 0.13] ns | 0.11 [0.01, 0.23] | 0.27 [0.10, 0.49] |
+| onset_hyper140 | rev_twin_static_actoff_k3 − twin_static_actoff_k3 | 0.06 [-0.00, 0.13] ns | 0.11 [0.01, 0.23] | 0.27 [0.10, 0.48] |
+
+**Test-retest, revised spec** (45 patients, days 0–3 vs 3–6)
+
+| index | retest_corr_log | retest_abs_log_diff_median | retest_corr_log_original |
+|---|---|---|---|
+| Gb | 0.67 | 0.08 | 0.62 |
+| SG | 0.24 | 1.35 | 0.22 |
+| SI | 0.26 | 1.09 | 0.24 |
+| fc | 0.24 | 0.68 | 0.19 |
+| kabs | 0.17 | 0.77 | 0.18 |
 

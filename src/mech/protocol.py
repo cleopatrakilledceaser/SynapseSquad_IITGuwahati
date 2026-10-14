@@ -16,7 +16,7 @@ Per outer fold (Part 2/3 CV repeat 0, identical to LightGBM and the static prior
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 import numpy as np
@@ -144,10 +144,34 @@ def select_qr(
     return q, r, scores
 
 
+def fix_to_population(c: Ctx, pop: Prior, fix: list[str]) -> Ctx:
+    """Ctx where the parameters in ``fix`` are not fitted but set to the population mean (D-037).
+
+    ``pop`` comes from TRAINING patients' stage-1 fits, so no evaluated patient is involved.
+    """
+    fix = [p for p in fix if p in c.free]
+    if not fix:
+        return c
+    base = c.base_logp.copy()
+    fi = [FIT_PARAMS.index(p) for p in fix]
+    base[fi] = pop.mu[fi]
+    return replace(c, free=[p for p in c.free if p not in fix], base_logp=base)
+
+
 def run_fold(
-    c: Ctx, fold: int, train: list[str], test: list[str], ks: list[int]
+    c0: Ctx,
+    fold: int,
+    train: list[str],
+    test: list[str],
+    ks: list[int],
+    fix: list[str] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, Any], pd.DataFrame]:
-    """All twin variants for one fold -> (forecasts long table, choices, test-patient params)."""
+    """All twin variants for one fold -> (forecasts long table, choices, test-patient params).
+
+    ``fix``: parameters set to the training-population mean after stage 1 instead of being fitted
+    per patient (Part 4b revision, D-037). None = original specification.
+    """
+    c = c0
     mc, cp = c.mc, config_prior(c.mc["params"])
     floor, feats = mc["fit"]["prior_sd_floor"], mc["prior"]["static_features"]
     choices: dict[str, Any] = {"fold": fold, "n_train": len(train), "n_test": len(test)}
@@ -157,6 +181,7 @@ def run_fold(
         variants = {"off": 0.0}  # no wearable stream
     s_test = dict(zip(test, static_matrix(c.static, test, feats), strict=True))
     for act, alpha in variants.items():
+        c = c0  # stage 1 / alpha_E always fit every free parameter
         if alpha is None:
             alpha, choices["alpha_scores"] = select_alpha(c, train)
         choices[f"alpha_{act}"] = alpha
@@ -168,6 +193,8 @@ def run_fold(
         )
         choices[f"ridge_alpha_{act}"] = dict(zip(FIT_PARAMS, sp.chosen_alpha, strict=True))
         choices[f"pop_prior_{act}"] = {"mu": pop.mu.tolist(), "sd": pop.sd.tolist()}
+        c = fix_to_population(c0, pop, fix or [])
+        choices[f"free_{act}"] = list(c.free)
         pop_of: Callable[[str], Prior] = lambda _p, _pop=pop: _pop  # noqa: E731
         static_of: Callable[[str], Prior] = lambda p, _sp=sp: _sp.prior_for(s_test[p])  # noqa: E731
         for k in ks:

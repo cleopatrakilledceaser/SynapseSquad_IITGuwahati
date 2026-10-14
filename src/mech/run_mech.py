@@ -6,7 +6,9 @@ Stages (cached in data/processed/mech/, skipped if present):
   lgbm      population LightGBM, CGM + time of day + meals, delta target (same folds)
   shanghai  meal-timing-only twin, k = 3 (pooled dose x per-patient fc) + its comparators
   identify  synthetic recovery + Laplace / profile likelihood
-Usage: python -m src.mech.run_mech [twin|ar|lgbm|shanghai|identify|all]
+  rev       Part 4b revised spec (SG bound widened, beta fixed; D-037): twin for both cohorts
+            (outputs tagged _rev, originals untouched) + revised test-retest
+Usage: python -m src.mech.run_mech [twin|ar|lgbm|shanghai|identify|rev|all]
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ from __future__ import annotations
 import json
 import sys
 import time
+from copy import deepcopy
 from typing import Any
 
 import pandas as pd
@@ -72,28 +75,42 @@ def make_ctx(cohort: str, mc: dict[str, Any], fc: dict[str, Any]) -> Ctx:
     )
 
 
-def _fold_job(cohort: str, fold: int, train: list[str], test: list[str], ks: list[int]) -> None:
+def revised(mc: dict[str, Any]) -> tuple[dict[str, Any], list[str], str]:
+    """(config, fixed params, file tag) of the Part 4b revised specification (D-037)."""
+    r = mc["revision"]
+    m = deepcopy(mc)
+    m["params"]["fit"]["SG"]["lo"] = r["sg_lo"]
+    return m, list(r["fix"]), r["tag"]
+
+
+def _fold_job(
+    cohort: str, fold: int, train: list[str], test: list[str], ks: list[int], rev: bool = False
+) -> None:
     mc, fc = load_config("mech"), load_config("fusion")
-    path = OUT / f"twin_{cohort}_fold{fold}.parquet"
+    fix, tag = None, ""
+    if rev:
+        mc, fix, tag = revised(mc)
+    path = OUT / f"twin{tag}_{cohort}_fold{fold}.parquet"
     if path.exists():
         return
     t0 = time.time()
     c = make_ctx(cohort, mc, fc)
     train = [p for p in train if p in c.by_pat]
     test = [p for p in test if p in c.by_pat]
-    preds, choices, fits = run_fold(c, fold, train, test, ks)
+    preds, choices, fits = run_fold(c, fold, train, test, ks, fix=fix)
     preds.to_parquet(path, index=False)
-    fits.to_parquet(OUT / f"twinfits_{cohort}_fold{fold}.parquet", index=False)
+    fits.to_parquet(OUT / f"twinfits{tag}_{cohort}_fold{fold}.parquet", index=False)
     choices["seconds"] = time.time() - t0
-    (OUT / f"twin_{cohort}_fold{fold}.json").write_text(json.dumps(choices, indent=1, default=str))
+    js = OUT / f"twin{tag}_{cohort}_fold{fold}.json"
+    js.write_text(json.dumps(choices, indent=1, default=str))
     print(f"  {path.name}: {time.time() - t0:.0f}s", flush=True)
 
 
-def stage_twin(cohort: str, ks: list[int], n_jobs: int = 5) -> None:
+def stage_twin(cohort: str, ks: list[int], n_jobs: int = 5, rev: bool = False) -> None:
     """Twin variants for every fold of CV repeat 0 (folds in parallel processes)."""
     mc = load_config("mech")
     fl = folds(cohort, [mc["cv_repeat"]])
-    Parallel(n_jobs=n_jobs)(delayed(_fold_job)(cohort, f, tr, te, ks) for _, f, tr, te in fl)
+    Parallel(n_jobs=n_jobs)(delayed(_fold_job)(cohort, f, tr, te, ks, rev) for _, f, tr, te in fl)
 
 
 def stage_ar(cohort: str) -> None:
@@ -156,7 +173,7 @@ def main() -> None:
     set_global_seed(42)
     OUT.mkdir(parents=True, exist_ok=True)
     mc = load_config("mech")
-    todo = ["twin", "ar", "lgbm", "identify", "shanghai"] if stage == "all" else [stage]
+    todo = ["twin", "ar", "lgbm", "identify", "shanghai", "rev"] if stage == "all" else [stage]
     for s in todo:
         t0 = time.time()
         print(f"[{s}]", flush=True)
@@ -174,6 +191,13 @@ def main() -> None:
             from src.mech.identify import run_identify
 
             run_identify()
+        elif s == "rev":  # Part 4b revised spec (D-037); AR / LightGBM are shared
+            stage_twin("cgmacros", mc["adapt_days"], rev=True)
+            if mc["shanghai"]["enabled"]:
+                stage_twin("shanghai_t2dm", [mc["shanghai"]["k"]], rev=True)
+            from src.mech.identify import run_retest_revised
+
+            run_retest_revised()
         print(f"[{s}] {time.time() - t0:.0f}s", flush=True)
 
 

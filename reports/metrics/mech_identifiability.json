@@ -1,7 +1,7 @@
 {
   "name": "mech_identifiability",
-  "timestamp_utc": "2026-10-13T14:01:29.149047+00:00",
-  "git_hash": "811a328e7c58c73a239b69cf585b4cf2b026b1a0-dirty",
+  "timestamp_utc": "2026-10-14T09:43:07.336539+00:00",
+  "git_hash": "500edd500f1c0240164bc16069f989887effbb49-dirty",
   "seed": 42,
   "data_hash": "dfbd88835c87e3585b7a4e2084a71e116c43044b9cedb1c1eeefa797ca67f478",
   "config": {
@@ -173,6 +173,8 @@
       "noise_sd": 8.0,
       "contraction_min": 0.5,
       "retest_min": 0.5,
+      "at_bound_tol_log": 0.01,
+      "at_bound_flag": 0.2,
       "profile_patients": 5,
       "profile_points": 9,
       "profile_halfwidth_log": 1.0
@@ -189,6 +191,13 @@
         "kabs"
       ],
       "n_sub": 3
+    },
+    "revision": {
+      "tag": "_rev",
+      "sg_lo": 1e-05,
+      "fix": [
+        "beta"
+      ]
     },
     "simulate": {
       "n_patients": 100,
@@ -305,6 +314,1240 @@
       "fc_kabs": -0.5247456441894727,
       "fc_beta": -0.03582728245943904,
       "kabs_beta": 0.7630300711553937
+    },
+    "at_bound": {
+      "cgmacros": [
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.044444444444444446,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4888888888888889,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.06666666666666667,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.044444444444444446,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.26666666666666666,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4222222222222222,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.1111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.15555555555555556,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.044444444444444446,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.5111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.06666666666666667,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.044444444444444446,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.24444444444444444,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.1111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.15555555555555556,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4444444444444444,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.044444444444444446,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.26666666666666666,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4444444444444444,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.1111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.15555555555555556,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4666666666666667,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.044444444444444446,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.26666666666666666,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.4,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.1111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.022222222222222223,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "beta",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.15555555555555556,
+          "lower_bound": 0.010000000000000004,
+          "upper_bound": 10.000000000000002,
+          "flag_gt_threshold": false
+        }
+      ],
+      "shanghai_t2dm": [
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.02,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 100,
+          "frac_at_lower": 0.43,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 100,
+          "frac_at_lower": 0.06,
+          "frac_at_upper": 0.01,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 100,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.02,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 100,
+          "frac_at_lower": 0.43,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.0010000000000000002,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": true
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 100,
+          "frac_at_lower": 0.06,
+          "frac_at_upper": 0.01,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 100,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        }
+      ]
+    },
+    "retest_rev": {
+      "n_retest_patients": 45,
+      "fixed": [
+        "beta"
+      ],
+      "sg_lo": 1e-05,
+      "params": {
+        "Gb": {
+          "retest_corr_log": 0.6746609972012287,
+          "retest_abs_log_diff_median": 0.077415421617264,
+          "retest_corr_log_original": 0.6150820825116124
+        },
+        "SG": {
+          "retest_corr_log": 0.244425728827068,
+          "retest_abs_log_diff_median": 1.3526358628388415,
+          "retest_corr_log_original": 0.22031720524609796
+        },
+        "SI": {
+          "retest_corr_log": 0.25947666245653905,
+          "retest_abs_log_diff_median": 1.0884545961830536,
+          "retest_corr_log_original": 0.24226286657974244
+        },
+        "fc": {
+          "retest_corr_log": 0.24206159553118972,
+          "retest_abs_log_diff_median": 0.68418769264232,
+          "retest_corr_log_original": 0.18988322522954515
+        },
+        "kabs": {
+          "retest_corr_log": 0.16908090881312807,
+          "retest_abs_log_diff_median": 0.7712185700167158,
+          "retest_corr_log_original": 0.1784248567987102
+        }
+      }
+    },
+    "at_bound_rev": {
+      "cgmacros": [
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.1111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_acton_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.1111111111111111,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k1",
+          "k": 1,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 45,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 45,
+          "frac_at_lower": 0.022222222222222223,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 45,
+          "frac_at_lower": 0.13333333333333333,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_acton_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 45,
+          "frac_at_lower": 0.08888888888888889,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        }
+      ],
+      "shanghai_t2dm": [
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.02,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 100,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 100,
+          "frac_at_lower": 0.05,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_pop_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.02,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "Gb",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.02,
+          "lower_bound": 59.999999999999986,
+          "upper_bound": 249.9999999999999,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SG",
+          "n_patients": 100,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.0,
+          "lower_bound": 9.999999999999997e-06,
+          "upper_bound": 0.10000000000000002,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "SI",
+          "n_patients": 100,
+          "frac_at_lower": 0.01,
+          "frac_at_upper": 0.0,
+          "lower_bound": 1.0000000000000004e-06,
+          "upper_bound": 0.010000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "fc",
+          "n_patients": 100,
+          "frac_at_lower": 0.06,
+          "frac_at_upper": 0.0,
+          "lower_bound": 0.3,
+          "upper_bound": 30.000000000000004,
+          "flag_gt_threshold": false
+        },
+        {
+          "model": "twin_static_actoff_k3",
+          "k": 3,
+          "param": "kabs",
+          "n_patients": 100,
+          "frac_at_lower": 0.0,
+          "frac_at_upper": 0.02,
+          "lower_bound": 0.005000000000000002,
+          "upper_bound": 0.2,
+          "flag_gt_threshold": false
+        }
+      ]
     }
   }
 }

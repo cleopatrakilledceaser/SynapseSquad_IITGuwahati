@@ -92,8 +92,8 @@
 ## Part 4 outputs (done, tag `part-4-done`)
 - Code: `src/mech/` (model, inputs, fit, prior, protocol, baselines_k, run_mech, identify,
   simulate, report, figures); `configs/mech.yaml`; `tests/test_mech.py` (16 tests).
-- `make mech`: the full run took about 10 min of CPU time (twin, AR, LightGBM, identify,
-  Shanghai) and is cached in `data/processed/mech/` (gitignored).
+- `make mech`: the full run took about 9.5 min elapsed with folds in parallel (twin, AR,
+  LightGBM, identify, Shanghai) and is cached in `data/processed/mech/` (gitignored).
 - `reports/metrics/`: `mech_cgmacros.json`, `mech_shanghai_t2dm.json`,
   `mech_identifiability.json`.
 - `reports/figures/mech_*.png` (9 figures).
@@ -105,6 +105,16 @@
   - Only Gb is practically identifiable (D-034).
   - Activity has no measurable effect.
   - The static prior helps only at k = 0.
+
+## Part 4b outputs (done, tag `part-4b-done`)
+- Docs: at-bound fractions in D-034, the RESULTS.md table and `mech_identifiability.json`
+  (`at_bound`, `at_bound_rev`). Per-patient fits in `reports/metrics/mech_fitted_params{,_rev}.csv`.
+- README Part 4 summary added, with the "only Gb is stable" limitation.
+- SG / beta diagnosis on training patients only (`src/mech/diagnose_bounds.py`,
+  `mech_bounds_diagnosis.json`, about 3 min).
+- Revised spec (SG lower bound 1e-5, beta fixed at the training mean): `run_mech rev` took
+  8.4 min elapsed; results in `mech_revision.json`.
+- Verdict (D-037): the revision does not help; the original spec stays the default.
 
 ## Next steps
 1. Part 5 (hybrid): use twin states/forecasts as LightGBM features or a residual base. The
