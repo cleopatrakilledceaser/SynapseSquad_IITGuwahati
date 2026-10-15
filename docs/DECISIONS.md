@@ -859,6 +859,15 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
     that caveat; fold-0 test patients are 8–15 of the 44 / 71 evaluated.
   - The crossover's "best method" excludes continuous RLS. That rule was added after seeing that
     continuous RLS uses post-k data, which makes it a reporting fix, not a model choice.
+  - **Sensitivity (Part 6 housekeeping):** `python -m src.personalize.report excl_fold0` re-scores
+    the saved predictions without fold 0's test patients (CGMacros 36, Shanghai 56 patients) ->
+    `reports/metrics/personalize_excl_fold0.json`. +60 min, with static, vs none:
+    - CGMacros: rls_cont −0.84 [−1.20, −0.54] (all patients −1.13); rls k = 3 −0.65
+      [−1.14, −0.20] (−0.88); finetune k = 3 −0.69 [−1.14, −0.29] (−0.89).
+    - Shanghai: rls_cont −0.76 [−1.06, −0.47] (−0.88); rls k = 3 −0.40 [−0.53, −0.26] (−0.43).
+    - The conclusions hold; effects shrink by about 0.1–0.3 mg/dL. Fine-tuning shrinks by a
+      similar amount, so the shrinkage reflects which patients remain rather than the RLS
+      redesign alone.
 - **Crossover k\*:** first k (linear interpolation) at which the best no-static adapted method
   reaches the with-static population model's k = 0 MAE.
   - The method is picked by mean MAE over k > 0 (a reporting choice).

@@ -348,6 +348,36 @@ def main() -> None:
     print("personalize figures written", flush=True)
 
 
+def excl_fold0() -> None:
+    """D-043 caveat: method table re-evaluated WITHOUT fold 0's test patients (no re-run).
+
+    Fold 0's test patients were seen in the smoke runs that motivated the RLS redesign, so the
+    RLS rows are re-reported on the remaining patients from the saved predictions.
+    """
+    from src.models.fusion_lgbm import folds
+    from src.utils.provenance import file_hash, write_metrics
+
+    pc = load_config("personalize")
+    res: dict[str, Any] = {}
+    for coh in ("cgmacros", "shanghai_t2dm"):
+        f0 = [te for _, f, _, te in folds(coh, [pc["cv_repeat"]]) if f == 0][0]
+        r = evaluate(coh, f0)
+        keep = ("_none", "_finetune", "_rls", "_rls_cont")
+        res[coh] = {
+            "excluded_fold0_patients": sorted(f0),
+            "n_patients": {h: r.get(f"n_patients_overall_{h}") for h in HORIZONS},
+            "methods": {
+                h: [x for x in r[f"methods_overall_{h}"] if x["model"].endswith(keep)]
+                for h in HORIZONS
+            },
+        }
+        print(f"{coh}: excl fold 0 -> {res[coh]['n_patients']}", flush=True)
+    write_metrics(
+        "personalize_excl_fold0", res, {"personalize": pc}, pc["seed"],
+        file_hash(sorted(OUT.glob("pers_*.parquet"))),
+    )  # fmt: skip
+
+
 def crossover(curve: np.ndarray, ks: list[float], target: float) -> float:
     """Smallest k (linear interpolation) with curve(k) <= target; inf if none."""
     for i, (k, v) in enumerate(zip(ks, curve, strict=True)):
@@ -360,4 +390,6 @@ def crossover(curve: np.ndarray, ks: list[float], target: float) -> float:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    excl_fold0() if sys.argv[1:] == ["excl_fold0"] else main()

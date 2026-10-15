@@ -80,6 +80,16 @@ Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-038 to D-044.
   - At k = 3, 30 of 44 CGMacros patients improve.
   - Continuous RLS correction (it keeps learning from every past reading) gives −0.7 to −1.1 mg/dL.
   - Per-patient models from scratch are worse than the population model at every k.
+  - **Caveat on the online-learner (RLS) rows (D-043):** the RLS design was revised after
+    smoke runs printed MAE for fold 0's TEST patients. Hyperparameters are still chosen on
+    training patients only, but those test patients influenced the design.
+    - Re-evaluated without fold 0's test patients (36 CGMacros / 56 Shanghai; saved predictions,
+      no re-run; `personalize_excl_fold0.json`), +60 min, with static, vs no adaptation:
+      - continuous RLS: −0.84 [−1.20, −0.54] vs −1.13 with all patients (CGMacros);
+        −0.76 [−1.06, −0.47] vs −0.88 (Shanghai);
+      - frozen RLS at k = 3: −0.65 [−1.14, −0.20] vs −0.88 (CGMacros); −0.40 vs −0.43 (Shanghai);
+      - fine-tuning (not affected by the redesign) at k = 3: −0.69 vs −0.89 (CGMacros).
+    - The direction and significance hold; magnitudes are about 0.1–0.3 mg/dL smaller.
 - **The twin does not make personalization better:** hybrid − LightGBM after adaptation is within
   ±0.5 mg/dL on CGMacros. On Shanghai the hybrid is 0.2–0.5 mg/dL better without adaptation.
 - **What the data do and do not support:**
