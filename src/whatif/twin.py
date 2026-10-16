@@ -99,10 +99,11 @@ class TwinSpec:
     q_scale: float
     r: float
     mc: dict[str, Any]
+    onesided: bool = False  # D-056 (post-hoc) activity term
 
     def theta(self, alpha: float) -> np.ndarray:
         """Kernel parameter vector with activity effect alpha."""
-        return theta_from_log(self.logp, self.mc["params"]["fixed"], alpha)
+        return theta_from_log(self.logp, self.mc["params"]["fixed"], alpha, self.onesided)
 
 
 def run(
@@ -173,12 +174,14 @@ def iauc(gl: np.ndarray, dt: float) -> float:
     return float(np.sum(0.5 * (v[1:] + v[:-1])) * dt)
 
 
-def walk_reduction(logp: np.ndarray, mc: dict, wc: dict, ac: dict, alpha: float) -> float:
+def walk_reduction(
+    logp: np.ndarray, mc: dict, wc: dict, ac: dict, alpha: float, onesided: bool = False
+) -> float:
     """Relative 3-h iAUC reduction by the walk for a patient starting at basal (D-052)."""
     sc = mc["solver"]
     dt = float(sc["dt_min"])
     n = int(ac["iauc_hours"] * 60 / dt) + 1
-    th = theta_from_log(logp, mc["params"]["fixed"], alpha)
+    th = theta_from_log(logp, mc["params"]["fixed"], alpha, onesided)
     carbs = np.zeros(n)
     carbs[0] = ac["meal_g"]
     slow = np.full(n, float(ac["slow_ratio"]))
@@ -194,14 +197,16 @@ def walk_reduction(logp: np.ndarray, mc: dict, wc: dict, ac: dict, alpha: float)
     return 1.0 - res[1] / res[0] if res[0] > 0 else float("nan")
 
 
-def calibrate_alpha(logp: np.ndarray, mc: dict, wc: dict, ac: dict, target: float) -> float:
+def calibrate_alpha(
+    logp: np.ndarray, mc: dict, wc: dict, ac: dict, target: float, onesided: bool = False
+) -> float:
     """alpha_E giving a ``target`` iAUC reduction (bisection; NaN if not reached)."""
     lo, hi = 0.0, float(ac["alpha_max"])
-    if not walk_reduction(logp, mc, wc, ac, hi) >= target:
+    if not walk_reduction(logp, mc, wc, ac, hi, onesided) >= target:
         return float("nan")
     for _ in range(50):
         mid = 0.5 * (lo + hi)
-        if walk_reduction(logp, mc, wc, ac, mid) < target:
+        if walk_reduction(logp, mc, wc, ac, mid, onesided) < target:
             lo = mid
         else:
             hi = mid

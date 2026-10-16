@@ -1738,5 +1738,37 @@ Descriptive effects (median [IQR]; peak mg/dL, walk AUC mg/dL x min):
 | +60 min | 16.20 | 16.36 | 0.16 [-0.02, 0.37] | 44 |
 | +120 min | 20.80 | 20.64 | -0.16 [-0.57, 0.19] | 44 |
 
-Final stage runs: 1, forced re-runs: 0.
+Final stage runs: 2, forced re-runs: 1
+
+(1: D-056 post-hoc twin walk tests only (owner-approved)).
+
+### D-056 (POST-HOC, not pre-registered): one-sided twin activity term
+
+Activity may only add glucose uptake above basal. Same windows as Part 7. The test-window
+run is forced re-run 1 of the locked final stage (twin walk tests only).
+
+| windows / model | walk direction pass % [CI] | checks | max peak rise | walk AUC median |
+|---|---|---|---|---|
+| fold-0 training / twin_assumed_d056 | 100.0 [100.0, 100.0] (post-hoc) | 668 | 0.000 | -210.8 |
+| fold-0 training / twin_learned_d056 | 100.0 [100.0, 100.0] (post-hoc) | 668 | 0.000 | -2.5 |
+| test / twin_assumed_d056 | 100.0 [100.0, 100.0] (post-hoc) | 830 | 0.000 | -217.7 |
+| test / twin_learned_d056 | 100.0 [100.0, 100.0] (post-hoc) | 830 | 0.000 | -2.9 |
+
+Part 4 twin re-run with the D-056 kernel (separate files; originals unchanged).
+Re-selected alpha_E (acton): fold 0: 0.0001 -> 0.002, fold 1: 0.00025 -> 0.002, fold 2: 0.0001 -> 0.002, fold 3: 0.0001 -> 0.004, fold 4: 0.0001 -> 0.002.
+
+| Part 4 variant | max abs diff +60 | MAE +60 original | MAE +60 D-056 |
+|---|---|---|---|
+| twin_pop_actoff_k0 | 0.000 | 22.35 | 22.35 |
+| twin_pop_actoff_k1 | 0.000 | 22.53 | 22.53 |
+| twin_pop_actoff_k3 | 0.000 | 18.11 | 18.11 |
+| twin_pop_acton_k0 | 35.858 | 22.29 | 21.38 |
+| twin_pop_acton_k1 | 210.521 | 22.48 | 22.11 |
+| twin_pop_acton_k3 | 113.943 | 18.11 | 18.20 |
+| twin_static_actoff_k0 | 0.000 | 19.73 | 19.73 |
+| twin_static_actoff_k1 | 0.000 | 22.64 | 22.64 |
+| twin_static_actoff_k3 | 0.000 | 18.16 | 18.16 |
+| twin_static_acton_k0 | 292.812 | 19.69 | 19.80 |
+| twin_static_acton_k1 | 147.367 | 22.62 | 22.72 |
+| twin_static_acton_k3 | 121.088 | 18.11 | 18.23 |
 

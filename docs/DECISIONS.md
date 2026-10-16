@@ -1264,3 +1264,68 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
   should be one-sided (a model change that would need a new pre-registration).
 - **Re-running `make whatif`** stops at the final stage (lock) unless `--force` is passed; any
   forced run is recorded in the lock and must be disclosed.
+
+
+## D-056 POST-HOC amendment: one-sided twin activity term; owner display decisions (written before running)
+- **Status:** POST-HOC (decided after seeing the Part 7 test results, D-055). NOT pre-registered.
+  The original Part 7 results stay unchanged in the report; every D-056 number is labelled
+  "post-hoc, not pre-registered".
+- **Owner decisions (Part 7 review):** (1) the monotone model (`mono`) is the default what-if
+  model; (2) magnitudes are NOT rescaled: the app shows direction and ranking plus the fixed note
+  "Model-based estimate. In matched real breakfasts the models predicted about half the observed
+  rise; treat sizes as lower bounds.", with the twin's magnitude shown alongside, labelled;
+  (3) the twin's activity term is fixed as below.
+- **Kernel change (src/mech/model.py, opt-in flag `act_onesided`, default 0 = original):**
+  original G' = -(SG + aE E)(G - Gb) - X G + Ra; D-056 G' = -SG (G - Gb) - aE E max(G - Gb, 0)
+  - X G + Ra. E >= 0, so activity only adds glucose uptake and has no effect at or below basal.
+  With the flag 0 (all Parts 4-6 configs) the kernel is unchanged.
+- **Alphas:** `twin_learned_d056` uses the Part 4 `alpha_on` of the fold (same choice as the
+  original); `twin_assumed_d056` is re-calibrated with the D-056 kernel to the same D-052 target
+  (20 % 3-h iAUC reduction; 10 / 35 % sensitivity) on the fold's training-population means.
+- **Checks, in this order:**
+  1. Training windows only: fold-0 training patients, the same sampled meal windows as the Part 7
+     dev stage, twin walk tests only (activity direction + walk AUC effect).
+  2. Test windows: the final stage is locked, so ONLY the twin walk tests are re-run on the same
+     test windows with the lock override (`--force`). This is **forced re-run 1** of the Part 7
+     final stage and is recorded in the lock file. No ML or carb test is re-run.
+  3. Parts 4 and 5 forecasts: Part 5 twin features use alpha_E = 0, so they cannot change
+     (checked by recomputing the features with the D-056 kernel; expected bitwise identical). Part 4:
+     the full CGMacros twin protocol is re-run with the D-056 kernel into separate files
+     (alpha selection on training patients, test forecasts) and compared with the stored Part 4
+     forecasts (max |difference| per variant; MAE difference). `actoff` variants must be identical;
+     `acton` variants are expected to change by a negligible amount (alpha_E at the grid bottom).
+- **Pass rule:** none (post-hoc). Results are reported as they come out.
+- **Training-window check done (before the test-window run):** fold-0 training patients, the
+  same 668 windows as the Part 7 dev stage (identical per period). Walk direction pass 100 % for
+  both `twin_learned_d056` and `twin_assumed_d056`; max peak rise 0.0 mg/dL, max walk AUC effect
+  0.0. D-056 alphas equal the originals (calibration starts at basal, where the two kernels agree).
+- **Known indirect effect (synthetic check, disclosed):** activity never raises the DIRECT
+  glucose rate, but lowering glucose also lowers the insulin surrogate, so a later part of the
+  trajectory can sit slightly higher (up to 0.86 mg/dL at alpha 0.02, 3-4 h after a walk that
+  started at 200 mg/dL). The D-051 metrics (peak, AUC over 0-120 min) never increase in the
+  synthetic checks. Not changed (owner rule is about the activity term itself).
+- **Part 5 check done:** twin features recomputed with the D-056 kernel at alpha_E = 0 for 24
+  fold-0 patient x level combinations: max |D-056 - original kernel| = 0.0 (bitwise). Part 5
+  results cannot change. (The recomputed features match the stored Part 5 files to 1.5e-5, a
+  floating-point difference present for both kernels.)
+- **Test-window run = forced re-run 1 (disclosed):** `python -m src.whatif.d056 final --force`
+  (owner-approved), twin walk tests only, the same 830 test windows as Part 7 (identical per
+  period). Lock file: `runs: 2, forced_reruns: 1`. No ML, carb or matched-meal result was
+  re-run or changed; the original Part 7 numbers stay in the report.
+  Result (post-hoc): walk direction 100 % [100, 100] for `twin_learned_d056` and
+  `twin_assumed_d056` (43 patients; max peak rise 0.0; median walk AUC effect -2.9 / -218
+  mg/dL x min). Original kernel: 67.2 % / 69.4 %.
+- **Part 4 re-run (expectation NOT met, disclosed):** the full CGMacros Part 4 twin protocol was
+  re-run with the D-056 kernel (separate files `data/processed/whatif/d056_part4_twin_fold*`).
+  - `actoff` variants: bitwise identical (max |diff| 0.0), as expected.
+  - `acton` variants: CHANGED. With the D-056 kernel the training-patient alpha_E selection
+    moved off the grid bottom (0.0001-0.00025 -> 0.002 in folds 0, 1, 2, 4 and 0.004 in fold 3),
+    because activity no longer harms forecasts when glucose is below basal. Test MAE at +60
+    changes by -0.9 to +0.1 mg/dL per variant (pop k0 22.29 -> 21.38; pop k3 18.11 -> 18.20);
+    single forecasts differ by up to 293 mg/dL (median 0.9; 12 % of forecasts by > 5 mg/dL).
+    The Part 4 conclusions used the `actoff` twin as the main model and found no activity
+    benefit; `acton` k3 (the Part 4 comparison level) is not better with D-056 (18.20 vs
+    18.11). The stored Part 4 results are NOT replaced.
+  - Part 5 hybrids and Part 6 use alpha_E = 0 (bitwise unchanged, checked above).
+  - Consequence for Part 7: `twin_learned_d056` uses the ORIGINAL Part 4 `alpha_on` (as
+    pre-specified in this entry), not the re-selected value.

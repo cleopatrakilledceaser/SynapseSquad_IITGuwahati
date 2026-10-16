@@ -249,3 +249,43 @@ def test_dev_stage_uses_training_patients_only() -> None:
         if f in WC["dev_folds"]:
             assert not set(tr) & set(te)
     assert theta_from_log is not None  # kernel import used by the twin
+
+
+def test_d056_onesided_activity_never_raises_glucose_and_default_unchanged() -> None:
+    from src.mech.model import deriv, initial_state, simulate
+
+    mu = _spec().logp
+    fix = MC["params"]["fixed"]
+    assert len(theta_from_log(mu, fix, 0.01)) == 12  # default: original kernel (Parts 4-6)
+    th1 = theta_from_log(mu, fix, 0.02, onesided=True)
+    th0 = theta_from_log(mu, fix, 0.02)
+    gb = float(np.exp(mu[0]))
+    # direct term: at or below basal activity changes nothing; above basal it only lowers dG/dt
+    for g in (60.0, gb, gb + 40.0):
+        x = np.array([10.0, 5.0, g, 3.0, 0.001, 2.0])
+        with_act, no_act = np.empty(6), np.empty(6)
+        deriv(x, th1, 0.5, 0.0, with_act)
+        x0 = x.copy()
+        x0[5] = 0.0
+        deriv(x0, th1, 0.5, 0.0, no_act)
+        if g <= gb:
+            assert with_act[2] == no_act[2]
+        else:
+            assert with_act[2] < no_act[2]
+    bnd = bounds_array(MC["solver"])
+    n = 72
+    a = np.zeros(n)
+    a[3:9] = 2.0
+    z = np.zeros(n)
+    rebound = 0.0
+    for g0 in (80.0, gb, 200.0):
+        base = simulate(th1, initial_state(g0, th1), z, z, z, 5.0, 1, bnd)[:, 2]
+        walk = simulate(th1, initial_state(g0, th1), z, z, a, 5.0, 1, bnd)[:, 2]
+        assert walk.max() <= base.max() + 1e-12  # peak (D-051 metric) never rises
+        assert np.trapezoid(walk, dx=5.0) <= np.trapezoid(base, dx=5.0) + 1e-9  # nor the AUC
+        rebound = max(rebound, float(np.max(walk - base)))
+    # indirect only: lower glucose -> lower insulin surrogate -> shallower later dip (D-056)
+    assert rebound < 1.0
+    g = [simulate(t, initial_state(80.0, t), z, z, a, 5.0, 1, bnd)[:, 2] for t in (th0, th1)]
+    assert g[0].max() > g[1].max()  # the original kernel pushes up below basal; D-056 does not
+    np.testing.assert_array_equal(th1[:12], th0)

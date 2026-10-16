@@ -46,15 +46,26 @@ IG = 2  # index of G in the state vector
 LN2 = math.log(2.0)
 
 
-def make_theta(fit: dict[str, float], fixed: dict[str, float], alpha_e: float) -> np.ndarray:
-    """Full parameter vector in kernel order (THETA)."""
+def make_theta(
+    fit: dict[str, float], fixed: dict[str, float], alpha_e: float, onesided: bool = False
+) -> np.ndarray:
+    """Full parameter vector in kernel order (THETA).
+
+    ``onesided`` (D-056, post-hoc, opt-in): appends a 13th element = 1, which switches the
+    activity term to -aE E max(G - Gb, 0). Default: the original 12-element vector (Parts 4-6).
+    """
     v = {**fit, **fixed, "aE": alpha_e}
-    return np.array([float(v[k]) for k in THETA])
+    th = [float(v[k]) for k in THETA]
+    onesided = onesided or bool(fixed.get("act_onesided", 0))  # config route (D-056 re-runs)
+    return np.array(th + [1.0] if onesided else th)
 
 
-def theta_from_log(logp: np.ndarray, fixed: dict[str, float], alpha_e: float) -> np.ndarray:
+def theta_from_log(
+    logp: np.ndarray, fixed: dict[str, float], alpha_e: float, onesided: bool = False
+) -> np.ndarray:
     """Kernel vector from log fitted parameters (FIT_PARAMS order)."""
-    return make_theta(dict(zip(FIT_PARAMS, np.exp(logp), strict=True)), fixed, alpha_e)
+    fit = dict(zip(FIT_PARAMS, np.exp(logp), strict=True))
+    return make_theta(fit, fixed, alpha_e, onesided)
 
 
 def bounds_array(solver: dict) -> np.ndarray:
@@ -80,7 +91,11 @@ def deriv(x: np.ndarray, th: np.ndarray, r: float, a: float, out: np.ndarray) ->
     ra = fc * k * x[1]
     out[0] = -k * x[0]
     out[1] = k * (x[0] - x[1])
-    out[2] = -(sg + ae * x[5]) * (x[2] - gb) - x[4] * x[2] + ra
+    if th.shape[0] > 12 and th[12] > 0.0:
+        # D-056 (post-hoc): activity only adds uptake above basal; no effect at or below Gb
+        out[2] = -sg * (x[2] - gb) - ae * x[5] * max(x[2] - gb, 0.0) - x[4] * x[2] + ra
+    else:
+        out[2] = -(sg + ae * x[5]) * (x[2] - gb) - x[4] * x[2] + ra
     out[3] = (-x[3] + softplus(x[2] - gb, s) + cr * ra) / taui
     out[4] = p2 * (-x[4] + si * (x[3] - s * LN2))
     out[5] = (a - x[5]) / taue

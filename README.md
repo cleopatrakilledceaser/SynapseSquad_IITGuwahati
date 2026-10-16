@@ -176,8 +176,29 @@ re-run); 43 test patients for the plausibility suite, 87 within-patient breakfas
 - **Walk direction:** the learned ML model lowers or keeps the forecast in 69 % of post-meal
   windows. The twin's direction pass (67 to 69 %) is limited by its structure: when glucose
   is already below basal, the activity term pulls it up.
-- **What needs an owner decision:** use `mono` for what-ifs; how to show the carb-effect
-  under-estimation; whether to change the twin's activity term (new pre-registration).
+- **Owner decisions (D-056):** `mono` is the default what-if model. Sizes are NOT rescaled; the
+  app shows direction and ranking with the fixed note *"Model-based estimate. In matched real
+  breakfasts the models predicted about half the observed rise; treat sizes as lower bounds."*,
+  and the twin's magnitude alongside, labelled.
+
+**Part 7 limitations**
+- **Dose-response test failed (pre-registered).** Both ML models give 0.20-0.22 mg/dL per g of
+  carbs, below the pre-registered 0.3-1.3.
+- **Carb effects are understated by about half.** On matched real breakfasts the models predicted
+  about half the observed rise (e.g. 18 vs 39 mg/dL at the peak). Treat sizes as lower bounds.
+- **Twin walk issue and its fix (POST-HOC, D-056, not pre-registered).** The original twin
+  activity term pulled glucose towards basal from both sides, so a walk raised predicted glucose
+  when glucose was below basal (walk direction pass 67-69 %). The fixed term only adds uptake
+  above basal: pass 100 % on the same training and test windows (post-hoc; the test run is
+  forced re-run 1 of the locked final stage). An indirect effect remains: lower glucose lowers
+  the insulin surrogate, so the trajectory 3-4 h later can sit slightly higher (< 1 mg/dL in
+  synthetic checks).
+- **Parts 4/5 after the fix:** Part 5 and Part 6 (activity strength 0) and the Part 4 `actoff`
+  twin are bitwise unchanged. The Part 4 `acton` twin is NOT unchanged: re-selected on training
+  patients, its activity strength moves off the grid bottom and +60 MAE changes by -0.9 to
+  +0.1 mg/dL (k3: 18.11 -> 18.20). Stored Part 4 results are kept; see D-056.
+- Walks enter the ML models only once they have happened; only the twin plays a planned walk
+  forward. Shanghai has no meal what-ifs.
 
 ## Quick start (Windows, PowerShell)
 ```powershell

@@ -59,6 +59,8 @@ whatif:  ## Part 7 what-if engine: dev (fold-0 training) + final (run ONCE; lock
 	$(PY) -m src.india.library check
 	$(PY) -W ignore -u -m src.whatif.run dev
 	$(PY) -W ignore -u -m src.whatif.run final
+	$(PY) -W ignore -u -m src.whatif.d056 dev
+	@echo D-056 test-window walk run (forced re-run 1) and Part 4 re-run: python -m src.whatif.d056 final --force / part4
 	$(PY) -W ignore -m src.whatif.report --final
 	$(PY) data/scripts/make_results_md.py
 

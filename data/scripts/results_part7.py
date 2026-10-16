@@ -137,5 +137,58 @@ def part7(md: Callable) -> list[str]:
         s += [md(pd.DataFrame(rows).set_index("horizon")), ""]
     if "meta" in p:
         lk = p["meta"]["lock"]
-        s += [f"Final stage runs: {lk['runs']}, forced re-runs: {lk['forced_reruns']}.", ""]
+        s += [f"Final stage runs: {lk['runs']}, forced re-runs: {lk['forced_reruns']}", ""]
+        s += [f"({'; '.join(lk.get('forced_rerun_log', [])) or 'none'}).", ""]
+    return s + part7b(md)
+
+
+def part7b(md: Callable) -> list[str]:
+    """D-056 post-hoc block (one-sided twin activity term); original Part 7 tables untouched."""
+    p = _load("whatif_plausibility").get("d056_posthoc")
+    if not p:
+        return []
+    s = [
+        "### D-056 (POST-HOC, not pre-registered): one-sided twin activity term",
+        "",
+        "Activity may only add glucose uptake above basal. Same windows as Part 7. The test-window",
+        "run is forced re-run 1 of the locked final stage (twin walk tests only).",
+        "",
+    ]
+    rows = []
+    for st, lab in (("dev", "fold-0 training"), ("final", "test")):
+        for m, r in p.get(st, {}).items():
+            rows.append(
+                {
+                    "windows / model": f"{lab} / {m}",
+                    "walk direction pass % [CI]": f"{100 * r['value']:.1f} "
+                    f"[{100 * r['ci'][0]:.1f}, {100 * r['ci'][1]:.1f}] (post-hoc)",
+                    "checks": r["n_checks"],
+                    "max peak rise": f"{r['max_peak_rise']:.3f}",
+                    "walk AUC median": f"{r['walk_auc_median']:.1f}",
+                }
+            )
+    s += [md(pd.DataFrame(rows).set_index("windows / model")), ""]
+    p4 = p.get("part4_rerun")
+    if p4:
+        rows = []
+        for mod, v in p4["variants"].items():
+            d = v["60"]
+            rows.append(
+                {
+                    "Part 4 variant": mod,
+                    "max abs diff +60": f"{d['max_abs_diff']:.3f}",
+                    "MAE +60 original": f"{d['mae_original']:.2f}",
+                    "MAE +60 D-056": f"{d['mae_d056']:.2f}",
+                }
+            )
+        al = ", ".join(
+            f"fold {f}: {a['original']:g} -> {a['d056']:g}" for f, a in p4["alpha_on"].items()
+        )
+        s += ["Part 4 twin re-run with the D-056 kernel (separate files; originals unchanged)."]
+        s += [
+            f"Re-selected alpha_E (acton): {al}.",
+            "",
+            md(pd.DataFrame(rows).set_index("Part 4 variant")),
+            "",
+        ]
     return s

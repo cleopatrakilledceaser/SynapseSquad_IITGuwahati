@@ -154,6 +154,7 @@
 | Tests | ✅ `tests/test_whatif.py` |
 | Make | ✅ `make whatif` |
 | Findings (D-055): dose test FAILED for ML, twin walk direction structural | ✅ disclosed |
+| D-056 post-hoc: one-sided twin activity term, training then test (forced re-run 1), Part 4/5 check | ✅ `src/whatif/d056.py`; tag `part-7b-done` |
 
 ## Next steps
 1. Owner decisions from D-055 (mono as what-if model, carb-effect under-estimation, twin

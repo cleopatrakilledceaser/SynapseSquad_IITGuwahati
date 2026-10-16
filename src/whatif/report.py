@@ -140,6 +140,10 @@ def main() -> None:
         mat["test_mae_mono_vs_unc"] = mae_block(OUT / "final_mae.parquet", wc)
         run = json.loads((OUT / "final.json").read_text())
         plaus["meta"] = {"final_run": run, "lock": json.loads(LOCK.read_text())}
+    from src.whatif import d056
+
+    if (OUT / "d056_dev_walk.parquet").exists():
+        plaus["d056_posthoc"] = d056.summary(wc)  # post-hoc, not pre-registered
     write_metrics("whatif_plausibility", plaus, wc, wc["seed"], dh)
     write_metrics("whatif_matched", mat, wc, wc["seed"], dh)
     from src.whatif import examples, figures
