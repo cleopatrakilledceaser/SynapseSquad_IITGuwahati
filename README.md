@@ -98,6 +98,54 @@ Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-038 to D-044.
   - "The clinical profile gives it a head start" is NOT supported for the ML models in these two
     cohorts.
 
+## Part 6 results: uncertainty, alarms, robustness (honest summary)
+Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-045 to D-049. `make uncertainty`.
+Design A (headline: CV repeat 0, 44 CGMacros / 71 Shanghai test patients) and design B
+(confirmatory holdout: 9 / 14 test patients). B was never used for any choice.
+
+- **Interval coverage (80 % target, +60 min, population model, design A):**
+  - split conformal 80.8 % (CGMacros) / 79.5 % (Shanghai);
+  - CV+ 81.3 % / 81.2 %;
+  - CQR 80.8 % / 77.0 %. CQR undercovers on Shanghai at +60 and +120 (design A CI below
+    80 %).
+    - Design B points the same way (75–77 %), but its CI excludes 80 % only for the
+      personalized model.
+  - Median 80 % width is about 50 mg/dL at +60 min.
+- **Coverage is not equal across groups.** On CGMacros at +60 min, split conformal covers
+  87 % of healthy rows but only 73 % of T2D rows (CV+ 87 % / 73 %). Pooled coverage hides this.
+  On Shanghai, up to 17 % of patients (CQR; 4–8 % for split conformal / CV+) sit more than
+  10 points below target at +60.
+- **ACI is not informative here (D-049):** it reaches near-exact coverage only because 7–64 %
+  of its intervals are infinite. Do not use it as reported.
+- **Event probabilities:** AUROC 0.83 / 0.78 (CGMacros hyper > 180 / > 140, +60) and 0.90 / 0.85 /
+  0.90 (Shanghai > 180 / > 140 / < 70). After isotonic recalibration on training patients,
+  ECE is ≤ 0.014. CGMacros hypoglycemia (< 70) is limited evidence: only 8 patients have events.
+- **Alarms (60-min ahead, about 1 false alarm/day, design A):**
+  - Hyperglycemia: the model alert beats the naive "current value" and trend alerts.
+    - CGMacros > 140: sensitivity 37 % vs 16 % / 8 %.
+    - Shanghai > 180: 71 % vs 59 % / 67 %.
+    - Its median lead time is 15–30 min.
+  - **Hypoglycemia on Shanghai: the simple naive alert is better** (84 % vs 70 % sensitivity
+    at about 1 FA/day).
+  - Decision curves are positive for hyperglycemia at thresholds 5–40 %. For hypoglycemia, net
+    benefit is about 0 for every system.
+- **Selective prediction:** ranking by CQR width cuts the MAE-coverage area by 16–23 % vs
+  random. A data-quality score alone gives −1 to +3 %.
+- **Robustness (+60 min, faults after day 7):** sensor bias and drift are the main risk.
+  - A +20 mg/dL bias drops 80 % coverage to 65 % / 63 %. A 20 mg/dL/day drift drops it
+    to 46 % / 26 %.
+  - Gaps, dropout and compression degrade more gracefully: +0.2 to +4.4 mg/dL MAE and
+    ≤ 9 coverage points at the worst level.
+  - The data-quality score does not detect bias or drift (its mean stays at 0.97–0.99), and
+    its correlation with error is weak (Spearman 0.02–0.09; CGMacros CIs include 0). It flags
+    missing data, not wrong data.
+- **Item 2, patient level (next-day time above 180 / time in range):**
+  - Day-1 CGM beats static labs by 3.4–7.9 percentage points (CIs exclude 0).
+  - Adding static labs to day-1 CGM changes nothing (−0.2 to +0.3 points, CIs include 0).
+- **Disclosure:** a robustness bug was found after the first final scoring by a consistency
+  check, not by test metrics. The test windows were scored a second time; the interval / event /
+  alarm outputs were bit-identical (D-049).
+
 ## Quick start (Windows, PowerShell)
 ```powershell
 py -3.11 -m venv .venv

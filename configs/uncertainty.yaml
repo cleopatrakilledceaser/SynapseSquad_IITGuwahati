@@ -1,0 +1,75 @@
+# Part 6: uncertainty, event calibration, selective prediction, alarms, robustness, patient-level
+# fusion. Decisions: docs/DECISIONS.md D-045..D-048. Units: glucose mg/dL, time min / days.
+seed: 42
+horizons_min: [30, 60, 120]
+alphas: [0.2, 0.05]                 # 80 % and 95 % intervals
+cv_repeat: 0                        # design A folds (identical to Part 5)
+designs: [A, B]                     # A = headline (CV repeat 0), B = confirmatory holdout
+k_finetune: 3                       # M_ft adaptation days (Part 5 fine-tuning)
+aci_start_day: 3                    # ACI runs from the end of the adaptation window (causal)
+test_from_day: 7                    # evaluation region (Part 5)
+min_test_anchors: 96
+n_jobs: 4                           # parallel (design, cohort, fold) jobs
+threads: 2                          # LightGBM threads per job
+
+aci:
+  # 0.0 = plain split conformal. Widened (0.1, 0.2) after a smoke run on TRAINING patients picked
+  # the old upper edge 0.05 in 11 of 12 cells (D-045).
+  gamma_grid: [0.0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2]
+
+events:
+  hyper180: {threshold: 180, direction: above}
+  hyper140: {threshold: 140, direction: above}
+  hypo70: {threshold: 70, direction: below}
+  limited_evidence: {cgmacros: [hypo70]}
+  ece_bins: 10
+
+alerts:
+  horizon_min: 60                   # alert window: episode onset within (t, t + 60]
+  refractory_min: 60
+  episode_min_minutes: 15           # consensus lv1: >= 15 consecutive minutes
+  end_min_minutes: 15
+  fa_per_day: [1, 2, 3]
+  trend_slope_feature: cgm_slope_30
+  dca_thresholds: [0.05, 0.5, 0.01] # start, stop, step
+  events: [hyper180, hyper140, hypo70]
+
+selective:
+  coverage_grid: [1.0, 0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5]
+
+dq:                                 # data-quality score (D-047); limits are design assumptions
+  completeness_window_h: 6
+  recency_full_min: 60              # minutes since last real reading at which recency = 0
+  plaus_window_min: 60
+  roc_ok_mgdl_min: 4.0
+  roc_bad_mgdl_min: 8.0
+  bins: [0.0, 0.5, 0.7, 0.85, 0.95, 1.01]
+
+robustness:
+  stale_max_min: 60                 # forecast from the last real reading if <= 60 min old
+  faults:
+    gaps: {param: gap_min, levels: [30, 60, 120, 240], every_h: 6}
+    dropout: {param: drop_frac, levels: [0.1, 0.2, 0.4], mean_burst: 3}
+    bias: {param: mgdl, levels: [10, 20, 40]}
+    drift: {param: mgdl_per_day, levels: [5, 10, 20]}
+    noise: {param: sd_mgdl, levels: [5, 10, 20]}
+    compression: {param: dip_mgdl, levels: [20, 40, 60], night_hours: [0, 6], dip_min: 45}
+    wearable_missing: {param: frac_days, levels: [0.5, 1.0]}
+    # delay must be a multiple of the grid step; Shanghai (15-min grid) cannot represent 5 min,
+    # so its smallest level is skipped and reported as n/a (D-047)
+    timestamp_delay: {param: delay_min, levels: [5, 15, 30]}
+
+patient_fusion:                     # item 2 (D-048)
+  first_day_h: [0, 24]
+  next_day_h: [24, 48]
+  min_real_frac: 0.7
+  static:
+    cgmacros: [hba1c_pct, fasting_glucose_mgdl, age_years, bmi, sex_male]
+    shanghai_t2dm: [hba1c_pct, fasting_glucose_mgdl, age_years, bmi, sex_male,
+                    diabetes_duration_years]
+  ridge_alpha_grid: [0.1, 1.0, 10.0, 100.0, 1000.0]
+  n_splits: 5
+  n_repeats: 5
+
+bootstrap: {n_boot: 1000, ci: 0.95}
+min_patients_reliable: 5

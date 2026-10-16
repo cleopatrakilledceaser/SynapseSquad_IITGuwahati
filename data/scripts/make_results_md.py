@@ -297,9 +297,11 @@ def main() -> None:
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from results_part5 import part5
+    from results_part6 import part6
 
     p5 = part5(md, reg, paired, ci)
-    OUT.write_text("\n".join(head + part3() + part4() + p5) + "\n", encoding="utf-8")
+    p6 = part6(md)
+    OUT.write_text("\n".join(head + part3() + part4() + p5 + p6) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

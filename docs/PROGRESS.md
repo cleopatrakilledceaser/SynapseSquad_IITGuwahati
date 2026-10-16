@@ -129,6 +129,20 @@
 | Make | ✅ `make hybrid`, `make personalize` |
 | Findings (D-044) | ✅ |
 
+## Part 6 outputs (uncertainty, calibration, alarms, robustness, item 2)
+| Step | Status |
+|---|---|
+| Protocol, alert rules, robustness / DQ, item 2 written before running (D-045 to D-048) | ✅ owner option C: design A headline + design B confirmatory |
+| Conformal: split, CQR, ACI, CV+ (population + fine-tuned k = 3) | ✅ `src/uncertainty/`; 12 jobs, about 37 min total |
+| Event calibration (Platt / isotonic), alarms (FA/day budgets, lead time, DCA), selective prediction | ✅ `events.py`, `alarms.py`, `alarm_eval.py` |
+| Fault injection + data-quality score | ✅ `src/robustness/`; clean-rebuild guard = 0.0 in every fold |
+| Item 2: patient-level static + day-1 CGM ridge | ✅ `patient_fusion.py` |
+| Reports / figures | ✅ `uncertainty.json`, `patient_fusion.json`, `unc_*.png`, `patient_fusion.png` |
+| Tests | ✅ `tests/test_uncertainty.py`, `tests/test_robustness.py` (whole suite green) |
+| Make | ✅ `make uncertainty` |
+| Robustness bug + second scoring, ACI infinite intervals (D-049) | ✅ disclosed |
+
 ## Next steps
-1. Part 6 (uncertainty / conformal) on the A hybrid at k = 3 or LightGBM + fine-tuning.
-   Keep the onset-weighting trade-off (D-044) in mind.
+1. Owner decision on ACI (D-049): keep it as reported (not informative), or pre-register a
+   fix (cap alpha_t / penalize infinite intervals in gamma selection) and re-evaluate on design B only.
+2. App / clinician-facing views (decision support wording only).

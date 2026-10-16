@@ -928,3 +928,181 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
 
 
 
+
+## D-045 Part 6 protocol: uncertainty, two designs declared BEFORE running (owner choice C)
+- **Models.**
+  - M_pop = population LightGBM A0 (CGM + time of day + meals + glycemic static, delta target;
+    Part 5 `lgbm_s_none`).
+  - M_ft = M_pop fine-tuned on the patient's first k = 3 days (Part 5 `lgbm_s_finetune`; lr and
+    trees chosen per fold on training patients' out-of-fold rows).
+  - Evaluation rows are the Part 5 rows: first period, day >= 7, eligible patients, real target.
+    Horizons +30 / +60 / +120 min; targets 80 % and 95 %.
+- **Design A (HEADLINE):** CV repeat 0, the same 5 folds as Part 5. Two arms per fold:
+  - *Split arm* (split conformal, CQR, ACI). "Calibration patients" = the fold's training
+    patients that are in the fixed holdout calibration set (configs/splits.yaml). They are
+    REMOVED from model fitting, early stopping, fine-tune selection and every tuning choice.
+    They only supply conformity scores.
+  - *CV+ arm*. Model on all fold-training patients (the Part 5 base). Out-of-fold residuals come
+    from the Part 5 inner 3-fold patient split; test intervals use the 3 inner models (CV+,
+    Barber et al. 2021, Ann. Stat. 49:486, Sec. 3). Guarantee >= 1 - 2 alpha under
+    exchangeability only.
+  - The CV+ arm has no calibration set by design: the holdout-calibration patients are ordinary
+    training patients there, exactly as in the Part 5 base. "Calibration patients are never used
+    in training or tuning" applies to the split arm and is unit-tested there.
+  - In design B, the CV+ arm trains on holdout train + calibration patients.
+  - CV+ residuals = training patients' out-of-fold rows in the same region as test (first period,
+    day >= 7, real target), for both M_pop and M_ft (fine-tuned out-of-fold).
+  - M_ft CV+ uses each test patient's fine-tune of each of the 3 inner models.
+  - Split-arm calibration scores = the calibration patients' region rows.
+  - The ACI run starts at day 3 (end of adaptation, causal warm-up) and is scored on day >= 7.
+  - Inner fold seed: 42 + fold (Part 5); 42 in design B.
+  - ACI gamma grid widened to include 0.1 and 0.2, after a design-B CGMacros smoke run picked the
+    old upper edge (0.05) in 11 of 12 cells. That choice was made on proper-training patients'
+    objective only; no test metric was computed.
+  - Robustness uses design A only (the B test set is too small to stratify faults).
+  - For robustness, a missing current reading is replaced by the last real reading if it is
+    <= 60 min old (stale forecast); otherwise the system gives no forecast. Availability is
+    reported.
+- **Design B (CONFIRMATORY):** holdout split, train 27 / cal 9 / test 9 (Shanghai 60 / 21 / 19),
+  eligible patients evaluated. Same code, with the holdout as a single fold.
+  - B is never used to choose a method, level or threshold. It is reported next to A.
+  - Where A and B disagree, A stays the headline and the disagreement is reported.
+- **Split conformal:** score |y - yhat|; quantile at rank ceil((n + 1)(1 - alpha)) of the
+  calibration rows.
+- **CQR** (Romano et al. 2019):
+  - LightGBM quantile models (delta target, A0 features, the point model's leaves, early stopping
+    on the inner-validation patients) at alpha/2 and 1 - alpha/2. Score
+    max(lo - y, y - hi).
+  - Personalized CQR shifts both quantiles by the fine-tune correction (M_ft - M_pop) and is
+    conformalized on the calibration patients' personalized scores.
+- **ACI** (Gibbs & Candès 2021): alpha_{t+1} = alpha_t + gamma (alpha - err_t), checked against
+  the authors' code (github.com/isgibbs/AdaptiveConformal, ACCode.R).
+  - Runs per test patient, in time order, on split-conformal scores.
+  - err_t enters only after y(t + h) is observed (delayed feedback, causal).
+  - alpha_t <= 0 gives an infinite interval (counted as covered; reported separately). alpha_t >= 1
+    gives a zero-width interval.
+  - gamma is chosen from the config grid on TRAINING patients only (out-of-fold scores, own
+    patient left out), minimizing mean |per-patient coverage - target|.
+- **Exchangeability caveat** (stated with every table):
+  - Rows within a patient are autocorrelated, so the row-level guarantees are nominal.
+  - Coverage is reported overall, per group and per patient, with 95 % patient-bootstrap CIs
+    (1,000 draws).
+  - Cells with < 5 patients are marked "unreliable". Every CGMacros group in B falls in this
+    category.
+- **Event probabilities** (CV+ arm):
+  - Raw score = P(yhat + R > thr), with R the training patients' out-of-fold residuals.
+  - Platt and isotonic maps are fitted on training out-of-fold rows only.
+  - Events, onset-only: hyper180_any_h and hyper140_any_h (glucose at t <= thr); hypo70_any_h
+    (glucose at t >= 70) on Shanghai. CGMacros hypo is computed but labeled "limited evidence".
+  - Metrics: Brier, ECE (10 equal-width bins), reliability curve, AUROC.
+- **Selective prediction:**
+  - Signals: CQR 80 % width, the data-quality score (D-047), and their mean rank.
+  - Risk = MAE on retained rows. Report the risk-coverage curve and AURC.
+  - No abstention threshold is tuned on test.
+- **Development rule:** print only training-patient numbers. Test windows are scored once at the
+  end.
+
+
+## D-046 Part 6 alert definitions and false-alarm counting (written before running)
+- **Episodes (ground truth)** follow the consensus lv1 definitions (Battelino et al. 2023, Lancet
+  Diabetes Endocrinol 11:42, as implemented in the cgmguru R package):
+  - Hyper-180 starts at >= 15 consecutive minutes of real readings > 180 and ends after >= 15
+    consecutive minutes <= 180.
+  - Hyper-140 uses the same rule at 140.
+  - Hypo-70 starts at >= 15 minutes < 70 and ends after >= 15 minutes >= 70.
+  - "15 consecutive minutes" = a run of real readings with no missing grid point: 4 readings at
+    5 min (CGMacros), 2 at 15 min (Shanghai). A missing reading breaks the run.
+  - Episodes are detected in the evaluation region (first period, day >= 7).
+- **Alert systems**, evaluated at every anchor (15-min stride) while the patient is NOT in an
+  episode of that type ("at-risk" anchors):
+  1. *Model*: P(episode onset within 60 min) >= theta. The raw score is the CV+-arm M_pop
+     predictive probability P(yhat_60 + R beyond threshold). It is Platt-mapped on TRAINING
+     patients' at-risk anchors (out-of-fold forecasts, all first-period days), with the alert
+     truth label. The naive and trend scores get the same kind of Platt map (used for DCA).
+  2. *Naive*: glucose(t) >= theta (hypo: <= theta).
+  3. *Linear trend*: glucose(t) + 60 * slope_30(t) >= theta (hypo: <=).
+- **Counting rules:**
+  - After an alert, the same system is silenced for 60 min (refractory). Silenced alerts are not
+    counted.
+  - An alert at t is TRUE if an episode starts in (t, t + 60]; otherwise it is a FALSE alarm.
+  - An episode is DETECTED if a counted alert falls in [onset - 60, onset). Lead time = onset -
+    first such alert.
+  - Episodes with no at-risk anchor in the 60 min before onset are excluded and counted
+    separately.
+  - Monitoring time = at-risk anchors x 15 min. FA/day = false alarms / monitoring days.
+  - Sensitivity at 1 / 2 / 3 FA/day is reported two ways:
+    - (i) as a curve point on test (FROC-style, no tuning);
+    - (ii) with theta chosen on TRAINING out-of-fold rows, then applied to test (the realized
+      FA/day is reported).
+  - PPV = true alerts / counted alerts.
+- **Decision curve analysis** (Vickers & Elkin 2006):
+  - At-risk anchors; label = event within 60 min.
+  - Net benefit = TP/N - FP/N * pt / (1 - pt), for pt in 0.05-0.50.
+  - Compared: model, treat-all, treat-none, and the naive and trend scores (each mapped to a
+    probability by a Platt fit on training patients).
+
+## D-047 Part 6 robustness and data-quality score (written before running)
+- **Fault injection:**
+  - Faults go into test patients' grids at t >= tau = day 7. Features are recomputed with the
+    Part 2 causal code. Targets remain the clean real readings.
+  - Unit-tested: anchors before tau are unchanged.
+- **Severity ladders** (configs/uncertainty.yaml):
+  - gaps, dropout bursts, bias, drift, noise;
+  - compression-lag night dips;
+  - missing wearables: CGMacros only (Shanghai has no wearable stream, so n/a);
+  - timestamp delay: lag only. An "early" shift would leak future values and is not simulated.
+- **Data-quality score** at t, in [0, 1], = mean of four sub-scores:
+  - completeness: real fraction in (t - 6 h, t];
+  - recency: 1 - minutes since the last real reading / 60, clipped;
+  - plausibility: 1 - fraction of the last 60 min of readings at or beyond the sensor range
+    bounds;
+  - rate-of-change: 1 if max |dG/dt| over 60 min is <= 4 mg/dL/min, falling linearly to 0 at 8.
+    These limits are a design assumption with no verified source; they are listed in the config.
+  - Wearables are excluded, because A0 uses no wearable input.
+- **Test that a low score predicts high error:** Spearman correlation between the score and
+  |error|, plus MAE by score bin, on pooled clean + faulted test rows, with patient-bootstrap
+  CIs.
+
+## D-048 Part 6 item 2: patient-level static + dynamic fusion (written before running)
+- **Unit:** one row per patient (first period).
+- **Targets:** next-day (hours 24-48) time above 180 and time in range 70-180, in % of real
+  readings. A day needs >= 70 % of its grid points real.
+- **Input sets:**
+  - (i) static only: HbA1c, fasting glucose, age, BMI, sex (+ diabetes duration on Shanghai);
+  - (ii) first-day (hours 0-24) CGM summary: mean, SD, CV, TIR, TAR180, TBR70, max; plus meal
+    count and carbs (CGMacros);
+  - (iii) both.
+- **Model:** ridge on standardized inputs. Alpha is chosen by inner leave-one-out on training
+  patients only; missing values get training medians.
+- **Validation:** patient-grouped 5-fold CV x 5 repeats, predictions averaged over repeats per
+  patient.
+- **Report:** MAE, plus paired patient-bootstrap CIs for (iii) - (i) and (iii) - (ii). If fusion
+  does not help, this is said plainly.
+
+
+## D-049 Part 6: robustness bug, second scoring of test windows, ACI infinite intervals
+- **Bug:** `refresh_derived` (src/robustness/faults.py) rebuilt `minutes_since_real` from the
+  grid index. Part 1 stores it relative to the raw reading time, so the "clean" fault rebuild
+  differed from the stored features.
+  - Found after the first `report --final` by a consistency check (clean rebuild vs stored
+    features), NOT by looking at test metrics.
+  - Every robustness number from the first run was invalid.
+  - Fix: `orig` parameter; new test `test_zero_severity_fault_is_identity`.
+  - New guard in `run_job`: the clean rebuild must match the population +60 forecast within
+    1e-6, otherwise `RuntimeError`. It is saved as `clean_rebuild_max_abs_diff_60`; the value is 0.0
+    in all 10 design-A folds.
+- **Second scoring:** design A was re-run and `report --final` was run a second time.
+  - The interval / event / alarm outputs of the re-run are byte-for-byte identical to the
+    first run (max |diff| = 0 on every test parquet). Only the robustness numbers changed.
+  - No method, threshold or hyperparameter was changed between the two scorings.
+- **ACI infinite intervals (reported, not fixed):** with the gamma chosen on training patients
+  (0.05–0.2), alpha_t often drops below 0, so the interval is infinite (D-045 counts it as
+  covered).
+  - On test, 7–54 % (CGMacros) and 11–64 % (Shanghai) of ACI rows are infinite.
+  - ACI's near-exact coverage is therefore mostly produced by uninformative intervals, and its
+    "median width" is over finite rows only.
+  - Cause: the gamma objective (|per-patient coverage − target|) ignores width and the number
+    of infinite intervals. This is a flaw in the pre-registered design. Any change (cap alpha_t,
+    penalize infinite intervals) would be chosen after seeing test results, so it is left to the
+    owner. RESULTS now prints the infinite fraction in each cell.
+

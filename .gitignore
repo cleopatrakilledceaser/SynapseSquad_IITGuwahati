@@ -29,3 +29,6 @@ data/external/*
 Thumbs.db
 .vscode/
 .idea/
+
+# Local run logs and scratch scripts
+logs/

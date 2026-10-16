@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: all setup data features models fusion mech hybrid personalize figures app test lint format smoke clean help
+.PHONY: all setup data features models fusion mech hybrid personalize uncertainty figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -48,6 +48,12 @@ hybrid:  ## Part 5.1 twin features + hybrids A0/A/B/C + neural onset fix (cached
 personalize:  ## Part 5.2 cold-start personalization, both cohorts (needs make hybrid features; about 2 h CPU)
 	$(PY) -W ignore -u -m src.personalize.run all
 	$(PY) -W ignore -m src.personalize.report
+
+uncertainty:  ## Part 6 intervals / calibration / alarms / robustness + patient fusion (about 35 min CPU, resumable)
+	$(PY) -W ignore -u -m src.uncertainty.run all all
+	$(PY) -W ignore -m src.uncertainty.report --final
+	$(PY) data/scripts/make_results_md.py
+
 
 figures:
 	$(PY) -m src.eval.eda

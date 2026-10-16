@@ -1269,3 +1269,349 @@ Eligible 71 of 100 patients (29 excluded: < 96 anchors at day >= 7); later perio
 | hybrid_ns_rls | 47 | 71 | 0.1 |
 | hybrid_ns_rls_cont | 49 | 71 | 0.29 |
 
+## Part 6 - Uncertainty, calibration, alarms, robustness
+
+Design A (headline) = CV repeat 0, 5 folds, every eligible patient tested once. Design B
+(confirmatory, never used for choices) = holdout train / cal / test. Coverage CIs are
+95 % patient-bootstrap. Rows within a patient are autocorrelated, so the conformal
+guarantees are nominal (D-045). Cells with < 5 patients are 'unreliable'. w = median
+interval width (mg/dL) over finite intervals; INFINITE = share of rows whose interval is
+infinite (ACI only; counted as covered, so ACI coverage is not informative, D-049).
+
+### CGMacros, design A (44 test patients)
+
+80 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 80.4 [80.2, 80.6] (w 30; INFINITE 7 %) | 80.4 [80.2, 80.6] (w 37; INFINITE 28 %) | 80.6 [80.2, 80.9] (w 47; INFINITE 30 %) |
+| ACI / population | 80.5 [80.3, 80.7] (w 30; INFINITE 8 %) | 80.5 [80.3, 80.6] (w 40; INFINITE 25 %) | 80.3 [80.0, 80.7] (w 52; INFINITE 30 %) |
+| CQR / personalized k=3 | 79.4 [77.4, 81.3] (w 29) | 80.8 [77.9, 83.4] (w 44) | 80.7 [77.3, 84.0] (w 54) |
+| CQR / population | 78.9 [76.9, 80.7] (w 29) | 80.8 [78.1, 83.1] (w 45) | 81.1 [77.9, 84.0] (w 57) |
+| CV+ / personalized k=3 | 81.2 [79.0, 83.6] (w 34) | 81.5 [78.4, 84.5] (w 48) | 81.7 [77.8, 85.7] (w 60) |
+| CV+ / population | 81.2 [79.1, 83.3] (w 36) | 81.3 [78.3, 84.2] (w 51) | 81.6 [77.2, 85.7] (w 65) |
+| split conformal / personalized k=3 | 78.5 [75.9, 80.9] (w 32) | 80.8 [77.1, 84.2] (w 48) | 81.4 [77.2, 85.5] (w 62) |
+| split conformal / population | 78.1 [75.7, 80.4] (w 34) | 80.8 [77.5, 83.8] (w 51) | 82.2 [78.1, 86.1] (w 70) |
+
+95 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 95.2 [95.1, 95.3] (w 49; INFINITE 36 %) | 95.3 [95.1, 95.5] (w 64; INFINITE 50 %) | 95.3 [95.1, 95.6] (w 77; INFINITE 54 %) |
+| ACI / population | 95.1 [95.0, 95.2] (w 53; INFINITE 34 %) | 95.2 [95.1, 95.4] (w 68; INFINITE 47 %) | 95.2 [94.9, 95.5] (w 84; INFINITE 47 %) |
+| CQR / personalized k=3 | 94.2 [93.1, 95.2] (w 52) | 95.1 [93.7, 96.3] (w 82) | 95.7 [94.2, 97.2] (w 106) |
+| CQR / population | 94.6 [93.5, 95.4] (w 55) | 94.8 [93.6, 95.9] (w 83) | 95.7 [94.4, 96.9] (w 105) |
+| CV+ / personalized k=3 | 95.4 [94.1, 96.5] (w 69) | 95.3 [93.9, 96.6] (w 95) | 95.7 [93.9, 97.3] (w 114) |
+| CV+ / population | 95.4 [94.1, 96.5] (w 73) | 95.2 [93.9, 96.5] (w 100) | 95.6 [93.9, 97.0] (w 121) |
+| split conformal / personalized k=3 | 94.7 [93.3, 96.0] (w 70) | 94.8 [93.2, 96.2] (w 92) | 95.9 [93.9, 97.6] (w 115) |
+| split conformal / population | 94.9 [93.5, 96.0] (w 74) | 95.1 [93.5, 96.5] (w 103) | 96.2 [94.5, 97.8] (w 132) |
+
+Failures (95 % CI entirely below target): none.
+
+### CGMacros, design B (9 test patients)
+
+80 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 79.7 [79.0, 80.4] (w 31; INFINITE 0 %) | 80.3 [79.8, 80.7] (w 39; INFINITE 31 %) | 80.2 [79.3, 81.0] (w 41; INFINITE 46 %) |
+| ACI / population | 80.5 [80.1, 80.9] (w 30; INFINITE 7 %) | 80.5 [80.0, 81.0] (w 38; INFINITE 30 %) | 80.6 [79.6, 81.5] (w 44; INFINITE 48 %) |
+| CQR / personalized k=3 | 76.4 [73.3, 79.7] (w 28) | 78.2 [74.1, 82.0] (w 43) | 79.5 [73.3, 85.5] (w 56) |
+| CQR / population | 77.4 [74.4, 80.6] (w 28) | 79.4 [76.3, 82.1] (w 44) | 79.9 [74.9, 84.7] (w 60) |
+| CV+ / personalized k=3 | 81.2 [75.6, 85.9] (w 34) | 78.3 [70.7, 85.1] (w 46) | 77.2 [66.4, 86.4] (w 58) |
+| CV+ / population | 80.9 [75.3, 85.5] (w 35) | 78.9 [71.8, 85.1] (w 48) | 78.0 [69.6, 85.6] (w 62) |
+| split conformal / personalized k=3 | 79.0 [72.8, 84.6] (w 33) | 79.3 [71.2, 86.6] (w 49) | 77.0 [66.6, 85.7] (w 62) |
+| split conformal / population | 79.5 [73.6, 84.8] (w 34) | 79.9 [72.1, 87.0] (w 52) | 79.4 [69.9, 88.2] (w 67) |
+
+95 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 95.2 [94.9, 95.5] (w 44; INFINITE 41 %) | 95.5 [95.2, 95.8] (w 70; INFINITE 41 %) | 94.8 [94.5, 95.2] (w 64; INFINITE 60 %) |
+| ACI / population | 95.3 [95.1, 95.5] (w 46; INFINITE 45 %) | 95.4 [95.2, 95.7] (w 61; INFINITE 59 %) | 95.1 [94.7, 95.4] (w 84; INFINITE 51 %) |
+| CQR / personalized k=3 | 94.2 [92.7, 95.5] (w 50) | 95.3 [93.6, 97.1] (w 84) | 95.3 [91.6, 98.2] (w 114) |
+| CQR / population | 93.9 [92.4, 95.4] (w 52) | 94.5 [92.3, 96.8] (w 85) | 95.2 [92.1, 98.0] (w 117) |
+| CV+ / personalized k=3 | 94.7 [91.5, 97.4] (w 69) | 93.1 [88.6, 97.0] (w 90) | 92.9 [86.0, 98.3] (w 108) |
+| CV+ / population | 94.3 [91.1, 97.2] (w 71) | 92.6 [88.3, 96.6] (w 95) | 93.4 [88.2, 98.0] (w 116) |
+| split conformal / personalized k=3 | 93.6 [89.7, 96.9] (w 65) | 93.7 [89.9, 97.2] (w 94) | 92.8 [85.5, 98.3] (w 113) |
+| split conformal / population | 93.9 [90.8, 96.8] (w 73) | 94.0 [90.4, 97.4] (w 108) | 94.6 [89.3, 98.7] (w 138) |
+
+Failures (95 % CI entirely below target): cqr/ft 80% +30 min: 76.4% [73.3, 79.7]
+
+Per group, design A, 80 %, +60 min (CGMacros):
+
+| row | healthy | prediabetes | t2d |
+|---|---|---|---|
+| ACI / personalized k=3 | 80.2 [79.9, 80.5] n=15 | 80.4 [80.0, 80.7] n=15 | 80.6 [80.4, 80.8] n=14 |
+| ACI / population | 80.4 [80.1, 80.7] n=15 | 80.5 [80.2, 80.9] n=15 | 80.4 [80.3, 80.6] n=14 |
+| CQR / personalized k=3 | 81.1 [76.0, 84.9] n=15 | 78.4 [75.1, 82.0] n=15 | 83.2 [77.3, 88.2] n=14 |
+| CQR / population | 81.9 [76.4, 85.8] n=15 | 79.4 [76.5, 82.4] n=15 | 81.0 [76.8, 84.8] n=14 |
+| CV+ / personalized k=3 | 87.2 [82.6, 91.2] n=15 | 81.6 [77.1, 85.7] n=15 | 74.6 [70.5, 78.5] n=14 |
+| CV+ / population | 87.3 [82.7, 91.2] n=15 | 82.4 [78.5, 86.2] n=15 | 73.0 [69.0, 77.1] n=14 |
+| split conformal / personalized k=3 | 87.2 [81.0, 91.0] n=15 | 80.4 [76.4, 84.6] n=15 | 73.7 [68.7, 78.4] n=14 |
+| split conformal / population | 87.4 [81.4, 91.2] n=15 | 80.7 [77.1, 84.6] n=15 | 73.1 [69.7, 76.5] n=14 |
+
+Per group, design B, 80 %, +60 min (CGMacros):
+
+| row | healthy | prediabetes | t2d |
+|---|---|---|---|
+| ACI / personalized k=3 | 80.2 [79.4, 80.9] n=3 (unreliable) | 80.1 [79.4, 80.9] n=3 (unreliable) | 80.6 [79.8, 81.5] n=3 (unreliable) |
+| ACI / population | 80.2 [79.0, 81.1] n=3 (unreliable) | 80.7 [80.1, 81.6] n=3 (unreliable) | 80.6 [80.2, 81.0] n=3 (unreliable) |
+| CQR / personalized k=3 | 81.0 [72.6, 87.2] n=3 (unreliable) | 73.7 [66.5, 76.9] n=3 (unreliable) | 79.8 [75.1, 85.2] n=3 (unreliable) |
+| CQR / population | 82.5 [79.4, 84.3] n=3 (unreliable) | 77.6 [69.5, 83.6] n=3 (unreliable) | 78.2 [73.4, 81.4] n=3 (unreliable) |
+| CV+ / personalized k=3 | 89.2 [84.7, 93.6] n=3 (unreliable) | 74.6 [60.6, 86.5] n=3 (unreliable) | 71.2 [61.7, 82.1] n=3 (unreliable) |
+| CV+ / population | 88.5 [83.1, 94.3] n=3 (unreliable) | 76.2 [60.2, 87.5] n=3 (unreliable) | 72.0 [66.4, 79.1] n=3 (unreliable) |
+| split conformal / personalized k=3 | 90.4 [85.2, 95.7] n=3 (unreliable) | 77.0 [63.1, 89.3] n=3 (unreliable) | 70.6 [62.1, 82.5] n=3 (unreliable) |
+| split conformal / population | 90.1 [84.3, 96.1] n=3 (unreliable) | 77.6 [62.3, 92.5] n=3 (unreliable) | 72.1 [66.2, 82.1] n=3 (unreliable) |
+
+### Shanghai T2DM, design A (71 test patients)
+
+80 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 80.0 [79.9, 80.0] (w 24; INFINITE 13 %) | 79.9 [79.9, 80.0] (w 38; INFINITE 30 %) | 80.2 [80.0, 80.3] (w 57; INFINITE 35 %) |
+| ACI / population | 80.0 [79.9, 80.1] (w 25; INFINITE 11 %) | 80.0 [79.9, 80.1] (w 39; INFINITE 27 %) | 80.1 [79.9, 80.2] (w 47; INFINITE 49 %) |
+| CQR / personalized k=3 | 78.6 [77.1, 80.0] (w 26) | 76.8 [75.2, 78.3] (w 46) | 74.2 [71.7, 76.4] (w 64) |
+| CQR / population | 78.7 [77.4, 80.1] (w 26) | 77.0 [75.4, 78.5] (w 46) | 75.4 [73.2, 77.5] (w 67) |
+| CV+ / personalized k=3 | 80.8 [79.1, 82.3] (w 28) | 80.9 [79.3, 82.4] (w 50) | 80.9 [78.9, 82.9] (w 74) |
+| CV+ / population | 80.9 [79.2, 82.4] (w 29) | 81.2 [79.6, 82.7] (w 52) | 81.1 [79.0, 83.3] (w 77) |
+| split conformal / personalized k=3 | 80.6 [79.0, 82.1] (w 28) | 78.9 [77.2, 80.5] (w 49) | 77.5 [75.2, 79.8] (w 70) |
+| split conformal / population | 80.9 [79.3, 82.3] (w 29) | 79.5 [77.7, 81.2] (w 51) | 78.1 [75.7, 80.4] (w 74) |
+
+95 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 95.0 [95.0, 95.1] (w 38; INFINITE 41 %) | 95.1 [95.0, 95.2] (w 76; INFINITE 41 %) | 95.1 [94.9, 95.2] (w 85; INFINITE 64 %) |
+| ACI / population | 95.0 [95.0, 95.0] (w 38; INFINITE 41 %) | 95.1 [95.0, 95.2] (w 71; INFINITE 48 %) | 95.2 [95.0, 95.3] (w 111; INFINITE 47 %) |
+| CQR / personalized k=3 | 94.5 [93.8, 95.1] (w 47) | 94.2 [93.4, 94.9] (w 81) | 92.3 [90.9, 93.5] (w 109) |
+| CQR / population | 94.6 [93.9, 95.3] (w 47) | 94.2 [93.5, 94.9] (w 82) | 92.0 [90.6, 93.3] (w 111) |
+| CV+ / personalized k=3 | 95.2 [94.2, 96.0] (w 53) | 95.3 [94.5, 96.0] (w 93) | 95.5 [94.4, 96.5] (w 130) |
+| CV+ / population | 95.2 [94.3, 96.0] (w 54) | 95.4 [94.6, 96.2] (w 97) | 95.5 [94.3, 96.7] (w 137) |
+| split conformal / personalized k=3 | 94.9 [94.0, 95.6] (w 52) | 95.0 [94.2, 95.8] (w 93) | 94.4 [93.3, 95.6] (w 126) |
+| split conformal / population | 94.9 [94.0, 95.7] (w 53) | 94.8 [93.8, 95.7] (w 95) | 94.0 [92.7, 95.3] (w 130) |
+
+Failures (95 % CI entirely below target): cqr/ft 80% +30 min: 78.6% [77.1, 80.0]; cqr/ft 80% +60 min: 76.8% [75.2, 78.3]; cqr/ft 80% +120 min: 74.2% [71.7, 76.4]; cqr/ft 95% +60 min: 94.2% [93.4, 94.9]; cqr/ft 95% +120 min: 92.3% [90.9, 93.5]; cqr/pop 80% +60 min: 77.0% [75.4, 78.5]; cqr/pop 80% +120 min: 75.4% [73.2, 77.5]; cqr/pop 95% +60 min: 94.2% [93.5, 94.9]; cqr/pop 95% +120 min: 92.0% [90.6, 93.3]; scp/ft 80% +120 min: 77.5% [75.2, 79.8]
+
+### Shanghai T2DM, design B (14 test patients)
+
+80 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 80.0 [79.9, 80.1] (w 25; INFINITE 15 %) | 80.0 [79.9, 80.2] (w 38; INFINITE 30 %) | 80.0 [79.7, 80.4] (w 64; INFINITE 33 %) |
+| ACI / population | 80.0 [79.9, 80.1] (w 23; INFINITE 14 %) | 80.0 [79.9, 80.2] (w 39; INFINITE 30 %) | 80.1 [79.6, 80.5] (w 62; INFINITE 30 %) |
+| CQR / personalized k=3 | 78.2 [75.7, 80.7] (w 26) | 75.1 [73.0, 77.4] (w 45) | 69.7 [66.0, 72.6] (w 65) |
+| CQR / population | 79.4 [76.9, 81.9] (w 26) | 77.3 [74.4, 81.0] (w 46) | 75.7 [72.0, 80.3] (w 66) |
+| CV+ / personalized k=3 | 80.3 [77.7, 83.5] (w 28) | 80.0 [76.7, 83.4] (w 50) | 77.8 [73.5, 82.0] (w 72) |
+| CV+ / population | 80.6 [77.9, 83.9] (w 28) | 81.0 [77.9, 84.4] (w 51) | 80.7 [76.0, 85.8] (w 76) |
+| split conformal / personalized k=3 | 80.4 [77.7, 83.6] (w 28) | 78.0 [74.9, 81.1] (w 49) | 77.5 [72.8, 81.7] (w 75) |
+| split conformal / population | 80.7 [78.0, 83.9] (w 29) | 78.5 [75.0, 82.1] (w 49) | 79.5 [74.4, 84.6] (w 77) |
+
+95 % target:
+
+| row | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| ACI / personalized k=3 | 95.0 [94.9, 95.1] (w 39; INFINITE 42 %) | 95.1 [94.9, 95.3] (w 62; INFINITE 59 %) | 95.1 [94.8, 95.5] (w 82; INFINITE 69 %) |
+| ACI / population | 95.0 [94.9, 95.1] (w 39; INFINITE 40 %) | 95.1 [95.0, 95.3] (w 63; INFINITE 58 %) | 95.2 [95.0, 95.5] (w 108; INFINITE 47 %) |
+| CQR / personalized k=3 | 94.2 [92.7, 95.6] (w 46) | 93.1 [91.9, 94.4] (w 80) | 92.6 [89.9, 94.7] (w 119) |
+| CQR / population | 94.3 [93.1, 95.7] (w 47) | 93.6 [92.1, 95.2] (w 81) | 92.3 [90.2, 94.8] (w 111) |
+| CV+ / personalized k=3 | 95.5 [94.3, 96.8] (w 53) | 95.5 [93.9, 97.0] (w 93) | 94.9 [92.3, 97.1] (w 126) |
+| CV+ / population | 95.3 [94.2, 96.7] (w 54) | 95.5 [93.6, 97.3] (w 97) | 94.8 [91.8, 97.4] (w 134) |
+| split conformal / personalized k=3 | 95.4 [94.2, 96.7] (w 53) | 95.4 [93.8, 96.9] (w 93) | 94.7 [91.9, 97.0] (w 132) |
+| split conformal / population | 95.1 [93.8, 96.4] (w 54) | 95.0 [93.1, 96.9] (w 95) | 93.9 [90.7, 97.1] (w 129) |
+
+Failures (95 % CI entirely below target): cqr/ft 80% +60 min: 75.1% [73.0, 77.4]; cqr/ft 80% +120 min: 69.7% [66.0, 72.6]; cqr/ft 95% +60 min: 93.1% [91.9, 94.4]; cqr/ft 95% +120 min: 92.6% [89.9, 94.7]; cqr/pop 95% +120 min: 92.3% [90.2, 94.8]
+
+Per group, design A, 80 %, +60 min (Shanghai T2DM):
+
+| row | 7-9 | <7 | >=9 | unknown |
+|---|---|---|---|---|
+| ACI / personalized k=3 | 80.0 [79.8, 80.1] n=27 | 80.0 [79.9, 80.1] n=16 | 79.9 [79.8, 80.1] n=20 | 79.8 [79.6, 80.0] n=8 |
+| ACI / population | 79.9 [79.8, 80.1] n=27 | 80.1 [79.9, 80.3] n=16 | 80.1 [79.9, 80.4] n=20 | 79.8 [79.5, 80.0] n=8 |
+| CQR / personalized k=3 | 77.1 [75.2, 79.1] n=27 | 78.2 [75.7, 80.4] n=16 | 74.0 [69.6, 78.5] n=20 | 78.1 [73.8, 82.9] n=8 |
+| CQR / population | 75.6 [73.7, 77.7] n=27 | 79.3 [76.7, 81.6] n=16 | 76.5 [73.0, 80.1] n=20 | 78.1 [72.3, 83.5] n=8 |
+| CV+ / personalized k=3 | 80.9 [78.6, 83.3] n=27 | 83.6 [80.6, 86.5] n=16 | 78.7 [76.1, 81.4] n=20 | 80.7 [73.5, 86.0] n=8 |
+| CV+ / population | 80.3 [78.2, 82.5] n=27 | 84.3 [81.6, 87.1] n=16 | 79.6 [77.0, 82.2] n=20 | 81.3 [73.4, 87.2] n=8 |
+| split conformal / personalized k=3 | 78.7 [76.5, 81.0] n=27 | 82.1 [78.4, 85.3] n=16 | 77.1 [74.7, 79.7] n=20 | 77.6 [69.6, 83.3] n=8 |
+| split conformal / population | 78.3 [76.1, 80.5] n=27 | 82.8 [79.5, 85.8] n=16 | 78.8 [76.4, 81.3] n=20 | 78.9 [69.8, 85.1] n=8 |
+
+Per group, design B, 80 %, +60 min (Shanghai T2DM):
+
+| row | 7-9 | <7 | >=9 | unknown |
+|---|---|---|---|---|
+| ACI / personalized k=3 | 80.2 [80.1, 80.3] n=5 | 80.0 [79.7, 80.2] n=4 (unreliable) | 80.0 [79.6, 80.8] n=4 (unreliable) | 79.6 [79.6, 79.6] n=1 (unreliable) |
+| ACI / population | 80.0 [79.9, 80.2] n=5 | 80.0 [79.7, 80.4] n=4 (unreliable) | 80.1 [79.8, 80.6] n=4 (unreliable) | 79.8 [79.8, 79.8] n=1 (unreliable) |
+| CQR / personalized k=3 | 74.0 [70.4, 79.0] n=5 | 76.7 [76.4, 77.3] n=4 (unreliable) | 75.3 [68.8, 83.4] n=4 (unreliable) | 72.4 [72.4, 72.4] n=1 (unreliable) |
+| CQR / population | 75.5 [72.1, 80.8] n=5 | 80.0 [76.2, 83.6] n=4 (unreliable) | 77.8 [69.5, 87.8] n=4 (unreliable) | 73.6 [73.6, 73.6] n=1 (unreliable) |
+| CV+ / personalized k=3 | 77.2 [71.9, 84.4] n=5 | 84.3 [80.8, 86.9] n=4 (unreliable) | 78.3 [72.6, 85.1] n=4 (unreliable) | 79.2 [79.2, 79.2] n=1 (unreliable) |
+| CV+ / population | 78.6 [73.8, 85.8] n=5 | 85.4 [82.0, 87.7] n=4 (unreliable) | 78.7 [74.0, 84.6] n=4 (unreliable) | 79.6 [79.6, 79.6] n=1 (unreliable) |
+| split conformal / personalized k=3 | 74.9 [70.3, 80.6] n=5 | 82.0 [79.0, 84.6] n=4 (unreliable) | 77.3 [71.6, 83.9] n=4 (unreliable) | 77.8 [77.8, 77.8] n=1 (unreliable) |
+| split conformal / population | 74.6 [69.1, 82.2] n=5 | 83.2 [79.2, 86.3] n=4 (unreliable) | 78.3 [73.2, 84.6] n=4 (unreliable) | 76.9 [76.9, 76.9] n=1 (unreliable) |
+
+### Event probabilities (design A, onset-only windows, +60 min)
+
+| cohort | event | pos / rows | patients w/ events | ECE raw | ECE Platt | ECE isotonic | Brier Platt | AUROC |
+|---|---|---|---|---|---|---|---|---|
+| CGMacros | hyper180 | 1024 / 11085 | 40 | 0.026 | 0.021 | 0.009 | 0.071 | 0.832 [0.796, 0.867] |
+| CGMacros | hyper140 | 1918 / 7543 | 43 | 0.040 | 0.040 | 0.014 | 0.154 | 0.782 [0.746, 0.814] |
+| CGMacros | hypo70 (limited evidence) | 42 / 12753 | 8 | 0.006 | 0.003 | 0.003 | 0.003 | 0.877 [0.743, 0.962] |
+| Shanghai T2DM | hyper180 | 2210 / 32449 | 62 | 0.013 | 0.012 | 0.003 | 0.047 | 0.897 [0.884, 0.909] |
+| Shanghai T2DM | hyper140 | 3674 / 24038 | 71 | 0.021 | 0.020 | 0.005 | 0.093 | 0.854 [0.841, 0.868] |
+| Shanghai T2DM | hypo70 | 557 / 36898 | 41 | 0.021 | 0.004 | 0.004 | 0.014 | 0.903 [0.875, 0.928] |
+
+### Alarm burden (design A, 60-min alerts, LE = limited evidence)
+
+Thresholds chosen on training patients' out-of-fold rows for each FA/day budget, then
+applied to test; the last column is the test FROC curve point (no tuning; optimistic).
+
+| cohort | event | system | FA/day budget | sens % (train thr.) | realized FA/day | PPV % | lead median [IQR] min | sens % at FA (test curve) | episodes |
+|---|---|---|---|---|---|---|---|---|---|
+| CGMacros | hyper180 | model | 1 | 46.8 | 1.07 | 44.0 | 25 [10, 35] | 41.5 | 205 |
+| CGMacros | hyper180 | model | 2 | 64.4 | 2.03 | 36.0 | 25 [10, 40] | 63.9 | 205 |
+| CGMacros | hyper180 | model | 3 | 72.2 | 3.12 | 29.3 | 25 [15, 40] | 72.7 | 205 |
+| CGMacros | hyper180 | naive | 1 | 42.0 | 0.99 | 43.2 | 10 [5, 20] | 42.0 | 205 |
+| CGMacros | hyper180 | naive | 2 | 62.4 | 1.92 | 36.6 | 10 [5, 30] | 62.4 | 205 |
+| CGMacros | hyper180 | naive | 3 | 70.7 | 3.00 | 29.7 | 15 [5, 30] | 70.2 | 205 |
+| CGMacros | hyper180 | trend | 1 | 23.4 | 1.04 | 28.7 | 5 [5, 15] | 22.9 | 205 |
+| CGMacros | hyper180 | trend | 2 | 44.4 | 2.02 | 28.3 | 10 [5, 20] | 41.0 | 205 |
+| CGMacros | hyper180 | trend | 3 | 56.6 | 2.96 | 25.5 | 15 [5, 25] | 55.6 | 205 |
+| CGMacros | hyper140 | model | 1 | 37.2 | 1.20 | 62.3 | 20 [10, 35] | 33.7 | 401 |
+| CGMacros | hyper140 | model | 2 | 56.4 | 2.39 | 55.9 | 25 [15, 40] | 50.1 | 401 |
+| CGMacros | hyper140 | model | 3 | 68.1 | 3.42 | 51.6 | 25 [15, 40] | 65.6 | 401 |
+| CGMacros | hyper140 | naive | 1 | 15.7 | 1.11 | 43.1 | 15 [5, 35] | 7.0 | 401 |
+| CGMacros | hyper140 | naive | 2 | 38.7 | 2.12 | 49.5 | 15 [5, 35] | 34.4 | 401 |
+| CGMacros | hyper140 | naive | 3 | 52.1 | 3.25 | 46.3 | 15 [5, 35] | 46.4 | 401 |
+| CGMacros | hyper140 | trend | 1 | 8.0 | 0.78 | 35.6 | 10 [5, 31] | 11.0 | 401 |
+| CGMacros | hyper140 | trend | 2 | 22.2 | 1.83 | 39.5 | 10 [5, 25] | 23.2 | 401 |
+| CGMacros | hyper140 | trend | 3 | 33.9 | 2.84 | 39.0 | 15 [5, 25] | 36.4 | 401 |
+| CGMacros | hypo70 (LE) | model | 1 | 100.0 | 0.63 | 4.5 | 15 [9, 24] | 100.0 | 4 |
+| CGMacros | hypo70 (LE) | model | 2 | 100.0 | 1.44 | 2.0 | 22 [16, 28] | 100.0 | 4 |
+| CGMacros | hypo70 (LE) | model | 3 | 100.0 | 2.20 | 1.3 | 22 [16, 28] | 100.0 | 4 |
+| CGMacros | hypo70 (LE) | naive | 1 | 100.0 | 0.64 | 4.4 | 20 [16, 21] | 100.0 | 4 |
+| CGMacros | hypo70 (LE) | naive | 2 | 100.0 | 1.58 | 1.8 | 15 [9, 20] | 100.0 | 4 |
+| CGMacros | hypo70 (LE) | naive | 3 | 100.0 | 2.52 | 1.2 | 15 [9, 24] | 100.0 | 4 |
+| CGMacros | hypo70 (LE) | trend | 1 | 25.0 | 0.81 | 0.9 | 35 [35, 35] | 50.0 | 4 |
+| CGMacros | hypo70 (LE) | trend | 2 | 50.0 | 1.76 | 0.8 | 38 [31, 44] | 50.0 | 4 |
+| CGMacros | hypo70 (LE) | trend | 3 | 100.0 | 2.60 | 1.1 | 22 [16, 28] | 100.0 | 4 |
+| Shanghai T2DM | hyper180 | model | 1 | 71.1 | 0.81 | 56.9 | 15 [15, 30] | 73.3 | 498 |
+| Shanghai T2DM | hyper180 | model | 2 | 91.8 | 1.73 | 44.5 | 30 [15, 30] | 93.2 | 498 |
+| Shanghai T2DM | hyper180 | model | 3 | 98.4 | 2.63 | 36.1 | 30 [15, 45] | 98.8 | 498 |
+| Shanghai T2DM | hyper180 | naive | 1 | 59.0 | 0.94 | 48.6 | 15 [15, 15] | 59.4 | 498 |
+| Shanghai T2DM | hyper180 | naive | 2 | 78.7 | 1.88 | 38.7 | 15 [15, 30] | 79.5 | 498 |
+| Shanghai T2DM | hyper180 | naive | 3 | 89.4 | 2.73 | 33.0 | 15 [15, 30] | 91.6 | 498 |
+| Shanghai T2DM | hyper180 | trend | 1 | 67.3 | 1.00 | 50.5 | 15 [15, 30] | 65.1 | 498 |
+| Shanghai T2DM | hyper180 | trend | 2 | 86.7 | 1.99 | 39.7 | 15 [15, 30] | 86.7 | 498 |
+| Shanghai T2DM | hyper180 | trend | 3 | 96.2 | 2.95 | 33.0 | 30 [15, 30] | 95.6 | 498 |
+| Shanghai T2DM | hyper140 | model | 1 | 64.1 | 0.87 | 72.5 | 15 [15, 30] | 68.6 | 835 |
+| Shanghai T2DM | hyper140 | model | 2 | 82.8 | 1.85 | 61.5 | 15 [15, 30] | 84.8 | 835 |
+| Shanghai T2DM | hyper140 | model | 3 | 91.4 | 2.69 | 54.9 | 30 [15, 45] | 93.8 | 835 |
+| Shanghai T2DM | hyper140 | naive | 1 | 44.7 | 0.87 | 64.9 | 15 [15, 15] | 45.4 | 835 |
+| Shanghai T2DM | hyper140 | naive | 2 | 65.0 | 1.64 | 58.6 | 15 [15, 30] | 65.0 | 835 |
+| Shanghai T2DM | hyper140 | naive | 3 | 78.0 | 2.68 | 51.0 | 15 [15, 30] | 79.4 | 835 |
+| Shanghai T2DM | hyper140 | trend | 1 | 47.8 | 0.99 | 63.4 | 15 [15, 30] | 45.4 | 835 |
+| Shanghai T2DM | hyper140 | trend | 2 | 73.3 | 1.93 | 57.6 | 15 [15, 30] | 73.5 | 835 |
+| Shanghai T2DM | hyper140 | trend | 3 | 83.7 | 2.87 | 51.1 | 15 [15, 30] | 84.0 | 835 |
+| Shanghai T2DM | hypo70 | model | 1 | 70.3 | 1.16 | 14.9 | 30 [15, 45] | 58.6 | 111 |
+| Shanghai T2DM | hypo70 | model | 2 | 86.5 | 2.32 | 9.7 | 30 [15, 45] | 85.6 | 111 |
+| Shanghai T2DM | hypo70 | model | 3 | 92.8 | 3.40 | 7.3 | 30 [15, 45] | 90.1 | 111 |
+| Shanghai T2DM | hypo70 | naive | 1 | 83.8 | 0.97 | 19.9 | 15 [15, 30] | 83.8 | 111 |
+| Shanghai T2DM | hypo70 | naive | 2 | 95.5 | 1.93 | 12.5 | 15 [15, 30] | 95.5 | 111 |
+| Shanghai T2DM | hypo70 | naive | 3 | 99.1 | 3.21 | 8.2 | 30 [15, 45] | 97.3 | 111 |
+| Shanghai T2DM | hypo70 | trend | 1 | 56.8 | 0.97 | 14.4 | 30 [15, 45] | 58.6 | 111 |
+| Shanghai T2DM | hypo70 | trend | 2 | 82.9 | 2.04 | 10.5 | 30 [15, 45] | 82.9 | 111 |
+| Shanghai T2DM | hypo70 | trend | 3 | 93.7 | 3.06 | 8.1 | 30 [15, 45] | 92.8 | 111 |
+
+### Selective prediction (area under the MAE-vs-coverage curve, mg/dL; lower = better)
+
+Abstention ranks rows by CQR interval width, a data-quality score, both, or at random;
+the oracle ranks by the true error (a lower bound, not achievable).
+
+| design / cohort | horizon | cqr_width | random | low_dq | width_and_dq | oracle |
+|---|---|---|---|---|---|---|
+| A / CGMacros | +30 min | 4.29 | 5.56 | 5.40 | 4.66 | 2.96 |
+| A / CGMacros | +60 min | 6.40 | 8.03 | 7.95 | 7.01 | 4.39 |
+| A / CGMacros | +120 min | 8.13 | 10.08 | 10.19 | 9.02 | 5.74 |
+| A / Shanghai T2DM | +30 min | 3.73 | 4.51 | 4.58 | 4.05 | 2.59 |
+| A / Shanghai T2DM | +60 min | 6.66 | 8.15 | 8.25 | 7.26 | 4.69 |
+| A / Shanghai T2DM | +120 min | 10.15 | 12.05 | 12.07 | 10.85 | 7.10 |
+| B / CGMacros | +30 min | 4.25 | 5.90 |  |  | 3.02 |
+| B / CGMacros | +60 min | 6.76 | 8.83 |  |  | 4.65 |
+| B / CGMacros | +120 min | 9.57 | 11.44 |  |  | 6.62 |
+| B / Shanghai T2DM | +30 min | 3.76 | 4.49 |  |  | 2.60 |
+| B / Shanghai T2DM | +60 min | 6.67 | 8.13 |  |  | 4.65 |
+| B / Shanghai T2DM | +120 min | 10.32 | 12.17 |  |  | 7.26 |
+
+### Robustness (design A, +60 min, population model, split-arm intervals)
+
+CGMacros:
+
+| fault | level | available % | MAE | cov 80 % split | cov 80 % CQR | cov 95 % split | DQ mean |
+|---|---|---|---|---|---|---|---|
+| bias | 10.0 | 100.0 | 18.5 [17.0, 20.1] | 76.3 | 72.2 | 95.2 | 0.99 |
+| bias | 20.0 | 100.0 | 22.6 [21.1, 24.4] | 65.3 | 54.9 | 94.2 | 0.99 |
+| bias | 40.0 | 100.0 | 32.4 [30.4, 34.6] | 33.9 | 34.8 | 86.3 | 0.98 |
+| clean | 0.0 | 100.0 | 15.9 [14.4, 17.6] | 80.8 | 80.8 | 95.1 | 0.99 |
+| compression | 20.0 | 100.0 | 16.1 [14.6, 17.8] | 80.5 | 80.3 | 95.1 | 0.99 |
+| compression | 40.0 | 100.0 | 16.5 [15.0, 18.2] | 79.0 | 79.6 | 94.9 | 0.97 |
+| compression | 60.0 | 100.0 | 16.9 [15.4, 18.6] | 78.4 | 79.0 | 94.3 | 0.97 |
+| drift | 5.0 | 100.0 | 18.3 [16.7, 19.7] | 76.4 | 73.1 | 95.2 | 0.99 |
+| drift | 10.0 | 100.0 | 22.9 [20.0, 26.5] | 65.6 | 59.9 | 92.1 | 0.99 |
+| drift | 20.0 | 100.0 | 34.1 [27.3, 44.6] | 45.6 | 43.5 | 82.2 | 0.99 |
+| dropout | 0.1 | 99.8 | 16.1 [14.5, 17.8] | 80.5 | 80.5 | 94.9 | 0.96 |
+| dropout | 0.2 | 99.2 | 16.7 [15.1, 18.5] | 79.6 | 80.0 | 94.4 | 0.92 |
+| dropout | 0.4 | 97.7 | 17.4 [15.8, 19.2] | 78.3 | 79.1 | 93.9 | 0.86 |
+| gaps | 30.0 | 100.0 | 16.1 [14.6, 17.8] | 80.4 | 80.6 | 94.9 | 0.96 |
+| gaps | 60.0 | 100.0 | 16.8 [15.2, 18.6] | 79.2 | 79.8 | 94.4 | 0.93 |
+| gaps | 120.0 | 83.1 | 17.2 [15.5, 18.9] | 78.2 | 79.2 | 94.0 | 0.85 |
+| gaps | 240.0 | 49.4 | 18.6 [16.7, 20.6] | 75.7 | 79.9 | 93.0 | 0.69 |
+| noise | 5.0 | 100.0 | 16.5 [15.0, 18.1] | 80.1 | 80.5 | 95.0 | 0.98 |
+| noise | 10.0 | 100.0 | 17.9 [16.4, 19.5] | 77.1 | 78.7 | 94.5 | 0.88 |
+| noise | 20.0 | 100.0 | 21.7 [20.3, 23.3] | 68.1 | 73.5 | 92.0 | 0.75 |
+| timestamp_delay | 5.0 | 100.0 | 16.3 [14.7, 18.0] | 80.0 | 80.1 | 94.9 | 0.99 |
+| timestamp_delay | 15.0 | 100.0 | 17.0 [15.3, 18.9] | 78.4 | 78.3 | 94.2 | 0.99 |
+| timestamp_delay | 30.0 | 100.0 | 18.2 [16.3, 20.4] | 76.1 | 75.6 | 93.3 | 0.98 |
+| wearable_missing | 0.5 | 100.0 | 15.9 [14.4, 17.6] | 80.8 | 80.8 | 95.1 | 0.99 |
+| wearable_missing | 1.0 | 100.0 | 15.9 [14.4, 17.6] | 80.8 | 80.9 | 95.1 | 0.99 |
+
+DQ vs absolute error, Spearman 0.038 [-0.001, 0.074] (pooled clean + faulted rows); clean rows only 0.042.
+
+Shanghai T2DM:
+
+| fault | level | available % | MAE | cov 80 % split | cov 80 % CQR | cov 95 % split | DQ mean |
+|---|---|---|---|---|---|---|---|
+| bias | 10.0 | 100.0 | 18.8 [17.9, 19.7] | 75.2 | 64.3 | 94.7 | 0.97 |
+| bias | 20.0 | 100.0 | 23.3 [22.3, 24.4] | 63.2 | 48.6 | 92.6 | 0.97 |
+| bias | 40.0 | 100.0 | 35.2 [33.7, 36.6] | 29.2 | 28.2 | 79.8 | 0.97 |
+| clean | 0.0 | 100.0 | 16.3 [15.5, 17.2] | 79.5 | 77.0 | 94.8 | 0.97 |
+| compression | 20.0 | 100.0 | 16.7 [15.9, 17.6] | 78.9 | 76.5 | 94.8 | 0.97 |
+| compression | 40.0 | 100.0 | 17.2 [16.4, 18.0] | 77.3 | 76.5 | 94.6 | 0.97 |
+| compression | 60.0 | 100.0 | 17.6 [16.8, 18.5] | 76.6 | 76.2 | 93.6 | 0.97 |
+| drift | 5.0 | 100.0 | 21.9 [20.9, 22.8] | 65.7 | 56.4 | 92.7 | 0.97 |
+| drift | 10.0 | 100.0 | 30.7 [29.3, 32.1] | 45.7 | 41.2 | 80.2 | 0.97 |
+| drift | 20.0 | 100.0 | 52.1 [50.0, 54.2] | 26.3 | 24.3 | 49.7 | 0.97 |
+| dropout | 0.1 | 96.2 | 17.3 [16.5, 18.2] | 77.6 | 75.1 | 93.9 | 0.93 |
+| dropout | 0.2 | 92.2 | 18.6 [17.6, 19.6] | 75.1 | 72.9 | 92.6 | 0.89 |
+| dropout | 0.4 | 82.7 | 20.7 [19.5, 21.8] | 70.9 | 69.0 | 90.7 | 0.81 |
+| gaps | 30.0 | 100.0 | 17.5 [16.5, 18.3] | 77.3 | 74.9 | 93.9 | 0.94 |
+| gaps | 60.0 | 96.2 | 18.3 [17.4, 19.3] | 75.6 | 72.5 | 93.0 | 0.90 |
+| gaps | 120.0 | 79.3 | 18.9 [17.9, 20.0] | 74.5 | 70.5 | 92.4 | 0.83 |
+| gaps | 240.0 | 45.9 | 20.6 [19.3, 21.8] | 71.9 | 72.1 | 90.7 | 0.67 |
+| noise | 5.0 | 100.0 | 18.4 [17.7, 19.2] | 74.8 | 74.5 | 93.2 | 0.97 |
+| noise | 10.0 | 100.0 | 22.3 [21.5, 23.0] | 66.9 | 69.7 | 89.3 | 0.97 |
+| noise | 20.0 | 100.0 | 29.0 [28.2, 29.9] | 54.3 | 62.7 | 81.0 | 0.96 |
+| timestamp_delay | 15.0 | 100.0 | 18.5 [17.6, 19.5] | 75.2 | 71.6 | 92.7 | 0.97 |
+| timestamp_delay | 30.0 | 100.0 | 20.7 [19.5, 21.8] | 71.2 | 66.5 | 90.3 | 0.97 |
+
+DQ vs absolute error, Spearman 0.073 [0.046, 0.098] (pooled clean + faulted rows); clean rows only 0.048.
+
+### Item 2: patient-level static + dynamic fusion (MAE in percentage points of the day)
+
+| cohort | target | static | dynamic | both | cohort_mean_reference | both-static | both-dynamic |
+|---|---|---|---|---|---|---|---|
+| CGMacros (n=43) | next-day TAR>180 % | 10.24 | 6.53 | 6.54 | 15.89 | -3.70 [-6.04, -1.53] | 0.01 [-0.92, 0.85] |
+| CGMacros (n=43) | next-day TIR % | 10.77 | 7.36 | 7.37 | 15.46 | -3.40 [-5.70, -1.24] | 0.01 [-0.89, 0.89] |
+| Shanghai T2DM (n=100) | next-day TAR>180 % | 19.70 | 12.10 | 11.85 | 21.34 | -7.85 [-11.11, -4.94] | -0.24 [-0.93, 0.46] |
+| Shanghai T2DM (n=100) | next-day TIR % | 20.06 | 13.65 | 13.95 | 20.90 | -6.11 [-9.12, -3.36] | 0.30 [-0.28, 0.88] |
+
