@@ -1,0 +1,82 @@
+# Part 7: counterfactual what-if engine (CGMacros). Decisions: docs/DECISIONS.md D-050..D-054.
+# Units: glucose mg/dL, time min, macros g. Folds = CV repeat 0 (identical to Parts 2-6).
+seed: 42
+cohort: cgmacros                    # Shanghai excluded: no meal inputs / macros (D-050)
+horizons_min: [30, 60, 120]
+cv_repeat: 0
+threads: 2                          # LightGBM threads per fold job (Part 6 value)
+n_jobs: 5                           # parallel fold jobs
+dev_folds: [0]                      # development stage: fold-0 TRAINING patients only
+alphas: [0.2, 0.05]                 # 80 % / 95 % observational bands
+band_region_from_day: 7             # residual region for bands (Part 6 region)
+slice_hours: 8                      # unused since D-050 amendment (full period prefix, exact)
+feature_guard_tol: 0.0              # zero edit vs stored feature row: bitwise (D-050 amendment)
+oof_guard_tol: 1.0e-6               # unc refit vs Part 6 OOF population forecasts
+
+monotone:                           # owner choice Q2 = A (D-050)
+  increasing: [meal_carbs_g_1h, meal_carbs_g_3h, meal_carbs_g_6h,
+               meal_kcal_1h, meal_kcal_3h, meal_kcal_6h]
+  decreasing: [act_post_meal]
+
+kcal_per_g: {carbs_g: 4.0, protein_g: 4.0, fat_g: 9.0, fiber_g: 0.0}
+
+walk:                               # moved unchanged from configs/mech.yaml whatif (Part 4)
+  start_after_meal_min: 15
+  duration_min: 30
+  intensity: 2.0
+
+twin:
+  k: 3                              # parameters from the first 3 days (twinfeatfits, prior pop)
+  rollout_min: 120
+  z80: 1.2815515655446004
+  z95: 1.959963984540054
+  assumed:                          # D-052, simulator only, never mixed with learned results
+    meal_g: 60.0
+    slow_ratio: 0.5                 # Part 4 what-if illustration value
+    iauc_hours: 3
+    reduction: 0.20
+    sensitivity: [0.10, 0.35]
+    alpha_max: 0.2                  # RK4 stability at dt 5 min: dt * alpha * E_max stays < 2.8
+
+plausibility:                       # D-051
+  min_day: 3
+  meal_lookback_min: 15
+  max_windows_per_patient: 20
+  carb_grid_g: [0, 15, 30, 45, 60, 90, 120]
+  mono_tol: 1.0e-9
+  mono_tol_secondary: 2.0
+  walk_window_min: [45, 120]        # ML walk windows: anchor 45-120 min after the last meal
+  bounds_mgdl: [40.0, 400.0]
+  max_rate_mgdl_min: 4.0            # D-047 design assumption (unsourced)
+  dose_low_g: 30
+  dose_high_g: 60
+  dose_window_range: [0.0, 2.0]     # mg/dL per g
+  dose_median_range: [0.3, 1.3]     # Franc et al. 2010 (PMC2928333), weak bounds
+  cross_abs_tol: 10.0
+  cross_rel_tol: 0.5
+  macro_edits_g: {protein_g: 20.0, fat_g: 10.0, fiber_g: 5.0}   # descriptive only
+
+matched:                            # D-053
+  meal_type: breakfast
+  macro_tol_g: {protein_g: 5.0, fat_g: 5.0, fiber_g: 3.0}
+  min_carb_diff_g: 20.0
+  clock_tol_h: 2.0
+  cgm_tol: 20.0
+  amount_pct: [90.0, 110.0]
+  clean_before_h: 3.0
+  clean_after_h: 2.0
+  anchor_max_after_min: 15
+  twin_min_day: 3
+  cross:                            # secondary, cross-patient (more confounded)
+    hba1c_tol: 0.5
+    clock_tol_h: 1.0
+    cgm_tol: 15.0
+    macro_tol_g: {protein_g: 5.0, fat_g: 5.0}
+    max_pairs_per_patient_pair: 1
+
+examples:
+  carbs_g: [30, 60]
+  india_presets: [roti_2_dal_sabzi, rice_1katori_dal_sabzi, rice_2katori_dal_sabzi, poha, idli_sambar]
+
+bootstrap: {n_boot: 1000, ci: 0.95}
+dpi: 300

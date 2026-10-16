@@ -1,0 +1,762 @@
+{
+ "disclaimer": "ASSUMED recipes and portions for illustration only; NOT clinical or dietary values. Per-portion macros are computed from IFCT 2017 (Longvah et al., National Institute of Nutrition / ICMR) for our own assumed raw-ingredient grams by `python -m src.india.library build`. No IFCT table or per-100 g values are stored here. GlucoTwin was trained on US meals (CGMacros), so forecasts for these meals are out of distribution.",
+ "source": "IFCT 2017 (Longvah T, Ananthan R, Bhaskarachary K, Venkaiah K. Indian Food Composition Tables 2017. NIN, ICMR, Hyderabad). Values fetched at run time from the ifct2017 package (AGPL-3.0), not redistributed.",
+ "approximations": {
+  "curd": "approximate assumption: curd (plain, cow milk) is not in IFCT 2017; whole cow milk (L002) is used as a proxy",
+  "frying_oil": "approximate assumption: oil absorbed during deep frying, grams assumed"
+ },
+ "presets": {
+  "roti_2_dal_sabzi": {
+   "label": "2 roti + dal + aloo-gobi sabzi",
+   "portion": "2 medium roti, 1 katori dal, 1 katori sabzi",
+   "ingredients": [
+    [
+     "A019",
+     60
+    ],
+    [
+     "B021",
+     30
+    ],
+    [
+     "F006",
+     50
+    ],
+    [
+     "D036",
+     50
+    ],
+    [
+     "G017",
+     20
+    ],
+    [
+     "D075",
+     30
+    ],
+    [
+     "T005",
+     10
+    ]
+   ],
+   "macros": {
+    "carbs_g": 66.4,
+    "protein_g": 15.2,
+    "fat_g": 11.8,
+    "fiber_g": 13.2,
+    "kcal": 353.0
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A019",
+    "B021",
+    "D036",
+    "D075",
+    "F006",
+    "G017",
+    "T005"
+   ]
+  },
+  "rice_1katori_dal_sabzi": {
+   "label": "1 katori rice + dal + aloo-gobi sabzi",
+   "portion": "1 katori cooked rice (about 150 g), 1 katori dal, 1 katori sabzi",
+   "ingredients": [
+    [
+     "A015",
+     50
+    ],
+    [
+     "B021",
+     30
+    ],
+    [
+     "F006",
+     50
+    ],
+    [
+     "D036",
+     50
+    ],
+    [
+     "G017",
+     20
+    ],
+    [
+     "D075",
+     30
+    ],
+    [
+     "T005",
+     10
+    ]
+   ],
+   "macros": {
+    "carbs_g": 67.0,
+    "protein_g": 12.9,
+    "fat_g": 11.2,
+    "fiber_g": 7.8,
+    "kcal": 339.1
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B021",
+    "D036",
+    "D075",
+    "F006",
+    "G017",
+    "T005"
+   ]
+  },
+  "rice_2katori_dal_sabzi": {
+   "label": "2 katori rice + dal + aloo-gobi sabzi",
+   "portion": "2 katori cooked rice (about 300 g), 1 katori dal, 1 katori sabzi",
+   "ingredients": [
+    [
+     "A015",
+     100
+    ],
+    [
+     "B021",
+     30
+    ],
+    [
+     "F006",
+     50
+    ],
+    [
+     "D036",
+     50
+    ],
+    [
+     "G017",
+     20
+    ],
+    [
+     "D075",
+     30
+    ],
+    [
+     "T005",
+     10
+    ]
+   ],
+   "macros": {
+    "carbs_g": 106.1,
+    "protein_g": 16.8,
+    "fat_g": 11.4,
+    "fiber_g": 9.2,
+    "kcal": 517.2
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B021",
+    "D036",
+    "D075",
+    "F006",
+    "G017",
+    "T005"
+   ]
+  },
+  "veg_thali": {
+   "label": "Vegetarian thali",
+   "portion": "1 roti, 1 katori rice, dal, 2 sabzis, 1 katori curd",
+   "ingredients": [
+    [
+     "A019",
+     30
+    ],
+    [
+     "A015",
+     50
+    ],
+    [
+     "B021",
+     30
+    ],
+    [
+     "F006",
+     50
+    ],
+    [
+     "D036",
+     50
+    ],
+    [
+     "D061",
+     30
+    ],
+    [
+     "L002",
+     100,
+     "curd"
+    ],
+    [
+     "G017",
+     20
+    ],
+    [
+     "D075",
+     30
+    ],
+    [
+     "T005",
+     15
+    ]
+   ],
+   "macros": {
+    "carbs_g": 94.8,
+    "protein_g": 21.5,
+    "fat_g": 21.2,
+    "fiber_g": 13.1,
+    "kcal": 532.4
+   },
+   "source": "approximate assumption (partly IFCT2017-derived)",
+   "ifct_codes": [
+    "A015",
+    "A019",
+    "B021",
+    "D036",
+    "D061",
+    "D075",
+    "F006",
+    "G017",
+    "L002",
+    "T005"
+   ]
+  },
+  "dal_chawal": {
+   "label": "Dal-chawal",
+   "portion": "1.5 katori rice, 1 katori dal with ghee",
+   "ingredients": [
+    [
+     "A015",
+     75
+    ],
+    [
+     "B021",
+     40
+    ],
+    [
+     "T013",
+     5
+    ],
+    [
+     "G017",
+     10
+    ],
+    [
+     "D075",
+     20
+    ]
+   ],
+   "macros": {
+    "carbs_g": 82.4,
+    "protein_g": 14.9,
+    "fat_g": 6.1,
+    "fiber_g": 6.3,
+    "kcal": 408.2
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B021",
+    "D075",
+    "G017",
+    "T013"
+   ]
+  },
+  "idli_sambar": {
+   "label": "Idli-sambar",
+   "portion": "4 idli, 1 katori sambar",
+   "ingredients": [
+    [
+     "A015",
+     60
+    ],
+    [
+     "B003",
+     20
+    ],
+    [
+     "B021",
+     20
+    ],
+    [
+     "D075",
+     30
+    ],
+    [
+     "G017",
+     20
+    ],
+    [
+     "F002",
+     20
+    ],
+    [
+     "T005",
+     5
+    ]
+   ],
+   "macros": {
+    "carbs_g": 72.2,
+    "protein_g": 14.4,
+    "fat_g": 6.2,
+    "fiber_g": 7.7,
+    "kcal": 366.7
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B003",
+    "B021",
+    "D075",
+    "F002",
+    "G017",
+    "T005"
+   ]
+  },
+  "plain_dosa": {
+   "label": "Plain dosa + coconut chutney",
+   "portion": "1 large dosa, 2 tbsp chutney",
+   "ingredients": [
+    [
+     "A015",
+     60
+    ],
+    [
+     "B003",
+     20
+    ],
+    [
+     "T005",
+     10
+    ],
+    [
+     "H007",
+     25
+    ]
+   ],
+   "macros": {
+    "carbs_g": 58.7,
+    "protein_g": 10.3,
+    "fat_g": 21.0,
+    "fiber_g": 6.7,
+    "kcal": 380.9
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B003",
+    "H007",
+    "T005"
+   ]
+  },
+  "masala_dosa": {
+   "label": "Masala dosa + coconut chutney",
+   "portion": "1 large dosa with potato filling, 2 tbsp chutney",
+   "ingredients": [
+    [
+     "A015",
+     60
+    ],
+    [
+     "B003",
+     20
+    ],
+    [
+     "F006",
+     100
+    ],
+    [
+     "G017",
+     30
+    ],
+    [
+     "T005",
+     15
+    ],
+    [
+     "H007",
+     25
+    ]
+   ],
+   "macros": {
+    "carbs_g": 76.5,
+    "protein_g": 12.3,
+    "fat_g": 26.3,
+    "fiber_g": 9.1,
+    "kcal": 465.1
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B003",
+    "F006",
+    "G017",
+    "H007",
+    "T005"
+   ]
+  },
+  "poha": {
+   "label": "Poha",
+   "portion": "1 plate",
+   "ingredients": [
+    [
+     "A011",
+     60
+    ],
+    [
+     "F006",
+     30
+    ],
+    [
+     "G017",
+     30
+    ],
+    [
+     "D061",
+     20
+    ],
+    [
+     "H012",
+     10
+    ],
+    [
+     "T005",
+     8
+    ]
+   ],
+   "macros": {
+    "carbs_g": 57.5,
+    "protein_g": 9.2,
+    "fat_g": 12.8,
+    "fiber_g": 5.6,
+    "kcal": 315.8
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A011",
+    "D061",
+    "F006",
+    "G017",
+    "H012",
+    "T005"
+   ]
+  },
+  "upma": {
+   "label": "Upma",
+   "portion": "1 plate",
+   "ingredients": [
+    [
+     "A022",
+     60
+    ],
+    [
+     "G017",
+     30
+    ],
+    [
+     "F002",
+     20
+    ],
+    [
+     "D061",
+     20
+    ],
+    [
+     "T005",
+     10
+    ]
+   ],
+   "macros": {
+    "carbs_g": 47.4,
+    "protein_g": 8.9,
+    "fat_g": 10.6,
+    "fiber_g": 8.7,
+    "kcal": 237.5
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A022",
+    "D061",
+    "F002",
+    "G017",
+    "T005"
+   ]
+  },
+  "aloo_paratha": {
+   "label": "Aloo paratha + curd",
+   "portion": "2 parathas, 1 katori curd",
+   "ingredients": [
+    [
+     "A019",
+     80
+    ],
+    [
+     "F006",
+     120
+    ],
+    [
+     "G017",
+     15
+    ],
+    [
+     "T013",
+     10
+    ],
+    [
+     "L002",
+     100,
+     "curd"
+    ]
+   ],
+   "macros": {
+    "carbs_g": 75.6,
+    "protein_g": 13.8,
+    "fat_g": 16.0,
+    "fiber_g": 11.5,
+    "kcal": 420.1
+   },
+   "source": "approximate assumption (partly IFCT2017-derived)",
+   "ifct_codes": [
+    "A019",
+    "F006",
+    "G017",
+    "L002",
+    "T013"
+   ]
+  },
+  "rajma_chawal": {
+   "label": "Rajma-chawal",
+   "portion": "1.5 katori rice, 1 katori rajma",
+   "ingredients": [
+    [
+     "B020",
+     40
+    ],
+    [
+     "A015",
+     75
+    ],
+    [
+     "G017",
+     30
+    ],
+    [
+     "D075",
+     50
+    ],
+    [
+     "T005",
+     10
+    ]
+   ],
+   "macros": {
+    "carbs_g": 82.6,
+    "protein_g": 14.7,
+    "fat_g": 11.3,
+    "fiber_g": 10.3,
+    "kcal": 410.8
+   },
+   "source": "IFCT2017-derived from an assumed recipe",
+   "ifct_codes": [
+    "A015",
+    "B020",
+    "D075",
+    "G017",
+    "T005"
+   ]
+  },
+  "veg_biryani": {
+   "label": "Veg biryani",
+   "portion": "1 plate (about 2 katori)",
+   "ingredients": [
+    [
+     "A015",
+     90
+    ],
+    [
+     "F006",
+     40
+    ],
+    [
+     "F002",
+     30
+    ],
+    [
+     "D061",
+     30
+    ],
+    [
+     "G017",
+     40
+    ],
+    [
+     "T013",
+     10
+    ],
+    [
+     "T005",
+     5
+    ],
+    [
+     "L002",
+     30,
+     "curd"
+    ]
+   ],
+   "macros": {
+    "carbs_g": 86.9,
+    "protein_g": 11.8,
+    "fat_g": 17.2,
+    "fiber_g": 7.3,
+    "kcal": 424.1
+   },
+   "source": "approximate assumption (partly IFCT2017-derived)",
+   "ifct_codes": [
+    "A015",
+    "D061",
+    "F002",
+    "F006",
+    "G017",
+    "L002",
+    "T005",
+    "T013"
+   ]
+  },
+  "chicken_biryani": {
+   "label": "Chicken biryani",
+   "portion": "1 plate (about 2 katori, 100 g chicken)",
+   "ingredients": [
+    [
+     "A015",
+     90
+    ],
+    [
+     "N003",
+     100
+    ],
+    [
+     "G017",
+     40
+    ],
+    [
+     "L002",
+     40,
+     "curd"
+    ],
+    [
+     "T013",
+     10
+    ],
+    [
+     "T005",
+     5
+    ]
+   ],
+   "macros": {
+    "carbs_g": 76.2,
+    "protein_g": 30.9,
+    "fat_g": 26.4,
+    "fiber_g": 3.5,
+    "kcal": 537.4
+   },
+   "source": "approximate assumption (partly IFCT2017-derived)",
+   "ifct_codes": [
+    "A015",
+    "G017",
+    "L002",
+    "N003",
+    "T005",
+    "T013"
+   ]
+  },
+  "chole_bhature": {
+   "label": "Chole-bhature",
+   "portion": "2 bhature, 1 katori chole",
+   "ingredients": [
+    [
+     "B002",
+     50
+    ],
+    [
+     "G017",
+     30
+    ],
+    [
+     "D075",
+     50
+    ],
+    [
+     "T005",
+     10
+    ],
+    [
+     "A018",
+     80
+    ],
+    [
+     "L002",
+     20,
+     "curd"
+    ],
+    [
+     "T005",
+     20,
+     "frying_oil"
+    ]
+   ],
+   "macros": {
+    "carbs_g": 84.7,
+    "protein_g": 19.2,
+    "fat_g": 34.3,
+    "fiber_g": 16.3,
+    "kcal": 463.4
+   },
+   "source": "approximate assumption (partly IFCT2017-derived)",
+   "ifct_codes": [
+    "A018",
+    "B002",
+    "D075",
+    "G017",
+    "L002",
+    "T005"
+   ]
+  },
+  "curd_rice": {
+   "label": "Curd rice",
+   "portion": "1.5 katori",
+   "ingredients": [
+    [
+     "A015",
+     60
+    ],
+    [
+     "L002",
+     150,
+     "curd"
+    ],
+    [
+     "T005",
+     3
+    ]
+   ],
+   "macros": {
+    "carbs_g": 54.4,
+    "protein_g": 9.7,
+    "fat_g": 10.0,
+    "fiber_g": 1.7,
+    "kcal": 323.2
+   },
+   "source": "approximate assumption (partly IFCT2017-derived)",
+   "ifct_codes": [
+    "A015",
+    "L002",
+    "T005"
+   ]
+  }
+ }
+}

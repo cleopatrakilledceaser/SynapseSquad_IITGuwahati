@@ -1,0 +1,1106 @@
+{
+  "name": "whatif_plausibility",
+  "timestamp_utc": "2026-10-16T14:01:26.347198+00:00",
+  "git_hash": "e8918a0e21f0a8b437eed4c82d96aa78dacd6b38-dirty",
+  "seed": 42,
+  "data_hash": "151ebfc8e9adba53d71795724e785e346cf0a9d5b574da37708b3eb6a2fd7c15",
+  "config": {
+    "seed": 42,
+    "cohort": "cgmacros",
+    "horizons_min": [
+      30,
+      60,
+      120
+    ],
+    "cv_repeat": 0,
+    "threads": 2,
+    "n_jobs": 5,
+    "dev_folds": [
+      0
+    ],
+    "alphas": [
+      0.2,
+      0.05
+    ],
+    "band_region_from_day": 7,
+    "slice_hours": 8,
+    "feature_guard_tol": 0.0,
+    "oof_guard_tol": 1e-06,
+    "monotone": {
+      "increasing": [
+        "meal_carbs_g_1h",
+        "meal_carbs_g_3h",
+        "meal_carbs_g_6h",
+        "meal_kcal_1h",
+        "meal_kcal_3h",
+        "meal_kcal_6h"
+      ],
+      "decreasing": [
+        "act_post_meal"
+      ]
+    },
+    "kcal_per_g": {
+      "carbs_g": 4.0,
+      "protein_g": 4.0,
+      "fat_g": 9.0,
+      "fiber_g": 0.0
+    },
+    "walk": {
+      "start_after_meal_min": 15,
+      "duration_min": 30,
+      "intensity": 2.0
+    },
+    "twin": {
+      "k": 3,
+      "rollout_min": 120,
+      "z80": 1.2815515655446004,
+      "z95": 1.959963984540054,
+      "assumed": {
+        "meal_g": 60.0,
+        "slow_ratio": 0.5,
+        "iauc_hours": 3,
+        "reduction": 0.2,
+        "sensitivity": [
+          0.1,
+          0.35
+        ],
+        "alpha_max": 0.2
+      }
+    },
+    "plausibility": {
+      "min_day": 3,
+      "meal_lookback_min": 15,
+      "max_windows_per_patient": 20,
+      "carb_grid_g": [
+        0,
+        15,
+        30,
+        45,
+        60,
+        90,
+        120
+      ],
+      "mono_tol": 1e-09,
+      "mono_tol_secondary": 2.0,
+      "walk_window_min": [
+        45,
+        120
+      ],
+      "bounds_mgdl": [
+        40.0,
+        400.0
+      ],
+      "max_rate_mgdl_min": 4.0,
+      "dose_low_g": 30,
+      "dose_high_g": 60,
+      "dose_window_range": [
+        0.0,
+        2.0
+      ],
+      "dose_median_range": [
+        0.3,
+        1.3
+      ],
+      "cross_abs_tol": 10.0,
+      "cross_rel_tol": 0.5,
+      "macro_edits_g": {
+        "protein_g": 20.0,
+        "fat_g": 10.0,
+        "fiber_g": 5.0
+      }
+    },
+    "matched": {
+      "meal_type": "breakfast",
+      "macro_tol_g": {
+        "protein_g": 5.0,
+        "fat_g": 5.0,
+        "fiber_g": 3.0
+      },
+      "min_carb_diff_g": 20.0,
+      "clock_tol_h": 2.0,
+      "cgm_tol": 20.0,
+      "amount_pct": [
+        90.0,
+        110.0
+      ],
+      "clean_before_h": 3.0,
+      "clean_after_h": 2.0,
+      "anchor_max_after_min": 15,
+      "twin_min_day": 3,
+      "cross": {
+        "hba1c_tol": 0.5,
+        "clock_tol_h": 1.0,
+        "cgm_tol": 15.0,
+        "macro_tol_g": {
+          "protein_g": 5.0,
+          "fat_g": 5.0
+        },
+        "max_pairs_per_patient_pair": 1
+      }
+    },
+    "examples": {
+      "carbs_g": [
+        30,
+        60
+      ],
+      "india_presets": [
+        "roti_2_dal_sabzi",
+        "rice_1katori_dal_sabzi",
+        "rice_2katori_dal_sabzi",
+        "poha",
+        "idli_sambar"
+      ]
+    },
+    "bootstrap": {
+      "n_boot": 1000,
+      "ci": 0.95
+    },
+    "dpi": 300
+  },
+  "metrics": {
+    "dev_fold0_training_patients": {
+      "n_patients": 34,
+      "pass_rates": [
+        {
+          "test": "activity_direction",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 680,
+          "n_patients": 34,
+          "note": "true by construction (monotone constraint)"
+        },
+        {
+          "test": "activity_direction",
+          "model": "twin_assumed",
+          "pass_rate": 0.7005988023952096,
+          "ci": [
+            0.6290663400955022,
+            0.7857222458076841
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": "ASSUMED walk effect, not learned from data"
+        },
+        {
+          "test": "activity_direction",
+          "model": "twin_learned",
+          "pass_rate": 0.6736526946107785,
+          "ci": [
+            0.6012005029270173,
+            0.7584811782914289
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "activity_direction",
+          "model": "unc",
+          "pass_rate": 0.7,
+          "ci": [
+            0.6485294117647059,
+            0.7514705882352941
+          ],
+          "n_checks": 680,
+          "n_patients": 34,
+          "note": "what the data learned"
+        },
+        {
+          "test": "bounds",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "bounds",
+          "model": "twin_learned",
+          "pass_rate": 0.9535928143712575,
+          "ci": [
+            0.9020556176887069,
+            0.9940652818991098
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "bounds",
+          "model": "unc",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": "true by construction (monotone constraint)"
+        },
+        {
+          "test": "carb_monotonicity",
+          "model": "twin_learned",
+          "pass_rate": 0.9730538922155688,
+          "ci": [
+            0.9257057949479941,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity",
+          "model": "unc",
+          "pass_rate": 0.26047904191616766,
+          "ci": [
+            0.20950790499108032,
+            0.3111294352823588
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity_2mgdl",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": "true by construction (monotone constraint)"
+        },
+        {
+          "test": "carb_monotonicity_2mgdl",
+          "model": "twin_learned",
+          "pass_rate": 0.9865269461077845,
+          "ci": [
+            0.9613670133729569,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity_2mgdl",
+          "model": "unc",
+          "pass_rate": 0.8068862275449101,
+          "ci": [
+            0.7480967572764619,
+            0.8537008327427356
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "causality",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 2001,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "causality",
+          "model": "twin_learned",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 2004,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "causality",
+          "model": "unc",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 2001,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "cross_model",
+          "model": "mono",
+          "pass_rate": 0.6287425149700598,
+          "ci": [
+            0.5308026596341601,
+            0.7213874332948231
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "cross_model",
+          "model": "unc",
+          "pass_rate": 0.5538922155688623,
+          "ci": [
+            0.4533032916419039,
+            0.6484106390787312
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "dose_window",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "dose_window",
+          "model": "twin_learned",
+          "pass_rate": 0.9730538922155688,
+          "ci": [
+            0.9243323442136498,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "dose_window",
+          "model": "unc",
+          "pass_rate": 0.9296407185628742,
+          "ci": [
+            0.8807025232317176,
+            0.9670189568892684
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "identity",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "identity",
+          "model": "twin_learned",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        },
+        {
+          "test": "identity",
+          "model": "unc",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 668,
+          "n_patients": 34,
+          "note": ""
+        }
+      ],
+      "dose_median": [
+        {
+          "model": "mono",
+          "median_mgdl_per_g": 0.2957650238142188,
+          "range": [
+            0.3,
+            1.3
+          ],
+          "pass": false
+        },
+        {
+          "model": "twin_learned",
+          "median_mgdl_per_g": 0.3283583719030946,
+          "range": [
+            0.3,
+            1.3
+          ],
+          "pass": true
+        },
+        {
+          "model": "unc",
+          "median_mgdl_per_g": 0.2639345047122641,
+          "range": [
+            0.3,
+            1.3
+          ],
+          "pass": false
+        }
+      ],
+      "descriptive": [
+        {
+          "test": "edit_fat_g",
+          "model": "mono",
+          "median": 0.08536295103314728,
+          "iqr": [
+            -0.294980339713355,
+            0.8375601945391793
+          ]
+        },
+        {
+          "test": "edit_fat_g",
+          "model": "twin_learned",
+          "median": -0.3273460533103645,
+          "iqr": [
+            -2.313186606571694,
+            -0.018673768187113637
+          ]
+        },
+        {
+          "test": "edit_fat_g",
+          "model": "unc",
+          "median": 0.05665067461040252,
+          "iqr": [
+            -0.6065202143869399,
+            0.9855493573514877
+          ]
+        },
+        {
+          "test": "edit_fiber_g",
+          "model": "mono",
+          "median": -0.7934972794012296,
+          "iqr": [
+            -2.6052927266734827,
+            0.0
+          ]
+        },
+        {
+          "test": "edit_fiber_g",
+          "model": "twin_learned",
+          "median": -0.1657899406529566,
+          "iqr": [
+            -1.2144465137402207,
+            -0.010324437224902283
+          ]
+        },
+        {
+          "test": "edit_fiber_g",
+          "model": "unc",
+          "median": -0.8086150790586402,
+          "iqr": [
+            -2.5359953594975373,
+            0.0
+          ]
+        },
+        {
+          "test": "edit_protein_g",
+          "model": "mono",
+          "median": -1.234234035543814,
+          "iqr": [
+            -2.75925771931146,
+            0.0
+          ]
+        },
+        {
+          "test": "edit_protein_g",
+          "model": "twin_learned",
+          "median": -0.3273460533103645,
+          "iqr": [
+            -2.313186606571694,
+            -0.018673768187113637
+          ]
+        },
+        {
+          "test": "edit_protein_g",
+          "model": "unc",
+          "median": -1.217206642298052,
+          "iqr": [
+            -2.9595392637259543,
+            0.0
+          ]
+        },
+        {
+          "test": "walk_effect_auc",
+          "model": "twin_assumed",
+          "median": -203.37392054826614,
+          "iqr": [
+            -549.4610393996536,
+            73.75254955243963
+          ]
+        },
+        {
+          "test": "walk_effect_auc",
+          "model": "twin_learned",
+          "median": -2.2774742667861574,
+          "iqr": [
+            -6.276124841901037,
+            1.2819284494739804
+          ]
+        }
+      ],
+      "cross_model_spearman": {
+        "mono": 0.23716422863781078,
+        "unc": 0.1880858865772334
+      }
+    },
+    "final_test_patients": {
+      "n_patients": 43,
+      "pass_rates": [
+        {
+          "test": "activity_direction",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 857,
+          "n_patients": 43,
+          "note": "true by construction (monotone constraint)"
+        },
+        {
+          "test": "activity_direction",
+          "model": "twin_assumed",
+          "pass_rate": 0.6939759036144578,
+          "ci": [
+            0.6184259224764438,
+            0.7720582770478691
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": "ASSUMED walk effect, not learned from data"
+        },
+        {
+          "test": "activity_direction",
+          "model": "twin_learned",
+          "pass_rate": 0.672289156626506,
+          "ci": [
+            0.595378416920715,
+            0.7527506758293483
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "activity_direction",
+          "model": "unc",
+          "pass_rate": 0.6872812135355892,
+          "ci": [
+            0.6255741789662872,
+            0.7452846643264589
+          ],
+          "n_checks": 857,
+          "n_patients": 43,
+          "note": "what the data learned"
+        },
+        {
+          "test": "bounds",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "bounds",
+          "model": "twin_learned",
+          "pass_rate": 0.9578313253012049,
+          "ci": [
+            0.9162296123518251,
+            0.9910216460627451
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "bounds",
+          "model": "unc",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": "true by construction (monotone constraint)"
+        },
+        {
+          "test": "carb_monotonicity",
+          "model": "twin_learned",
+          "pass_rate": 0.9759036144578314,
+          "ci": [
+            0.9363132097827059,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity",
+          "model": "unc",
+          "pass_rate": 0.2469879518072289,
+          "ci": [
+            0.20304870174592787,
+            0.29572459166754855
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity_2mgdl",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": "true by construction (monotone constraint)"
+        },
+        {
+          "test": "carb_monotonicity_2mgdl",
+          "model": "twin_learned",
+          "pass_rate": 0.9915662650602409,
+          "ci": [
+            0.9775916849235446,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "carb_monotonicity_2mgdl",
+          "model": "unc",
+          "pass_rate": 0.7518072289156627,
+          "ci": [
+            0.6809783318104685,
+            0.818849615092703
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "causality",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 2487,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "causality",
+          "model": "twin_learned",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 2490,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "causality",
+          "model": "unc",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 2487,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "cross_model",
+          "model": "mono",
+          "pass_rate": 0.6168674698795181,
+          "ci": [
+            0.5120439000658216,
+            0.7146372226749562
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "cross_model",
+          "model": "unc",
+          "pass_rate": 0.6265060240963856,
+          "ci": [
+            0.5244410404454002,
+            0.7148269579867997
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "dose_window",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "dose_window",
+          "model": "twin_learned",
+          "pass_rate": 0.9650602409638555,
+          "ci": [
+            0.9185962656529517,
+            0.9988023952095808
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "dose_window",
+          "model": "unc",
+          "pass_rate": 0.9578313253012049,
+          "ci": [
+            0.9382404444431892,
+            0.9743628640776699
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "identity",
+          "model": "mono",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "identity",
+          "model": "twin_learned",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        },
+        {
+          "test": "identity",
+          "model": "unc",
+          "pass_rate": 1.0,
+          "ci": [
+            1.0,
+            1.0
+          ],
+          "n_checks": 830,
+          "n_patients": 43,
+          "note": ""
+        }
+      ],
+      "dose_median": [
+        {
+          "model": "mono",
+          "median_mgdl_per_g": 0.20094880938544032,
+          "range": [
+            0.3,
+            1.3
+          ],
+          "pass": false
+        },
+        {
+          "model": "twin_learned",
+          "median_mgdl_per_g": 0.32822085082620117,
+          "range": [
+            0.3,
+            1.3
+          ],
+          "pass": true
+        },
+        {
+          "model": "unc",
+          "median_mgdl_per_g": 0.21821698431842407,
+          "range": [
+            0.3,
+            1.3
+          ],
+          "pass": false
+        }
+      ],
+      "descriptive": [
+        {
+          "test": "edit_fat_g",
+          "model": "mono",
+          "median": 0.0,
+          "iqr": [
+            -0.16148902221488015,
+            0.48948050751753414
+          ]
+        },
+        {
+          "test": "edit_fat_g",
+          "model": "twin_learned",
+          "median": -0.2957764388536006,
+          "iqr": [
+            -2.316291503821585,
+            -0.023256351457245472
+          ]
+        },
+        {
+          "test": "edit_fat_g",
+          "model": "unc",
+          "median": 0.0,
+          "iqr": [
+            -0.24588007094357778,
+            0.5839521501920757
+          ]
+        },
+        {
+          "test": "edit_fiber_g",
+          "model": "mono",
+          "median": -0.3477876306537411,
+          "iqr": [
+            -1.8269252578425608,
+            0.0
+          ]
+        },
+        {
+          "test": "edit_fiber_g",
+          "model": "twin_learned",
+          "median": -0.1504886474172622,
+          "iqr": [
+            -1.2065840624723165,
+            -0.011617232046283732
+          ]
+        },
+        {
+          "test": "edit_fiber_g",
+          "model": "unc",
+          "median": -0.2770364582789284,
+          "iqr": [
+            -1.5626686656233773,
+            0.0
+          ]
+        },
+        {
+          "test": "edit_protein_g",
+          "model": "mono",
+          "median": -0.734902800778201,
+          "iqr": [
+            -2.4542441487402904,
+            0.08717035495499204
+          ]
+        },
+        {
+          "test": "edit_protein_g",
+          "model": "twin_learned",
+          "median": -0.2957764388536006,
+          "iqr": [
+            -2.316291503821585,
+            -0.023256351457245472
+          ]
+        },
+        {
+          "test": "edit_protein_g",
+          "model": "unc",
+          "median": -0.68212263188002,
+          "iqr": [
+            -2.1553612632337718,
+            0.018917745707224043
+          ]
+        },
+        {
+          "test": "walk_effect_auc",
+          "model": "twin_assumed",
+          "median": -202.4747545447526,
+          "iqr": [
+            -567.8504451879785,
+            72.41895014762076
+          ]
+        },
+        {
+          "test": "walk_effect_auc",
+          "model": "twin_learned",
+          "median": -2.5707176766954944,
+          "iqr": [
+            -8.78892851392311,
+            1.6500203336022423
+          ]
+        }
+      ],
+      "cross_model_spearman": {
+        "mono": 0.2776765455426353,
+        "unc": 0.2715298601592691
+      }
+    },
+    "meta": {
+      "final_run": {
+        "0": {
+          "oof_guard_max_abs_diff": 0.0,
+          "fit_seconds": 77.4,
+          "n_train": 36,
+          "n_test": 9,
+          "constraints": {
+            "unc": false,
+            "mono": true
+          },
+          "alpha_on": 0.0001,
+          "alpha_assumed": {
+            "0.2": 0.011650702043545543,
+            "0.1": 0.005255631145848571,
+            "0.35": 0.024671768887741495
+          }
+        },
+        "1": {
+          "oof_guard_max_abs_diff": 0.0,
+          "fit_seconds": 55.8,
+          "n_train": 36,
+          "n_test": 9,
+          "constraints": {
+            "unc": false,
+            "mono": true
+          },
+          "alpha_on": 0.00025,
+          "alpha_assumed": {
+            "0.2": 0.011870485632610703,
+            "0.1": 0.005356023566159695,
+            "0.35": 0.02512378846681953
+          }
+        },
+        "2": {
+          "oof_guard_max_abs_diff": 0.0,
+          "fit_seconds": 72.1,
+          "n_train": 36,
+          "n_test": 9,
+          "constraints": {
+            "unc": false,
+            "mono": true
+          },
+          "alpha_on": 0.0001,
+          "alpha_assumed": {
+            "0.2": 0.01091705317362957,
+            "0.1": 0.004945155853960603,
+            "0.35": 0.02291539808863048
+          }
+        },
+        "3": {
+          "oof_guard_max_abs_diff": 0.0,
+          "fit_seconds": 45.9,
+          "n_train": 36,
+          "n_test": 9,
+          "constraints": {
+            "unc": false,
+            "mono": true
+          },
+          "alpha_on": 0.0001,
+          "alpha_assumed": {
+            "0.2": 0.01193602299394394,
+            "0.1": 0.005376385698764084,
+            "0.35": 0.025352308258127725
+          }
+        },
+        "4": {
+          "oof_guard_max_abs_diff": 0.0,
+          "fit_seconds": 79.7,
+          "n_train": 36,
+          "n_test": 9,
+          "constraints": {
+            "unc": false,
+            "mono": true
+          },
+          "alpha_on": 0.0001,
+          "alpha_assumed": {
+            "0.2": 0.011919584439640205,
+            "0.1": 0.005371386107693521,
+            "0.35": 0.025300492140443692
+          }
+        },
+        "seconds": 514.1,
+        "forced_reruns": 0
+      },
+      "lock": {
+        "runs": 1,
+        "forced_reruns": 0
+      }
+    }
+  }
+}

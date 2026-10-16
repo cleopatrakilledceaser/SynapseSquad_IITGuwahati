@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: all setup data features models fusion mech hybrid personalize uncertainty figures app test lint format smoke clean help
+.PHONY: all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -54,6 +54,13 @@ uncertainty:  ## Part 6 intervals / calibration / alarms / robustness + patient 
 	$(PY) -W ignore -m src.uncertainty.report --final
 	$(PY) data/scripts/make_results_md.py
 
+
+whatif:  ## Part 7 what-if engine: dev (fold-0 training) + final (run ONCE; lock file) + report (about 13 min CPU)
+	$(PY) -m src.india.library check
+	$(PY) -W ignore -u -m src.whatif.run dev
+	$(PY) -W ignore -u -m src.whatif.run final
+	$(PY) -W ignore -m src.whatif.report --final
+	$(PY) data/scripts/make_results_md.py
 
 figures:
 	$(PY) -m src.eval.eda

@@ -1615,3 +1615,128 @@ DQ vs absolute error, Spearman 0.073 [0.046, 0.098] (pooled clean + faulted rows
 | Shanghai T2DM (n=100) | next-day TAR>180 % | 19.70 | 12.10 | 11.85 | 21.34 | -7.85 [-11.11, -4.94] | -0.24 [-0.93, 0.46] |
 | Shanghai T2DM (n=100) | next-day TIR % | 20.06 | 13.65 | 13.95 | 20.90 | -6.11 [-9.12, -3.36] | 0.30 [-0.28, 0.88] |
 
+## Part 7 - Counterfactual what-if engine (CGMacros)
+
+Model-based what-ifs, not causal guarantees. Bands are observational (no counterfactual
+coverage guarantee). unc / mono = population A0 LightGBM without / with monotone
+constraints (carbs, kcal +1; post-meal activity -1); twin_learned = Part 4 twin with the
+Part 4 activity effect; twin_assumed = twin with the ASSUMED walk effect of D-052 (20 %
+3-h iAUC reduction), not learned from data. Shanghai is excluded (no meal macros).
+CIs are 95 % patient-bootstrap. Decisions D-050 to D-055.
+
+### Plausibility suite, test patients (final run, once): pass rate % (n patients = 43)
+
+| test | unc | mono | twin_learned | twin_assumed |
+|---|---|---|---|---|
+| activity_direction | 68.7 [62.6, 74.5] (learned) | 100.0 [100.0, 100.0] (by construction) | 67.2 [59.5, 75.3] | 69.4 [61.8, 77.2] (ASSUMED) |
+| bounds | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 95.8 [91.6, 99.1] | n/a |
+| carb_monotonicity | 24.7 [20.3, 29.6] | 100.0 [100.0, 100.0] (by construction) | 97.6 [93.6, 100.0] | n/a |
+| carb_monotonicity_2mgdl | 75.2 [68.1, 81.9] | 100.0 [100.0, 100.0] (by construction) | 99.2 [97.8, 100.0] | n/a |
+| causality | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | n/a |
+| cross_model | 62.7 [52.4, 71.5] | 61.7 [51.2, 71.5] | n/a | n/a |
+| dose_window | 95.8 [93.8, 97.4] | 100.0 [100.0, 100.0] | 96.5 [91.9, 99.9] | n/a |
+| identity | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | n/a |
+
+Median dose response, 30 -> 60 g peak (mg/dL per g; D-051: 0.3-1.3): mono 0.20 (FAIL); twin_learned 0.33 (pass); unc 0.22 (FAIL).
+
+Spearman of ML vs twin carb effects: mono 0.28, unc 0.27.
+
+Descriptive effects (median [IQR]; peak mg/dL, walk AUC mg/dL x min):
+
+- edit_fat_g / mono: 0.00 [-0.16, 0.49]
+- edit_fat_g / twin_learned: -0.30 [-2.32, -0.02]
+- edit_fat_g / unc: 0.00 [-0.25, 0.58]
+- edit_fiber_g / mono: -0.35 [-1.83, 0.00]
+- edit_fiber_g / twin_learned: -0.15 [-1.21, -0.01]
+- edit_fiber_g / unc: -0.28 [-1.56, 0.00]
+- edit_protein_g / mono: -0.73 [-2.45, 0.09]
+- edit_protein_g / twin_learned: -0.30 [-2.32, -0.02]
+- edit_protein_g / unc: -0.68 [-2.16, 0.02]
+- walk_effect_auc / twin_assumed: -202.47 [-567.85, 72.42]
+- walk_effect_auc / twin_learned: -2.57 [-8.79, 1.65]
+
+### Plausibility suite, fold-0 training patients (dev): pass rate % (n patients = 34)
+
+| test | unc | mono | twin_learned | twin_assumed |
+|---|---|---|---|---|
+| activity_direction | 70.0 [64.9, 75.1] (learned) | 100.0 [100.0, 100.0] (by construction) | 67.4 [60.1, 75.8] | 70.1 [62.9, 78.6] (ASSUMED) |
+| bounds | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 95.4 [90.2, 99.4] | n/a |
+| carb_monotonicity | 26.0 [21.0, 31.1] | 100.0 [100.0, 100.0] (by construction) | 97.3 [92.6, 100.0] | n/a |
+| carb_monotonicity_2mgdl | 80.7 [74.8, 85.4] | 100.0 [100.0, 100.0] (by construction) | 98.7 [96.1, 100.0] | n/a |
+| causality | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | n/a |
+| cross_model | 55.4 [45.3, 64.8] | 62.9 [53.1, 72.1] | n/a | n/a |
+| dose_window | 93.0 [88.1, 96.7] | 100.0 [100.0, 100.0] | 97.3 [92.4, 100.0] | n/a |
+| identity | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | n/a |
+
+Median dose response, 30 -> 60 g peak (mg/dL per g; D-051: 0.3-1.3): mono 0.30 (FAIL); twin_learned 0.33 (pass); unc 0.26 (FAIL).
+
+Spearman of ML vs twin carb effects: mono 0.24, unc 0.19.
+
+Descriptive effects (median [IQR]; peak mg/dL, walk AUC mg/dL x min):
+
+- edit_fat_g / mono: 0.09 [-0.29, 0.84]
+- edit_fat_g / twin_learned: -0.33 [-2.31, -0.02]
+- edit_fat_g / unc: 0.06 [-0.61, 0.99]
+- edit_fiber_g / mono: -0.79 [-2.61, 0.00]
+- edit_fiber_g / twin_learned: -0.17 [-1.21, -0.01]
+- edit_fiber_g / unc: -0.81 [-2.54, 0.00]
+- edit_protein_g / mono: -1.23 [-2.76, 0.00]
+- edit_protein_g / twin_learned: -0.33 [-2.31, -0.02]
+- edit_protein_g / unc: -1.22 [-2.96, 0.00]
+- walk_effect_auc / twin_assumed: -203.37 [-549.46, 73.75]
+- walk_effect_auc / twin_learned: -2.28 [-6.28, 1.28]
+
+### Matched breakfasts, every patient scored once (final): carb effect at +60 min (primary), mg/dL
+
+| design / model | pairs (clusters) | Pearson r | Spearman | sign agreement | slope | mean predicted | mean observed |
+|---|---|---|---|---|---|---|---|
+| cross / mono | 118 (30) | 0.27 [0.06, 0.47] | 0.28 [0.07, 0.48] | 0.67 [0.57, 0.75] | 1.56 [0.34, 2.68] | 23.58 [20.47, 26.75] | 28.92 [17.85, 40.19] |
+| cross / twin_learned | 43 (20) | 0.11 [-0.10, 0.29] | 0.10 [-0.22, 0.40] | 0.53 [0.38, 0.69] | 0.38 [-0.37, 1.24] | 21.69 [16.79, 27.64] | 24.60 [3.54, 44.43] |
+| cross / unc | 118 (30) | 0.30 [0.12, 0.47] | 0.29 [0.13, 0.44] | 0.67 [0.57, 0.75] | 1.50 [0.63, 2.46] | 24.56 [21.17, 28.67] | 28.92 [17.85, 40.19] |
+| within / mono | 87 (34) | 0.14 [-0.15, 0.42] | 0.10 [-0.18, 0.38] | 0.80 [0.68, 0.90] | 0.58 [-0.67, 1.76] | 22.78 [19.44, 26.20] | 35.33 [22.53, 47.89] |
+| within / twin_learned | 44 (27) | 0.21 [-0.11, 0.58] | 0.22 [-0.20, 0.60] | 0.82 [0.66, 0.95] | 0.35 [-0.18, 1.28] | 27.48 [19.51, 36.87] | 33.55 [18.25, 48.55] |
+| within / unc | 87 (34) | 0.30 [-0.00, 0.53] | 0.28 [0.01, 0.52] | 0.80 [0.68, 0.90] | 1.04 [-0.00, 1.84] | 24.76 [20.83, 28.82] | 35.33 [22.53, 47.89] |
+
+### Matched breakfasts, every patient scored once (final): carb effect at peak of +30/+60/+120 (secondary), mg/dL
+
+| design / model | pairs (clusters) | Pearson r | Spearman | sign agreement | slope | mean predicted | mean observed |
+|---|---|---|---|---|---|---|---|
+| cross / mono | 114 (29) | 0.24 [0.01, 0.47] | 0.27 [0.02, 0.50] | 0.80 [0.69, 0.90] | 0.83 [0.05, 1.65] | 18.90 [15.07, 22.92] | 29.59 [20.54, 38.56] |
+| cross / twin_learned | 43 (20) | -0.03 [-0.21, 0.15] | -0.11 [-0.47, 0.21] | 0.72 [0.56, 0.87] | -0.07 [-0.64, 0.48] | 19.60 [14.98, 24.90] | 28.49 [15.78, 41.93] |
+| cross / unc | 114 (29) | 0.23 [0.03, 0.46] | 0.21 [0.00, 0.42] | 0.80 [0.69, 0.90] | 0.75 [0.09, 1.55] | 20.99 [16.91, 25.60] | 29.59 [20.54, 38.56] |
+| within / mono | 87 (34) | 0.39 [0.11, 0.62] | 0.35 [0.09, 0.60] | 0.91 [0.83, 0.98] | 1.08 [0.31, 1.72] | 17.80 [14.01, 21.80] | 39.22 [29.77, 50.09] |
+| within / twin_learned | 44 (27) | 0.05 [-0.25, 0.43] | 0.08 [-0.32, 0.46] | 0.91 [0.80, 1.00] | 0.08 [-0.33, 0.86] | 24.75 [17.27, 33.47] | 40.25 [27.73, 53.19] |
+| within / unc | 87 (34) | 0.41 [0.10, 0.65] | 0.37 [0.09, 0.60] | 0.91 [0.83, 0.98] | 0.97 [0.25, 1.57] | 20.68 [16.44, 25.17] | 39.22 [29.77, 50.09] |
+
+### Matched breakfasts, fold-0 training patients (dev): carb effect at +60 min (primary), mg/dL
+
+| design / model | pairs (clusters) | Pearson r | Spearman | sign agreement | slope | mean predicted | mean observed |
+|---|---|---|---|---|---|---|---|
+| cross / mono | 89 (25) | 0.17 [-0.07, 0.41] | 0.19 [-0.06, 0.42] | 0.62 [0.50, 0.72] | 1.06 [-0.48, 2.48] | 25.55 [22.75, 28.55] | 23.45 [10.84, 36.14] |
+| cross / twin_learned | 31 (16) | 0.14 [-0.10, 0.44] | 0.11 [-0.24, 0.47] | 0.42 [0.27, 0.59] | 0.52 [-0.43, 2.74] | 20.85 [15.88, 27.34] | 15.71 [-5.17, 38.86] |
+| cross / unc | 89 (25) | 0.18 [-0.05, 0.41] | 0.19 [-0.05, 0.41] | 0.62 [0.50, 0.72] | 1.08 [-0.32, 2.35] | 26.63 [23.50, 29.93] | 23.45 [10.84, 36.14] |
+| within / mono | 75 (30) | 0.14 [-0.09, 0.35] | 0.13 [-0.12, 0.37] | 0.77 [0.65, 0.89] | 0.50 [-0.32, 1.47] | 26.06 [22.41, 29.87] | 27.75 [15.25, 39.26] |
+| within / twin_learned | 37 (23) | 0.35 [0.00, 0.74] | 0.39 [-0.06, 0.71] | 0.78 [0.61, 0.95] | 0.52 [0.00, 1.45] | 29.07 [18.85, 39.42] | 25.84 [10.51, 41.46] |
+| within / unc | 75 (30) | 0.15 [-0.15, 0.44] | 0.09 [-0.21, 0.37] | 0.77 [0.65, 0.89] | 0.47 [-0.41, 1.51] | 28.10 [23.90, 32.88] | 27.75 [15.25, 39.26] |
+
+### Matched breakfasts, fold-0 training patients (dev): carb effect at peak of +30/+60/+120 (secondary), mg/dL
+
+| design / model | pairs (clusters) | Pearson r | Spearman | sign agreement | slope | mean predicted | mean observed |
+|---|---|---|---|---|---|---|---|
+| cross / mono | 89 (25) | 0.05 [-0.24, 0.37] | 0.05 [-0.24, 0.34] | 0.78 [0.64, 0.90] | 0.19 [-0.95, 1.48] | 21.00 [17.98, 24.15] | 26.60 [16.50, 37.37] |
+| cross / twin_learned | 31 (16) | -0.04 [-0.29, 0.19] | -0.15 [-0.51, 0.22] | 0.68 [0.48, 0.86] | -0.13 [-0.97, 1.01] | 18.62 [14.36, 23.91] | 25.23 [10.03, 40.57] |
+| cross / unc | 89 (25) | 0.01 [-0.22, 0.30] | 0.01 [-0.23, 0.26] | 0.78 [0.64, 0.90] | 0.04 [-0.75, 1.38] | 20.83 [17.74, 24.74] | 26.60 [16.50, 37.37] |
+| within / mono | 75 (30) | 0.19 [-0.08, 0.49] | 0.19 [-0.10, 0.46] | 0.89 [0.80, 0.97] | 0.53 [-0.26, 1.29] | 21.70 [17.82, 25.86] | 34.41 [24.72, 45.21] |
+| within / twin_learned | 37 (23) | 0.13 [-0.23, 0.57] | 0.18 [-0.27, 0.59] | 0.89 [0.75, 0.98] | 0.18 [-0.25, 0.99] | 26.42 [16.95, 36.12] | 35.14 [23.02, 47.21] |
+| within / unc | 75 (30) | 0.39 [0.13, 0.60] | 0.32 [0.05, 0.55] | 0.89 [0.80, 0.97] | 0.90 [0.29, 1.57] | 22.80 [18.24, 28.26] | 34.41 [24.72, 45.21] |
+
+### Cost of the monotone constraint (test MAE, day >= 7)
+
+| horizon | MAE unc | MAE mono | mono - unc [CI] | patients |
+|---|---|---|---|---|
+| +30 min | 11.09 | 11.13 | 0.04 [-0.03, 0.13] | 45 |
+| +60 min | 16.20 | 16.36 | 0.16 [-0.02, 0.37] | 44 |
+| +120 min | 20.80 | 20.64 | -0.16 [-0.57, 0.19] | 44 |
+
+Final stage runs: 1, forced re-runs: 0.
+

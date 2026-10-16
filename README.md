@@ -146,6 +146,39 @@ Design A (headline: CV repeat 0, 44 CGMacros / 71 Shanghai test patients) and de
   check, not by test metrics. The test windows were scored a second time; the interval / event /
   alarm outputs were bit-identical (D-049).
 
+## Part 7 results: counterfactual what-if engine (honest summary)
+Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-050 to D-055. `make whatif`.
+What-ifs are **model-based associations, not causal guarantees**. Bands are observational
+(conformal for the ML models, filter variance for the twin), with no counterfactual coverage
+guarantee. CGMacros only: Shanghai has no meal macros. The final stage ran once (no forced
+re-run); 43 test patients for the plausibility suite, 87 within-patient breakfast pairs.
+
+| Effect | Learned from data or assumed? |
+|---|---|
+| Carbs / protein / fat / fiber / timing (ML) | learned (population A0 LightGBM) |
+| Carbs / timing (twin) | learned (per-patient twin, first 3 days) |
+| Post-meal walk, ML | learned (`act_post_meal`); ML only sees a walk once it has happened |
+| Post-meal walk, `twin_learned` | learned Part 4 activity effect (effectively 0) |
+| Post-meal walk, `twin_assumed` | **ASSUMED**: 20 % lower 3-h iAUC (literature-bounded, D-052) |
+| India meal presets | **ASSUMED** recipes; macros from IFCT 2017; out of distribution |
+
+- **Engine checks pass:** zero edits reproduce the stored forecasts exactly; edits never change
+  any forecast or filter state before the edited meal (100 % of about 2,500 checks per model).
+- **Carbs do not reliably raise the unconstrained model's forecast:** the peak rises across the
+  0 to 120 g carb grid in only 25 % of test windows (75 % within 2 mg/dL). The monotone model
+  passes by construction and costs nothing in accuracy (test MAE difference -0.16 to +0.16 mg/dL,
+  CIs include 0). The twin passes 98 %.
+- **Both ML models under-estimate the carb effect:** median 0.20 to 0.22 mg/dL per g of carbs,
+  below the pre-registered 0.3 to 1.3 (Franc et al. 2010). This test **failed**. The twin passes
+  (0.33). On matched breakfasts, the ML models predict about half of the observed peak difference
+  (mono: predicted 18 vs observed 39 mg/dL). The sign is right in 91 % of pairs, but the
+  correlation is weak (r = 0.39 to 0.41).
+- **Walk direction:** the learned ML model lowers or keeps the forecast in 69 % of post-meal
+  windows. The twin's direction pass (67 to 69 %) is limited by its structure: when glucose
+  is already below basal, the activity term pulls it up.
+- **What needs an owner decision:** use `mono` for what-ifs; how to show the carb-effect
+  under-estimation; whether to change the twin's activity term (new pre-registration).
+
 ## Quick start (Windows, PowerShell)
 ```powershell
 py -3.11 -m venv .venv

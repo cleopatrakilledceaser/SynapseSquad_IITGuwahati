@@ -142,7 +142,22 @@
 | Make | ✅ `make uncertainty` |
 | Robustness bug + second scoring, ACI infinite intervals (D-049) | ✅ disclosed |
 
+## Part 7 outputs (counterfactual what-if engine)
+| Step | Status |
+|---|---|
+| D-050 to D-054 written before any Part 7 code (owner Q1 = A, Q2 = A) | ✅ |
+| Engine: edits, causal recompute, unc / mono / twin, bands | ✅ `src/whatif/`, `configs/whatif.yaml`; guards 0.0 |
+| Plausibility suite + matched breakfasts, dev (fold-0 training) | ✅ 236 s |
+| Final stage, run ONCE (lock, no forced re-run) | ✅ 514 s |
+| India meal library (assumed recipes, IFCT 2017 at run time) | ✅ `src/india/` |
+| Reports / figures | ✅ `whatif_{plausibility,matched,examples}.json`, `whatif_*.png`, RESULTS Part 7 |
+| Tests | ✅ `tests/test_whatif.py` |
+| Make | ✅ `make whatif` |
+| Findings (D-055): dose test FAILED for ML, twin walk direction structural | ✅ disclosed |
+
 ## Next steps
-1. Owner decision on ACI (D-049): keep it as reported (not informative), or pre-register a
+1. Owner decisions from D-055 (mono as what-if model, carb-effect under-estimation, twin
+   activity term).
+2. Owner decision on ACI (D-049): keep it as reported (not informative), or pre-register a
    fix (cap alpha_t / penalize infinite intervals in gamma selection) and re-evaluate on design B only.
 2. App / clinician-facing views (decision support wording only).

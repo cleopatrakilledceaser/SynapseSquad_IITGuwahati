@@ -1106,3 +1106,161 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
     penalize infinite intervals) would be chosen after seeing test results, so it is left to the
     owner. RESULTS now prints the infinite fraction in each cell.
 
+
+## D-050 Part 7 what-if engine: models, edit semantics, bands (written before any Part 7 code)
+- **Scope:** CGMacros only. Shanghai is excluded from meal what-ifs: its A0 model has no meal
+  inputs and its meal log has no macros (D-018). Stated in the report, not dropped silently.
+- **Models (per fold, CV repeat 0, Part 5/6 folds):**
+  - `unc`: unconstrained A0 LightGBM (CGM + time of day + meals + glycemic static, delta target).
+    Refit exactly like the Part 6 CV+ arm (`um.fit_population` on all fold-training patients,
+    inner split seed 42, 2 threads; inner 3-fold models with seed 42 + fold).
+  - `mono`: identical features and protocol, plus LightGBM `monotone_constraints` (owner choice
+    Q2 = A): +1 on `meal_carbs_g_{1,3,6}h` and `meal_kcal_{1,3,6}h`; -1 on `act_post_meal`;
+    0 elsewhere (protein, fat, fiber free). Constraint method = LightGBM default ("basic").
+  - `twin`: original Part 4 specification as used in Part 5 (alpha_E = 0 fits, D-038):
+    parameters from the patient's first 3 days (`twinfeatfits_*`, k = 3, prior "pop"; training
+    patients use the leave-one-out population prior), EKF (q, r) of that fold at k = 3.
+    `twin_learned` walk effect = Part 4 `alpha_on` of that fold (chosen on training patients).
+- **Edits:** change carbs / protein / fat / fiber of a logged meal; remove a meal; move a meal;
+  add a post-meal walk.
+  - kcal is updated by the macro change: kcal' = max(0, kcal + 4 dCarbs + 4 dProtein + 9 dFat);
+    a fiber change does not change kcal (assumption).
+  - ML inputs are recomputed with the unchanged Part 2 code (`src.features.build.period_features`)
+    on the grid slice (t - 8 h, t] and the period's (edited) meal log. Guard: the zero edit must
+    reproduce the stored A0 feature row (max |diff| <= 1e-9, NaN-equal), else `RuntimeError`.
+  - A meal moved past t is unknown at t (= removed for the ML models). The twin can play
+    meals and walks AFTER t forward (open-loop rollout); the ML models cannot (their inputs are
+    causal). A walk therefore enters the ML models only at forecast times after the walk.
+  - Walk: grid `activity_intensity` = max(existing, 2.0) for [meal + 15, meal + 45) min (Part 4
+    `whatif.walk` values, moved to `configs/whatif.yaml` unchanged). HR is not edited. For the
+    twin the activity input is recomputed with the Part 4 rule (`activity_input`, rest level at t).
+- **Bands** (labelled "observational band, no counterfactual coverage guarantee"):
+  - Test patients (final run): CV+ (Part 6 method) from the form's 3 inner-fold models and the
+    out-of-fold absolute residuals of training patients (region day >= 7, first period).
+  - Training patients (development): scored by the inner-fold model that did not see them; band
+    = split-conformal half-width from OOF residuals of training patients NOT in that inner fold.
+  - Twin: Gaussian EKF predictive variance (mean +- z sd), labelled "filter variance, not
+    conformal".
+- **Amendment (engine bug found in development, no test patient involved):** a smoke run of the
+  suite on two fold-0 TRAINING periods showed that recomputing on the slice (t - 8 h, t] differs
+  from the stored rows by about 2e-16 (pandas rolling sums depend on where the series starts),
+  which flipped LightGBM splits in 5 % of `unc` identity and causality checks. The recompute now
+  uses the period's grid prefix up to t (exactly as Part 2 built the table); the zero-edit guard
+  is bitwise (0 difference on 286 sampled anchors). No pass rule or range was changed.
+- **Guards:** the `unc` refit must reproduce Part 6 OOF population forecasts
+  (`unc_A_cgmacros_fold<f>_oof.parquet`, `oof_pop|h`) within 1e-6 (training patients only); the
+  zero-edit twin forecast must equal `ekf_forecast` within 1e-9.
+
+
+## D-051 Part 7 plausibility suite: tests and pass rules (accepted by the owner as written)
+- **Windows:** anchors (Part 2 table) with day >= 3, a logged meal with macros and recorded amount
+  in the 15 min before t (meal windows); walk windows below. At most 20 windows per patient
+  (random, seed 42; config).
+- **Peak:** ML = max of the +30 / +60 / +120 forecasts; twin = max of the 0..120-min trajectory.
+- **Tests and pass rules:**
+  - Carb monotonicity: carbs of the last meal set to 0/15/30/45/60/90/120 g; the peak never
+    decreases. Tolerance 1e-9 (primary); 2 mg/dL (secondary). For `mono` this is true by
+    construction (both carbs and kcal are +1 constrained) and is labelled that way.
+  - Activity direction: a walk never raises the peak or the 2-h AUC (trapezoid over 0/30/60/120 for
+    ML with 0 = cgm_now; full trajectory for the twin). For `mono` true by construction (owner
+    Q2 = A); the `unc` pass rate is reported as "what the data learned". ML walk windows = anchors
+    45-120 min after the last meal (walk completed, within the 120-min post-meal feature window);
+    twin walk windows = the meal windows (walk in the future).
+  - Identity: zero edit gives exactly the same forecast.
+  - Causality: an edit at t_e changes no forecast before t_e (ML: anchors in the slice with
+    t < t_e; twin: filter states before t_e).
+  - Physiological bounds: unclipped forecasts within 40-400 mg/dL; |forecast(+30) - cgm_now| / 30 <=
+    4 mg/dL/min (same unsourced design assumption as D-047).
+  - Dose-response size: per window, (peak(60 g) - peak(30 g)) / 30 in [0, 2.0] mg/dL/g; median over
+    windows in [0.3, 1.3]. Source: Franc et al. 2010 (Diabetes Care 33:1913, PMC2928333): breakfast
+    rise = 65 x carbs / body weight + 73 mg/dL (R^2 0.20; insulin-treated T2D), i.e. 0.65-1.3
+    mg/dL/g for 50-100 kg; lunch slope about half. Weak bounds.
+  - Cross-model consistency: same sign of the 60 g vs 30 g peak effect for ML and twin, and
+    |ML effect - twin effect| <= max(10 mg/dL, 50 % of the larger) (design assumption). Spearman
+    correlation of effects also reported.
+- **Report:** pass rate per test x {unc, mono, twin_learned, twin_assumed (walk tests only)} with
+  95 % patient-bootstrap CIs (1000 resamples). Protein / fat / fiber edits are reported
+  descriptively (median effect), with no pass rule.
+
+
+
+## D-052 Part 7 walk effect: learned vs assumed (accepted by the owner as written)
+- **Learned:** ML response to the edited `act_post_meal` and the twin with `alpha_on` (Part 4,
+  bottom of its grid, effectively 0). Reported as they come out.
+- **Assumed (twin only, `twin_assumed`):** alpha_E calibrated so that a 30-min walk (intensity
+  2.0) starting 15 min after a 60 g meal lowers the 3-h incremental post-meal AUC of the
+  "median patient" (training-population mean parameters of the fold, starting at basal) by 20 %;
+  sensitivity 10 % and 35 %. Grounding: Iida et al. 2020 (PMC7538501; 15-min walks after each
+  meal, 24-h iAUC about 33 % lower, n = 11 T2D) and Engeroff et al. 2023 (PMC10036272; SMD 0.55,
+  direction only). Assumed output is always labelled "assumed, not learned from data", kept in
+  separate JSON keys and figure panels and never mixed with learned results.
+
+
+## D-053 Part 7 matched-meal validation (written before running)
+- **Primary, within-patient:** CGMacros standardized breakfasts (dataset page: "protein shakes with
+  varying amounts of carbohydrates, protein, fat, and fiber"). Pairs of the same patient: both
+  breakfasts; protein / fat / fiber within 5 / 5 / 3 g; carbs differ by >= 20 g; clock time within
+  2 h; pre-meal glucose (cgm_now) within 20 mg/dL; amount 90-110 % and recorded; no other meal from
+  3 h before to 2 h after; real CGM at the anchor and at the forecast points.
+- **Secondary, cross-patient:** same diabetes status, HbA1c within 0.5, same meal type, clock time
+  within 1 h, cgm_now within 15, protein / fat within 5 g, carbs differ >= 20 g (more confounded).
+- **Anchor** = first Part 2 anchor at or after the meal, at most 15 min after it. Pairs are ordered so
+  B has more carbs.
+- **Predicted difference** = mean over the two contexts of f(carbs_B) - f(carbs_A) (edit-based).
+  **Observed** = (y_B(+h) - cgm_B) - (y_A(+h) - cgm_A). Primary +60 min; +30, +120 and peak secondary.
+- **Metrics:** Pearson, Spearman, sign agreement, calibration slope + intercept (OLS observed on
+  predicted), mean predicted vs observed; 95 % CIs from 1000 patient-bootstrap resamples.
+- **Twin:** only pairs with both meals at day >= 3.
+- **Implementation details fixed before running:** the matched "peak" is max over +30 / +60 / +120
+  for every model (comparable with the observed readings; D-051's trajectory peak is for the
+  plausibility suite only). Cross-patient pairs: at most one pair per (patient A, patient B), the
+  closest in clock time; bootstrap clusters = the lower-carb patient of each pair. The amount /
+  clean-window / real-CGM rules of the primary design also apply to the secondary design.
+- **Development:** training patients scored by inner-fold models. **Final:** every patient scored
+  by the fold model that never saw it.
+- **Limits written in advance:** meal order not shown to be randomized; day-to-day variation,
+  previous dinner, sleep and medication not controlled; two carb levels give a two-point slope;
+  liquid shakes (may not transfer to mixed / Indian meals); the model was trained on other
+  patients' identical shakes, so this tests "a new patient, a familiar meal design".
+- **Final run once:** `python -m src.whatif.run final` writes `data/processed/whatif/FINAL_DONE`;
+  a second run requires `--force`, is recorded in the outputs and is disclosed to the owner.
+  Test-patient metrics are never computed or printed by the development stage.
+
+
+## D-054 Part 7 India meal library (owner choice Q1 = A)
+- About 15 presets in `src/india/meals.json`: our own ASSUMED raw-ingredient recipes (grams), the
+  IFCT 2017 codes used (Longvah et al., NIN / ICMR) and per-portion carbs / protein / fat / fiber
+  / kcal. No IFCT table and no per-100 g rows are stored in the repo.
+- `python -m src.india.library build|check` fetches the IFCT 2017 CSV at run time (ifct2017
+  GitHub package, AGPL-3.0 since April 2025; not redistributed, cached only under the gitignored
+  `data/external/`) and recomputes / cross-checks the per-portion numbers. Ingredients not
+  traceable to IFCT are marked "approximate assumption".
+- A top-level disclaimer says the values are assumptions, not clinical values. Model outputs on
+  these meals carry an out-of-distribution note (the model was trained on US meals).
+
+
+
+## D-055 Part 7 findings and disclosures (written AFTER the single final run)
+- **Runs:** dev stage (fold-0 training patients, 236 s); final stage once (514 s, 5 folds in
+  parallel; lock `runs: 1, forced_reruns: 0`). Guards: `unc` refit = Part 6 OOF forecasts
+  (max |diff| 0.0 in all 5 folds); zero-edit features bitwise identical; zero-edit twin = Part 4
+  `ekf_forecast` (1e-13).
+- **Engine bug before results (D-050 amendment):** slice-based recompute differed by ~2e-16 and
+  flipped trees; fixed to the full period prefix during development, no rule changed.
+- **Pre-registered tests that FAILED (reported, not tuned away):**
+  - Median dose response of both ML forms is below the D-051 range (final: unc 0.22, mono 0.20
+    mg/dL per g vs 0.3-1.3); the twin passes (0.33). The matched breakfasts agree: the ML forms
+    predict about half of the observed within-patient peak carb effect.
+  - `unc` carb monotonicity holds in only about a quarter of windows (75 % within 2 mg/dL).
+  - Activity direction is about 68 % for `unc` (learned) and both twin variants. For the twin
+    this is structural: the activity term (SG + aE E) pulls G towards Gb from either side, so a
+    walk RAISES predicted glucose when G is below basal (dev check on 120 training windows:
+    all 23 twin_assumed failures started below Gb, none of the 57 windows above Gb failed).
+    Median peak rise among failures (final): twin_learned 0.03, twin_assumed 1.4, unc 0.34 mg/dL.
+- **Monotone constraint cost:** test MAE mono - unc is +0.04 / +0.16 / -0.16 mg/dL at
+  +30 / +60 / +120 (CIs include 0).
+- **Owner decision needed (not changed here):** whether to use `mono` as the what-if model,
+  how to present the ML under-estimation of carb effects, and whether the twin's activity term
+  should be one-sided (a model change that would need a new pre-registration).
+- **Re-running `make whatif`** stops at the final stage (lock) unless `--force` is passed; any
+  forced run is recorded in the lock and must be disclosed.
