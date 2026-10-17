@@ -385,15 +385,14 @@ def live_twin() -> None:
                 "Lines connect the three forecast horizons; the model does not forecast between them. Shaded band: 80% interval."
             )
         a, c = st.columns([6, 6], gap="medium")
-        with a:
-            with st.container(border=True):
-                st.markdown("#### Forecast")
-                rows = []
-                for h in HORIZONS:
-                    rows.append({"Horizon": f"+{h} min", "Median": T.mgdl(r.get(f"pred|{h}")),
-                                 "80% interval": f"{T.mgdl(r.get(f'lo80|{h}'))} to {T.mgdl(r.get(f'hi80|{h}'))}",
-                                 "Width": T.mgdl(r.get(f"hi80|{h}") - r.get(f"lo80|{h}"))})  # fmt: skip
-                table(pd.DataFrame(rows))
+        with a, st.container(border=True):
+            st.markdown("#### Forecast")
+            rows = []
+            for h in HORIZONS:
+                rows.append({"Horizon": f"+{h} min", "Median": T.mgdl(r.get(f"pred|{h}")),
+                             "80% interval": f"{T.mgdl(r.get(f'lo80|{h}'))} to {T.mgdl(r.get(f'hi80|{h}'))}",
+                             "Width": T.mgdl(r.get(f"hi80|{h}") - r.get(f"lo80|{h}"))})  # fmt: skip
+            table(pd.DataFrame(rows))
         with c, st.container(border=True):
             st.markdown("#### Risk within 60 minutes")
             html_block(prob_bars(r, ticks))

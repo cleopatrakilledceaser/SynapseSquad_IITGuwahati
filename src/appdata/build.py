@@ -314,7 +314,6 @@ def main(check: bool = False) -> None:
     ref_width = float(np.nanmedian(hi - lo))
     say(f"median CV+ 80% width at +60: {ref_width:.1f} mg/dL ({len(reg)} rows)")
     twin_ids = set(fcx.twins)
-    n_out: dict[str, Any] = {}
     guards: dict[str, float] = {}
     patients_meta: dict[str, Any] = {}
     tables: dict[str, dict[str, Any]] = {}

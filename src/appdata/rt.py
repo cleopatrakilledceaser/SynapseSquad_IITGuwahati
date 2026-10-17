@@ -48,6 +48,7 @@ class Forest:
     """
 
     def __init__(self, trees: list[dict[str, list[str]]]) -> None:
+        """Flatten the parsed trees of one booster."""
         feat, thr, dec, left, right, leaf, roots = [], [], [], [], [], [], []
         n_node = n_leaf = 0
         for t in trees:
@@ -59,8 +60,8 @@ class Forest:
             k = len(lc)  # internal nodes (0 for a single-leaf tree)
 
             # child ids: >= 0 internal node, < 0 leaf (-1 - leaf index); make them global
-            def glob(c: np.ndarray) -> np.ndarray:
-                return np.where(c >= 0, c + n_node, -1 - ((-1 - c) + n_leaf))
+            def glob(c: np.ndarray, nn: int = n_node, nl: int = n_leaf) -> np.ndarray:
+                return np.where(c >= 0, c + nn, -1 - ((-1 - c) + nl))
 
             feat.append(np.asarray(t.get("split_feature", []), np.int64))
             thr.append(np.asarray(t.get("threshold", []), float))
@@ -79,6 +80,7 @@ class Forest:
         self.missing = (self.dec >> 2) & 3
 
     def __len__(self) -> int:
+        """Number of trees."""
         return len(self.roots)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
