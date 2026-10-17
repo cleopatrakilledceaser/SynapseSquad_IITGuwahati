@@ -18,6 +18,14 @@ jobs:
       - name: Lint
         run: make lint PY=python
       - name: Test
-        run: make test PY=python
+        run: |
+          set +e
+          python -m pytest --tb=line -q > pytest_out.txt 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "::error title=pytest exit $code::$(grep -E 'Error|FAILED|ERROR|assert' pytest_out.txt | head -12 | cut -c1-300 | sed ':a;N;$!ba;s/\n/%0A/g')"
+          fi
+          cat pytest_out.txt | tail -30
+          exit $code
       - name: Smoke (synthetic toy fixture)
         run: make smoke PY=python
