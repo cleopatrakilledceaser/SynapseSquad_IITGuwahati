@@ -23,6 +23,10 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D"]
+# Part 9 dashboard: long CSS / HTML / table-row lines are kept on one line on purpose.
+"src/dash/*" = ["E501", "N812"]
+"tests/test_dash.py" = ["E501", "N812"]
+"tests/test_appdata_rt.py" = ["N803", "N806"]
 # fit/predict implement a documented common protocol (module docstring); per-method docstrings
 # would only repeat it.
 "src/models/baselines.py" = ["D102"]

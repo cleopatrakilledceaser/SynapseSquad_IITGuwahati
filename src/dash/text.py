@@ -117,7 +117,7 @@ def confidence(row: Mapping[str, Any], cfg: Mapping[str, Any]) -> dict[str, Any]
 
 
 def forecast_line(row: Mapping[str, Any], horizon: int = 60) -> str:
-    """'Forecast at +60 min: 168 mg/dL (80% interval 150 to 186 mg/dL).'"""
+    """Forecast sentence, e.g. 'Forecast at +60 min: 168 mg/dL (80% interval 150 to 186 mg/dL).'."""
     p, lo, hi = row.get(f"pred|{horizon}"), row.get(f"lo80|{horizon}"), row.get(f"hi80|{horizon}")
     if not (isnum(p) and isnum(lo) and isnum(hi)):
         return f"Forecast at +{horizon} min: {NA}."

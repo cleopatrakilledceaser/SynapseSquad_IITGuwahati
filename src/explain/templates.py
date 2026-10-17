@@ -127,7 +127,7 @@ def pick_reasons(
         for f, s in shap_row.items()
         if f in used and direction * s >= cfg["min_abs_shap_mgdl"] and not math.isnan(s)
     ]
-    # clinically meaningful topics first; time of day / profile / data only if nothing else qualifies
+    # clinically meaningful topics first; time of day, profile, data only if nothing else qualifies
     cand.sort(key=lambda x: (feature_topic(x[0]) in WEAK_TOPICS, -abs(x[1])))
     out, seen = [], set()
     for f, s in cand:
