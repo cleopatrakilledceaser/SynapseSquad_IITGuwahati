@@ -169,6 +169,7 @@ def generate(
         t = t0 + pd.to_timedelta(np.arange(n) * DT_MIN, unit="m")
         grids.append(pd.DataFrame({
             "patient_id": pid, "period_id": pid, "dataset": icfg["name"], "t": t,
+            "minutes_since_start": np.arange(n) * float(DT_MIN),
             "days_since_start": np.arange(n) * DT_MIN / 1440.0, "glucose": g, "glucose_true": x[:, 2],
             "glucose_is_real": True, "glucose_is_carried": False, "glucose_missing": False,
             "minutes_since_real": 0.0, "hr": hr, "hr_missing": False, "activity_intensity": inten,
@@ -188,6 +189,25 @@ def generate(
                     **dict(zip(FIT_PARAMS, np.exp(lp), strict=True))})  # fmt: skip
     return {"grid": pd.concat(grids, ignore_index=True), "meals": pd.DataFrame(meal_rows),
             "static": pd.DataFrame(static_rows), "params": pd.DataFrame(prm)}  # fmt: skip
+
+
+def to_grid(c: dict[str, pd.DataFrame], step_min: int = 15) -> pd.DataFrame:
+    """Subsample the 5-min grid to the common ``step_min`` grid (causal).
+
+    Glucose is the value at the grid time; wearable channels are the mean of the trailing
+    ``step_min`` minutes (never future rows). ``minutes_since_start`` is exact multiples of the step.
+    """
+    k = int(round(step_min / DT_MIN))
+    wear = ["hr", "activity_intensity", "rest_proxy"]
+    out = []
+    for _, d in c["grid"].groupby("patient_id", sort=False):
+        d = d.reset_index(drop=True).copy()
+        d[wear] = d[wear].rolling(k, min_periods=1).mean()
+        d = d.iloc[::k].reset_index(drop=True)
+        d["minutes_since_start"] = np.arange(len(d)) * float(step_min)
+        d["days_since_start"] = d["minutes_since_start"] / 1440.0
+        out.append(d)
+    return pd.concat(out, ignore_index=True)
 
 
 def summary(c: dict[str, pd.DataFrame], icfg: dict[str, Any]) -> dict[str, Any]:
