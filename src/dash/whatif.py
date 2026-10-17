@@ -26,7 +26,10 @@ from src.utils.config import load_config
 from src.whatif import edits as ed
 
 ML_FORMS = {"mono": "Monotone model (default)", "unc": "Unconstrained model"}
-TWIN_VARIANTS = {"twin_learned": "Twin, learned walk effect", "twin_assumed": "Twin, assumed walk effect"}
+TWIN_VARIANTS = {
+    "twin_learned": "Twin, learned walk effect",
+    "twin_assumed": "Twin, assumed walk effect",
+}
 MODEL_LABELS = {**ML_FORMS, **TWIN_VARIANTS}
 MACROS = ("carbs_g", "protein_g", "fat_g", "fiber_g")
 
@@ -82,7 +85,9 @@ def patient_state(pdata: PatientData, ctx: dict[str, Any], cols: list[str]) -> r
 def edits_for(window: dict[str, Any], s: Scenario) -> list[ed.Edit]:
     """Part 7 edits realizing a scenario on the window's meal."""
     m = window["meal_idx"]
-    out = [ed.set_macros(m, carbs_g=s.carbs_g, protein_g=s.protein_g, fat_g=s.fat_g, fiber_g=s.fiber_g)]
+    out = [
+        ed.set_macros(m, carbs_g=s.carbs_g, protein_g=s.protein_g, fat_g=s.fat_g, fiber_g=s.fiber_g)
+    ]
     return out + ([ed.add_walk(m)] if s.walk else [])
 
 
@@ -102,7 +107,9 @@ def ml_run(
     }
 
 
-def _pack(mean: list[float], lo: list[float] | None, hi: list[float] | None) -> dict[int, dict[str, float | None]]:
+def _pack(
+    mean: list[float], lo: list[float] | None, hi: list[float] | None
+) -> dict[int, dict[str, float | None]]:
     return {
         h: {"mean": float(mean[i]), "lo": None if lo is None else float(lo[i]),
             "hi": None if hi is None else float(hi[i])}
@@ -131,7 +138,10 @@ def twin_run(
     idx = {h: int(round(h / dt)) for h in HORIZONS}
 
     def pack(g: np.ndarray) -> dict[int, dict[str, float | None]]:
-        return {h: {"mean": float(np.clip(g[i], *clamp)), "lo": None, "hi": None} for h, i in idx.items()}
+        return {
+            h: {"mean": float(np.clip(g[i], *clamp)), "lo": None, "hi": None}
+            for h, i in idx.items()
+        }
 
     return {
         "kind": "twin", "base": pack(b), "new": pack(n), "interpolated": bool(ib or in_),

@@ -109,6 +109,7 @@ def head_start(stats: Mapping[str, Any]) -> dict[str, Any]:
 
 # --------------------------------------------------------------------------- data quality
 
+
 def robustness_table(stats: Mapping[str, Any]) -> pd.DataFrame:
     """Split-conformal 80% coverage at +60 min and MAE under sensor faults (Part 6)."""
     rows = []
@@ -128,7 +129,9 @@ def robustness_table(stats: Mapping[str, Any]) -> pd.DataFrame:
             "Mean error": ci_text(c.get("mae_60"), c.get("mae_ci_60"), 1, " mg/dL"),
         })  # fmt: skip
     order = {"No fault": 0}
-    return pd.DataFrame(rows).sort_values("Fault", key=lambda s: s.map(lambda x: order.get(x, 1)), kind="stable")
+    return pd.DataFrame(rows).sort_values(
+        "Fault", key=lambda s: s.map(lambda x: order.get(x, 1)), kind="stable"
+    )
 
 
 # --------------------------------------------------------------------------- what-if evidence
@@ -194,6 +197,7 @@ def matched_summary(stats: Mapping[str, Any]) -> pd.DataFrame:
 
 # --------------------------------------------------------------------------- alerts and events
 
+
 def alarm_table(stats: Mapping[str, Any], rate: str = "2") -> pd.DataFrame:
     """Alert operating points (about ``rate`` false alarms a day) of the three alert systems."""
     name = {"model": "GlucoTwin model", "naive": "Current glucose value", "trend": "Current trend"}
@@ -216,7 +220,11 @@ def alarm_table(stats: Mapping[str, Any], rate: str = "2") -> pd.DataFrame:
 
 def auroc_text(stats: Mapping[str, Any]) -> list[str]:
     """One line per event: AUROC of the calibrated probability at +60 min."""
-    lab = {"hyper180_60": "above 180 mg/dL", "hyper140_60": "above 140 mg/dL", "hypo70_60": "below 70 mg/dL"}
+    lab = {
+        "hyper180_60": "above 180 mg/dL",
+        "hyper140_60": "above 140 mg/dL",
+        "hypo70_60": "below 70 mg/dL",
+    }
     out = []
     for k, label in lab.items():
         v = _g(stats, "events_auroc", k)
@@ -228,7 +236,14 @@ def auroc_text(stats: Mapping[str, Any]) -> list[str]:
 
 def coverage_text(stats: Mapping[str, Any]) -> str:
     """Pooled 80% interval coverage at +60 (CV+) and its unequal-group caveat."""
-    c = next((r for r in stats.get("coverage", []) if r["method"] == "cvp" and str(r["horizon_min"]) == "60"), None)
+    c = next(
+        (
+            r
+            for r in stats.get("coverage", [])
+            if r["method"] == "cvp" and str(r["horizon_min"]) == "60"
+        ),
+        None,
+    )
     if not c:
         return NA
     return (

@@ -57,6 +57,7 @@ class Forest:
             lc = np.asarray(t.get("left_child", []), np.int64)
             rc = np.asarray(t.get("right_child", []), np.int64)
             k = len(lc)  # internal nodes (0 for a single-leaf tree)
+
             # child ids: >= 0 internal node, < 0 leaf (-1 - leaf index); make them global
             def glob(c: np.ndarray) -> np.ndarray:
                 return np.where(c >= 0, c + n_node, -1 - ((-1 - c) + n_leaf))

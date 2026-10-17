@@ -37,7 +37,7 @@ import shutil
 import sys
 import time
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -58,7 +58,6 @@ from src.uncertainty.common import UNC, groups
 from src.utils.config import PROJECT_ROOT, load_config
 from src.whatif import context as cx
 from src.whatif import edits as ed
-from src.whatif.engine import PROC
 
 APP = PROJECT_ROOT / "app" / "demo"
 GEN = PROJECT_ROOT / "logs"
@@ -72,6 +71,7 @@ EVENTS_ALL = ("hyper180", "hyper140", "hypo70")  # event probabilities shown in 
 
 
 # --------------------------------------------------------------------------- io helpers
+
 
 def sync_dir(dst: Path, src: Path) -> None:
     """Copy a directory tree, deleting files in dst that are not in src (deterministic)."""
@@ -111,6 +111,7 @@ def clean_pandas(obj: Any) -> Any:
 
 # --------------------------------------------------------------------------- config
 
+
 def load_cfgs() -> dict[str, dict[str, Any]]:
     """All configs the builder reads."""
     return {n: load_config(n) for n in ("features", "whatif", "uncertainty", "app", "explain")}
@@ -146,6 +147,7 @@ def say(msg: str) -> None:
 
 # --------------------------------------------------------------------------- calibration
 
+
 def export_calibration(cal: rp.Calib, out: Path) -> None:
     """Platt maps, event thresholds, residuals, alert thresholds (fitted on training rows only)."""
     platt: dict[str, Any] = {}
@@ -170,6 +172,7 @@ def export_calibration(cal: rp.Calib, out: Path) -> None:
 
 
 # --------------------------------------------------------------------------- one patient
+
 
 def replay_tables(
     pid: str,
@@ -264,6 +267,7 @@ def write_patient(
 
 # --------------------------------------------------------------------------- main
 
+
 def main(check: bool = False) -> None:
     """Build ``app/demo`` (or only run the guards with ``--check``)."""
     t0 = time.time()
@@ -293,7 +297,9 @@ def main(check: bool = False) -> None:
     oof = pd.read_parquet(UNC / f"unc_A_{COHORT}_fold{fold}_oof.parquet")
     if not set(oof["patient_id"].astype(str)) <= set(train):
         raise RuntimeError("calibration rows include a non-training patient")
-    slope = unc["alerts"]["trend_slope_feature"]  # trailing CGM slope: a causal feature, not a label
+    slope = unc["alerts"][
+        "trend_slope_feature"
+    ]  # trailing CGM slope: a causal feature, not a label
     need = [f"{e}_any_{h}" for e in ev.EV for h in HORIZONS] + [slope]
     need = [c for c in need if c not in oof.columns]
     if need:  # training patients' rows only (the oof frame holds nothing else, checked above)
@@ -397,10 +403,17 @@ def main(check: bool = False) -> None:
     diff = 0.0
     for name, rf in rt_forms.items():
         for h in HORIZONS:
-            diff = max(diff, float(np.nanmax(np.abs(rf.predict(probe, h) - forms[name].predict(probe, h, None)))))
+            diff = max(
+                diff,
+                float(
+                    np.nanmax(np.abs(rf.predict(probe, h) - forms[name].predict(probe, h, None)))
+                ),
+            )
             lo_r, hi_r = rf.band(probe, h, ALPHA80)
             lo_m, hi_m = forms[name].band(probe, h, ALPHA80, None)
-            diff = max(diff, float(np.nanmax(np.abs(lo_r - lo_m))), float(np.nanmax(np.abs(hi_r - hi_m))))
+            diff = max(
+                diff, float(np.nanmax(np.abs(lo_r - lo_m))), float(np.nanmax(np.abs(hi_r - hi_m)))
+            )
     guards["rtform_max_abs_diff"] = diff
     n_cols = {k: assert_label_free(k, v["replay"]) + assert_label_free(k, v["explain"])
               for k, v in tables.items()}  # fmt: skip
@@ -409,7 +422,9 @@ def main(check: bool = False) -> None:
     bad = {k: v for k, v in guards.items()
            if k != "labels_in_outputs" and not v <= (1e-6 if k.startswith(("rtform", "recompute")) else 5.0)}  # fmt: skip
     if bad:
-        raise RuntimeError(f"guards failed (limits: runtime/recompute 1e-6, twin interpolation 5 mg/dL): {bad}")
+        raise RuntimeError(
+            f"guards failed (limits: runtime/recompute 1e-6, twin interpolation 5 mg/dL): {bad}"
+        )
     if check:
         say(f"--check passed in {time.time() - t0:.0f} s; nothing written")
         return
@@ -437,14 +452,15 @@ def main(check: bool = False) -> None:
         if pid in twin_arrays:
             np.savez_compressed(stage / "patients" / pid / "twin.npz", **twin_arrays[pid])
         (stage / "patients" / pid / "whatif.json").write_text(
-            json.dumps(clean_pandas(patients_meta[pid]["windows"]), indent=1), "utf-8")
+            json.dumps(clean_pandas(patients_meta[pid]["windows"]), indent=1), "utf-8"
+        )
     ctx_meta = {"ectx": clean_pandas(fcx.ectx), "kcal_per_g": wc["kcal_per_g"], "walk": wc["walk"],
                 "twin_grid": app["whatif"]["twin_grid"], "variants": list(VAR_ORDER),
                 "alphas": {"twin_learned": fcx.alpha_on}}  # fmt: skip
     (stage / "context.json").write_text(json.dumps(ctx_meta, indent=1), "utf-8")
     (stage / "patients.json").write_text(json.dumps(clean_pandas(patients_meta), indent=1), "utf-8")
     man = {
-        "built_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "built_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "git_hash": _git_hash(), "fold": fold, "cohort": COHORT, "demo_patients": demo_ids,
         "synthetic_patient": sid, "n_train": len(train), "n_test": len(test),
         "ref_width60_mgdl": ref_width, "alert_theta": {k: v for k, v in cal.theta.items()},
@@ -462,7 +478,9 @@ def _git_hash() -> str:
     import subprocess
 
     try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=PROJECT_ROOT, text=True).strip()
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=PROJECT_ROOT, text=True
+        ).strip()
     except Exception:  # noqa: BLE001
         return "unknown"
 

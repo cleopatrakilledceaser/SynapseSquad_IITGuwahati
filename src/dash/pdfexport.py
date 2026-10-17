@@ -30,9 +30,13 @@ def _wrap(s: str, width: int = 92) -> str:
     return "\n".join(textwrap.wrap(s, width=width)) if s else ""
 
 
-def _chart(ax: Any, hist: pd.DataFrame, row: Mapping[str, Any], meals: pd.DataFrame, cfg: Mapping[str, Any]) -> None:
+def _chart(
+    ax: Any, hist: pd.DataFrame, row: Mapping[str, Any], meals: pd.DataFrame, cfg: Mapping[str, Any]
+) -> None:
     now = pd.Timestamp(row["t"])
-    x0, x1 = now - pd.Timedelta(hours=cfg["history_hours"]), now + pd.Timedelta(minutes=cfg["forecast_min"])
+    x0, x1 = now - pd.Timedelta(hours=cfg["history_hours"]), now + pd.Timedelta(
+        minutes=cfg["forecast_min"]
+    )
     for lo, hi, c, a, hatch, label in ZONE:
         ax.axhspan(lo, hi, facecolor=c, alpha=a, lw=0)
         if hatch:
@@ -48,7 +52,15 @@ def _chart(ax: Any, hist: pd.DataFrame, row: Mapping[str, Any], meals: pd.DataFr
     ax.plot(ts, mean, color=DAMSON, lw=2.2, marker="o", ms=4, label="Forecast (median)")
     m = meals[(meals["t"] >= x0) & (meals["t"] <= x1)]
     if len(m):
-        ax.scatter(m["t"], [cfg["y_range"][0] + 4] * len(m), marker="^", color=INK, s=28, label="Meal", zorder=5)
+        ax.scatter(
+            m["t"],
+            [cfg["y_range"][0] + 4] * len(m),
+            marker="^",
+            color=INK,
+            s=28,
+            label="Meal",
+            zorder=5,
+        )
     ax.axvline(now, color=INK, lw=0.8)
     ax.set_xlim(x0, x1)
     ax.set_ylim(*cfg["y_range"])
@@ -92,7 +104,16 @@ def visit_summary_pdf(
              + ("   |   simulated record, assumed profile" if meta.get("synthetic") else ""),
              fontsize=9, color=SLATE, va="top")  # fmt: skip
     y -= 0.035
-    fig.text(0.08, y, _wrap(d["sentence"], 56), fontsize=14, color=INK, family="serif", va="top", fontweight="bold")
+    fig.text(
+        0.08,
+        y,
+        _wrap(d["sentence"], 56),
+        fontsize=14,
+        color=INK,
+        family="serif",
+        va="top",
+        fontweight="bold",
+    )
     y -= 0.07
     fig.text(0.08, y, T.forecast_line(row, 60), fontsize=10, color=INK, va="top")
     y -= 0.027
@@ -104,11 +125,15 @@ def visit_summary_pdf(
     y -= 0.34
     lines = ["Forecast at three horizons (80% interval from conformal prediction):"]
     for h in (30, 60, 120):
-        lines.append(f"   +{h:>3} min   {T.mgdl(row.get(f'pred|{h}')):>11}   interval {T.mgdl(row.get(f'lo80|{h}'))} to {T.mgdl(row.get(f'hi80|{h}'))}")
+        lines.append(
+            f"   +{h:>3} min   {T.mgdl(row.get(f'pred|{h}')):>11}   interval {T.mgdl(row.get(f'lo80|{h}'))} to {T.mgdl(row.get(f'hi80|{h}'))}"
+        )
     lines.append("")
     lines.append("Chance within 60 min (calibrated probability):")
     for r in T.readouts(row, 60):
-        lines.append(f"   Glucose {r['label']:<17} {T.pct(r['p']) if r['p'] is not None else r['note']}")
+        lines.append(
+            f"   Glucose {r['label']:<17} {T.pct(r['p']) if r['p'] is not None else r['note']}"
+        )
     st = T.alert_state(row)["on"]
     lines += ["", f"Alerts on now: {', '.join('glucose ' + T.EVENT_TEXT[e][2] for e in st) if st else 'none'}",
               f"Confidence: {conf['label']} (a display rule, not a validated threshold)",

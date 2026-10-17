@@ -47,10 +47,16 @@ def hero_figure(
     """
     import plotly.graph_objects as go
 
-    x0, x1 = now - pd.Timedelta(hours=cfg["history_hours"]), now + pd.Timedelta(minutes=cfg["forecast_min"])
+    x0, x1 = now - pd.Timedelta(hours=cfg["history_hours"]), now + pd.Timedelta(
+        minutes=cfg["forecast_min"]
+    )
     fig = go.Figure()
     for (ya, yb), (_, label, colour, shape, tint) in zip(_bounds(cfg), ZONES, strict=True):
-        pat = dict(shape=shape, fgcolor=colour, bgcolor=tint, size=6, solidity=0.16) if shape else None
+        pat = (
+            dict(shape=shape, fgcolor=colour, bgcolor=tint, size=6, solidity=0.16)
+            if shape
+            else None
+        )
         fig.add_trace(go.Scatter(
             x=[x0, x1, x1, x0, x0], y=[ya, ya, yb, yb, ya], mode="lines", line=dict(width=0),
             fill="toself", fillpattern=pat, fillcolor=None if pat else tint,
@@ -73,7 +79,9 @@ def hero_figure(
         hovertemplate="%{x|%H:%M}  %{y:.0f} mg/dL<extra></extra>",
     ))  # fmt: skip
 
-    def fan(f: dict[int, dict[str, float | None]], dash: str | None, fill: str, name: str, solid: bool) -> None:
+    def fan(
+        f: dict[int, dict[str, float | None]], dash: str | None, fill: str, name: str, solid: bool
+    ) -> None:
         ts = [now] + [now + pd.Timedelta(minutes=m) for m in f]
         mean = [now_value] + [f[m]["mean"] for m in f]
         lo = [now_value] + [f[m]["lo"] if f[m]["lo"] is not None else f[m]["mean"] for m in f]
@@ -125,7 +133,9 @@ def curve_figure(curve: pd.DataFrame, title: str) -> Any:
 
     fig = go.Figure()
     style = [(SLATE, "rgba(86,97,116,0.12)", "dash"), (DAMSON, "rgba(67,40,94,0.12)", "solid")]
-    for (colour, fill, dash), (name, d) in zip(style, curve.groupby("model", sort=False), strict=False):
+    for (colour, fill, dash), (name, d) in zip(
+        style, curve.groupby("model", sort=False), strict=False
+    ):
         d = d.sort_values("k")
         fig.add_trace(go.Scatter(x=list(d["k"]) + list(d["k"])[::-1], y=list(d["hi"]) + list(d["lo"])[::-1],
                                  fill="toself", fillcolor=fill, line=dict(width=0), hoverinfo="skip",

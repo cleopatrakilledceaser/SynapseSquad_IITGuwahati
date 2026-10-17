@@ -21,7 +21,9 @@ EVENT_TEXT = {
     "hyper140": ("above", 140, "above 140 mg/dL"),
     "hypo70": ("below", 70, "below 70 mg/dL"),
 }
-DISCLAIMER = "Research prototype for decision support. Not a medical device. Not for diagnosis or treatment."
+DISCLAIMER = (
+    "Research prototype for decision support. Not a medical device. Not for diagnosis or treatment."
+)
 WHATIF_NOTE = (
     "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted "
     "about half the observed rise; treat sizes as lower bounds."
@@ -113,7 +115,11 @@ def confidence(row: Mapping[str, Any], cfg: Mapping[str, Any]) -> dict[str, Any]
         reasons.append("the sensor data are incomplete or implausible")
     if isnum(stale) and float(stale) > c["stale_min"]:
         reasons.append(f"the last sensor reading is {float(stale):.0f} min old")
-    return {"label": label, "bars": CONF_BARS.get(label, 1), "reasons": reasons if label == "uncertain" else []}
+    return {
+        "label": label,
+        "bars": CONF_BARS.get(label, 1),
+        "reasons": reasons if label == "uncertain" else [],
+    }
 
 
 def forecast_line(row: Mapping[str, Any], horizon: int = 60) -> str:
@@ -155,7 +161,12 @@ def decision(row: Mapping[str, Any], cfg: Mapping[str, Any]) -> dict[str, Any]:
     else:
         word = risk_label(r["p"], cfg)
         body = f"{pct(r['p'])} chance of going {EVENT_TEXT[event][2]} within 60 min ({word} risk)."
-    return {"event": event, "sentence": f"{head} {body}".replace(":  ", ": "), "risk_word": word, "p": r["p"]}
+    return {
+        "event": event,
+        "sentence": f"{head} {body}".replace(":  ", ": "),
+        "risk_word": word,
+        "p": r["p"],
+    }
 
 
 def uncertain_banner(conf: Mapping[str, Any]) -> str | None:
@@ -208,5 +219,9 @@ def short_status(row: Mapping[str, Any], cfg: Mapping[str, Any]) -> str:
     head = trend.capitalize() if trend != NA else "Trend not available"
     r = next(x for x in readouts(row, 60) if x["event"] == d["event"])
     if r["p"] is None:
-        return f"{head}. Glucose is {r['note']}." if r["note"].startswith("already") else f"{head}. Risk {NA}."
+        return (
+            f"{head}. Glucose is {r['note']}."
+            if r["note"].startswith("already")
+            else f"{head}. Risk {NA}."
+        )
     return f"{head}. {pct(r['p'])} chance {EVENT_TEXT[d['event']][2]} within 60 min."
