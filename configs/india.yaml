@@ -65,3 +65,23 @@ stress:
   augment: {control: control, india: moderate}   # synthetic cohorts added to training (label: strength name)
   feature_groups: [cgm, tod, wearable, meals, static]
   static: [age_years, sex_male, bmi, hba1c_pct, fasting_glucose_mgdl]
+
+# Part 8d (D-064): simulated sleep, HRV and step channel. ALL SYNTHETIC; only duration affects glucose.
+sleep:
+  baseline_h: 7.0                    # deficit = baseline - duration (never negative)
+  duration: {mean: 6.8, sd: 1.0, lo: 3.5, hi: 9.5}      # ASSUMED
+  efficiency: {mean: 0.88, sd: 0.05, lo: 0.6, hi: 0.98}   # ASSUMED, no glucose effect
+  deep_frac: {mean: 0.17, sd: 0.04, lo: 0.05, hi: 0.35}   # ASSUMED, no glucose effect
+  hrv: {mean_ms: 32.0, per_hour_deficit: 0.05, noise_sd_log: 0.15}   # link to deficit ASSUMED
+  wake_minute: 360                   # a night becomes known at 06:00
+  si_beta_per_hour: 0.03             # ASSUMPTION within 0.023-0.045 (Buxton 2010, Diabetes 59:2126)
+  steps: {per_activity_unit_5min: 333.0, noise_sd: 40.0}
+  # power analysis (D-064)
+  multipliers: [0.0, 1.0, 3.0, 5.0]
+  n_patients: 100
+  days: 10
+  seed: 211
+  n_hours: 6
+  horizons_min: [30, 60, 120]
+  test_from_day: 3
+  n_folds: 5

@@ -30,6 +30,7 @@ convention = "google"
 "src/federated/*.py" = ["E501"]
 "tests/test_federated.py" = ["E501"]
 "tests/test_india_stress.py" = ["E501"]
+"tests/test_india_sleep.py" = ["E501"]
 "tests/test_transfer.py" = ["E501"]
 "src/transfer/*.py" = ["E501"]
 "src/appdata/rt.py" = ["E501", "N803", "N806"]

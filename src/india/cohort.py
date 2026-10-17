@@ -17,6 +17,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.india import sleep as sl
 from src.india.library import load_library
 from src.mech.fit import log_bounds
 from src.mech.model import FIT_PARAMS, bounds_array, initial_state, simulate, theta_from_log
@@ -159,9 +160,13 @@ def generate(
     icfg: dict[str, Any], mc: dict[str, Any], strength: float, tag: str, seed: int,
     n_patients: int | None = None, days: int | None = None,
     fits: pd.DataFrame | None = None, noise: dict[str, float] | None = None,
-    alpha: float | None = None,
+    alpha: float | None = None, sleep_mult: float | None = None,
 ) -> dict[str, pd.DataFrame]:  # fmt: skip
-    """Simulate one cohort: dict with ``grid``, ``meals``, ``static``, ``params`` (all SYNTHETIC)."""
+    """Simulate one cohort: dict with ``grid``, ``meals``, ``static``, ``params`` (all SYNTHETIC).
+
+    ``sleep_mult`` None keeps the original simulation bit for bit. A number (also 0.0) adds the
+    sleep / HRV / step channel of D-064 with that effect multiplier and a ``sleep`` table.
+    """
     fits = load_fits(icfg) if fits is None else fits
     if noise is None or alpha is None:
         noise, alpha = load_noise_and_alpha(icfg)
@@ -173,7 +178,8 @@ def generate(
     lib = load_library()
     sc, w_p = mc["solver"], mc["params"]["slow_protein_weight"]
     t0 = pd.Timestamp(icfg["start_datetime"])
-    grids, meal_rows, static_rows, prm = [], [], [], []
+    grids, meal_rows, static_rows, prm, nights_all = [], [], [], [], []
+    scfg = icfg.get("sleep", {})
     for i in range(n_pat):
         pid = f"{icfg['name']}_{tag}_{i:03d}"
         lp = np.clip(rng.multivariate_normal(mu, cov), lo, hi)
@@ -182,8 +188,16 @@ def generate(
         carbs, slow, meals = meal_inputs(day_meals, w_p)
         act = activity_days(rng, n_days, icfg["activity"])
         th = theta_from_log(lp, mc["params"]["fixed"], alpha)
-        x = simulate(th, initial_state(float(np.exp(lp[0])), th), carbs, slow, act,
-                     sc["dt_min"], sc["n_sub"], bounds_array(sc))  # fmt: skip
+        if sleep_mult is None:
+            x = simulate(th, initial_state(float(np.exp(lp[0])), th), carbs, slow, act,
+                         sc["dt_min"], sc["n_sub"], bounds_array(sc))  # fmt: skip
+        else:
+            srng = np.random.default_rng([seed, i, 7])  # separate stream: other draws unchanged
+            nights = sl.draw_nights(srng, n_days, scfg)
+            edges = sl.wake_steps(n_days, scfg)
+            shifts = sl.si_shift(nights["sleep_h"], scfg, sleep_mult)
+            x = sl.simulate_segmented(lp, mc["params"]["fixed"], alpha, carbs, slow, act, sc, shifts,
+                                      FIT_PARAMS.index("SI"), (lo, hi), edges)  # fmt: skip
         n = len(x)
         g = np.clip(
             x[:, 2] + ar1_noise(n, noise["white_sd"], noise["ar_sd"], noise["phi"], rng),
@@ -199,6 +213,13 @@ def generate(
             "minutes_since_real": 0.0, "hr": hr, "hr_missing": False, "activity_intensity": inten,
             "activity_missing": False, "rest_proxy": rest, "synthetic": True,
         }))  # fmt: skip
+        if sleep_mult is not None:
+            grids[-1]["steps"] = sl.steps_from_activity(srng, act, scfg)
+            nights_all.append(pd.DataFrame({
+                "patient_id": pid, "k": np.arange(n_days),
+                "wake_t": t0 + pd.to_timedelta(np.array(edges) * DT_MIN, unit="m"),
+                "sleep_effect_mult": sleep_mult, "si_log_shift": shifts, **nights,
+            }))  # fmt: skip
         for m in meals:
             meal_rows.append({
                 "patient_id": pid, "period_id": pid, "t": t[m["abs_step"]], "meal_type": m["slot"],
@@ -211,8 +232,11 @@ def generate(
                             **static_from_cgm(rng, g, icfg["static"])})  # fmt: skip
         prm.append({"patient_id": pid, "synthetic": True, "strength": strength,
                     **dict(zip(FIT_PARAMS, np.exp(lp), strict=True))})  # fmt: skip
-    return {"grid": pd.concat(grids, ignore_index=True), "meals": pd.DataFrame(meal_rows),
-            "static": pd.DataFrame(static_rows), "params": pd.DataFrame(prm)}  # fmt: skip
+    out = {"grid": pd.concat(grids, ignore_index=True), "meals": pd.DataFrame(meal_rows),
+           "static": pd.DataFrame(static_rows), "params": pd.DataFrame(prm)}  # fmt: skip
+    if sleep_mult is not None:
+        out["sleep"] = pd.concat(nights_all, ignore_index=True)
+    return out
 
 
 def to_grid(c: dict[str, pd.DataFrame], step_min: int = 15) -> pd.DataFrame:

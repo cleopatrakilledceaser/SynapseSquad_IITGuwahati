@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -74,6 +74,9 @@ india:  ## Part 8b India stress test + augmentation (SYNTHETIC cohorts; needs ma
 federated:  ## Part 8c federated learning simulation (needs make features)
 	$(PY) -W ignore -u -m src.federated.run
 	$(PY) -W ignore -m src.federated.report
+
+sleep-power:  ## Part 8d sleep/HRV detectability analysis (SYNTHETIC; needs make features)
+	$(PY) -W ignore -u -m src.india.wearable_power
 
 figures:
 	$(PY) -m src.eval.eda
