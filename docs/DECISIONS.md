@@ -1414,3 +1414,17 @@ Status: written before the first run of the builder; the guard values below are 
 Context: first screenshots looked plain, the Material icon font printed as text ("_arrow_right"), a heading was duplicated, the overview URL was wrong in the screenshot script, and Atkinson's slashed zero looked odd in numbers.
 Decision: dark damson sidebar with icons, white rounded cards, three number tiles per patient (glucose now, +60 min, chance of the headline event), word-plus-dot chips for risk and alerts, softer zone patterns (pattern and label still on every zone), system UI font stack instead of Atkinson (offline, native look, no slashed zero), Source Serif 4 kept only for the decision sentence. Streamlit toolbar and Deploy button hidden.
 Unchanged: every wording rule, fixed what-if note, disclaimer on every page, decision-support language, display of only Gb, no invented numbers. This departs from the flat, text-only look in docs/DESIGN.md section 2 at the user's request.
+
+## D-061: Part 8a cross-cohort transfer protocol (written before any run)
+
+Question: how much accuracy is lost when a model trained on one open cohort forecasts another, and what recovers it?
+Setup: CGMacros on the common 15-min grid (`cgmacros_15` tables) and Shanghai T2DM, both directions, 6 h windows, +30/+60/+120 min. LightGBM, delta target, Part 2 protocol (inner patient split for early stopping).
+Features: only columns present in both tables: `cgm_*` (shared names), time of day (sin, cos; `days_since_start` excluded because recording lengths differ), and optionally the five static fields both cohorts have (age, sex, BMI, HbA1c, fasting glucose). No wearable or meal features (Shanghai has none).
+Methods, all scored on the same rows (first period of each target patient, anchors at day >= 3, patients with >= 96 such anchors, real y at +60):
+1. persistence (last CGM value);
+2. in-cohort: target-cohort CV repeat 0 with the same features and the saved split files;
+3. zero-shot: trained on all source patients only;
+4. zero-shot + few-shot correction with the target patient's first k = 1 or 3 days (shrunk mean residual "offset", or ridge on four features). Only pairs whose target time is before day k are used (unit-tested). Hyperparameters are fixed in `configs/transfer.yaml` before running and are not tuned on target patients;
+5. pooled: all source patients plus the target training patients of each CV fold.
+Reported: MAE with patient-bootstrap 95% intervals; paired differences (zero-shot vs in-cohort = domain-shift penalty; pooled vs in-cohort; few-shot vs zero-shot); for CGMacros as target also the T2D-only subgroup (Shanghai is T2D only, so this is the fair comparison).
+Not done: South Asian subgroup (neither dataset records ethnicity; see data_card.md). Event (hypo / hyper) transfer is not run. A negative result will be reported as found.

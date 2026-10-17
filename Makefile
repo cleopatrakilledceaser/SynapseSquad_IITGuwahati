@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -63,6 +63,10 @@ whatif:  ## Part 7 what-if engine: dev (fold-0 training) + final (run ONCE; lock
 	@echo D-056 test-window walk run (forced re-run 1) and Part 4 re-run: python -m src.whatif.d056 final --force / part4
 	$(PY) -W ignore -m src.whatif.report --final
 	$(PY) data/scripts/make_results_md.py
+
+transfer:  ## Part 8a cross-cohort transfer (both directions; needs make features)
+	$(PY) -W ignore -u -m src.transfer.run
+	$(PY) -W ignore -m src.transfer.report
 
 figures:
 	$(PY) -m src.eval.eda

@@ -1,0 +1,35 @@
+# Part 8a: cross-cohort transfer (D-061). Both cohorts on the common 15-min grid.
+seed: 42
+n_hours: 6
+horizons_min: [30, 60, 120]
+cv_repeat: 0                      # in-cohort reference and pooled runs use CV repeat 0 (5 folds)
+
+tables:                           # cohort key (splits / strata) -> anchor-table name
+  cgmacros: cgmacros_15
+  shanghai_t2dm: shanghai_t2dm
+directions:                       # [source, target]
+  - [cgmacros, shanghai_t2dm]
+  - [shanghai_t2dm, cgmacros]
+
+common_static: [age_years, sex_male, bmi, hba1c_pct, fasting_glucose_mgdl]
+tod_columns: [tod_sin, tod_cos]   # days_since_start is excluded (recording lengths differ)
+feature_sets:
+  cgm_tod: [cgm, tod]
+  cgm_tod_static: [cgm, tod, static]
+
+# One common evaluation region for every method (paired): first period only, anchors at or after
+# test_from_day, patients with at least min_test_anchors such anchors (real y at +60 min).
+test_from_day: 3
+min_test_anchors: 96
+
+# Few-shot adaptation of the zero-shot forecast with the target patient's first k days.
+# Hyperparameters are FIXED here before any run (not tuned on target patients).
+k_grid: [1, 3]
+fewshot:
+  min_pairs: 24                   # fewer adaptation pairs -> no correction
+  offset_n0: 288                  # shrinkage weight n / (n + n0) of the mean residual
+  ridge_lambda: 1000.0
+  ridge_features: [cgm_now, cgm_delta_30, tod_sin, tod_cos]
+
+subgroups:                        # reported in addition to the whole target cohort
+  cgmacros: {name: "T2D only", column: diabetes_status, value: t2d}
