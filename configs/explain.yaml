@@ -1,0 +1,16 @@
+# Part 9 step 1: explainability (SHAP + template-based plain-language "why"). Decision: D-057.
+# Units: glucose mg/dL, time min, macros g. No LLM: every sentence comes from a fixed template.
+seed: 42
+risk_levels:                        # wording of a calibrated event probability (display choice)
+  bounds: [0.10, 0.30, 0.60]        # < 0.10 low, < 0.30 moderate, < 0.60 high, else very high
+  words: [low, moderate, high, very high]
+min_abs_shap_mgdl: 1.0              # a feature is quoted only if it moves the +h forecast by >= 1 mg/dL
+max_reasons: 2                      # at most two clauses per sentence, one per topic
+trend_window_min: 15                # slopes are quoted per 15 min
+events:                             # event -> (threshold mg/dL, direction)
+  hyper180: {threshold: 180, direction: above, label: "above 180 mg/dL"}
+  hyper140: {threshold: 140, direction: above, label: "above 140 mg/dL"}
+  hypo70: {threshold: 70, direction: below, label: "below 70 mg/dL"}
+shap_check:
+  n_rows: 60                        # rows compared with the shap package in the consistency test
+  tol_mgdl: 1.0e-6

@@ -1,0 +1,61 @@
+# Part 9: clinician dashboard (offline). Decisions: D-057 (explain), D-058 (app data), D-059 (UI rules).
+# Units: glucose mg/dL, time min, macros g. Everything below that is NOT a model result is a display
+# choice and is labelled as such in the app (see docs/DESIGN.md).
+seed: 42
+cohort: cgmacros
+fold: 0                              # CV repeat 0, fold 0: the 9 patients of this fold's test set
+                                     # are scored by the fold-0 models that never saw them
+
+demo:
+  # Rule (fixed before looking at any result): from the fold-0 test patients that have Part 6 test
+  # rows, take the first patient (sorted id) of each diabetes status, then the next T2D patient
+  # (T2D is the target population).
+  per_status: 1
+  extra_t2d: 1
+  replay_start_day: 8.0              # replay = the 24 h of anchors from the first anchor at/after this day
+  replay_hours: 24
+  history_hours: 6                   # CGM history drawn before the first replay anchor
+  whatif_offsets_min: [15, 45, 90]   # what-if windows: for each logged meal in the replay day, the anchor
+  whatif_tolerance_min: 7.5          # closest to each offset after the meal (within this tolerance)
+  synthetic:
+    rule: median_gb                  # the simulated patient whose Gb is closest to the cohort median
+    replay_start_day: 5.0            # the simulated record has 7 days
+    start_datetime: "2026-01-05 00:00"   # arbitrary label of day 0 (synthetic)
+    static_hba1c_pct: 6.9            # ASSUMED profile of the synthetic patient (not a data value)
+    static_fasting_glucose_mgdl: 128.0
+    macro_ratios: {protein_g: 0.25, fat_g: 0.30, fiber_g: 0.10}   # ASSUMED, per gram of carbs
+
+alerts:
+  default_fa_per_day: 2              # one of configs/uncertainty.yaml alerts.fa_per_day
+  events: [hyper180, hypo70]         # events with an alert in the live twin (Part 6 alert systems)
+
+display:
+  zones: {very_low: 54.0, low: 70.0, high: 180.0, very_high: 250.0}   # 54 and 250 are DISPLAY bands only
+  y_range: [40, 300]
+  history_hours: 6
+  forecast_min: 120
+  clamp: [40.0, 400.0]               # physiological output range (Part 7 bounds test)
+  risk_words: {bounds: [0.10, 0.30, 0.60], words: [low, moderate, high, very high]}
+  confidence:                        # DESIGN CHOICES, not validated thresholds
+    wide_ratio: 1.5                  # CV+ 80% width at +60 / median width of the same fold rows (no labels)
+    dq_uncertain_below: 0.70         # lowest Part 6 data-quality bins (configs/uncertainty.yaml dq.bins)
+    dq_high_from: 0.95               # top Part 6 data-quality bin
+    stale_min: 60                    # configs/uncertainty.yaml robustness.stale_max_min
+  replay_speeds: [1, 2, 4, 8]        # anchors per second
+  replay_tick_s: 1.0
+
+whatif:
+  carb_range_g: [0, 150]
+  macro_max_g: {protein_g: 80, fat_g: 80, fiber_g: 40}
+  twin_grid:                         # twin results are precomputed on this grid; values between grid
+    carbs_g: [0, 15, 30, 45, 60, 90, 120, 150]    # points are interpolated and labelled as such
+    slow_ratio: [0.0, 0.5, 1.0, 2.0, 4.0]         # (fat + 0.5 protein + fiber) / (carbs + 1)
+  walk_min: 30                       # fixed walk of Part 7 (configs/whatif.yaml walk)
+  note: "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted about half the observed rise; treat sizes as lower bounds."
+
+pdf:
+  page: A4
+  margin_mm: 16
+
+fonts:
+  ttf_dir: app/static/fonts/ttf

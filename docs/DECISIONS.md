@@ -1329,3 +1329,27 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
   - Part 5 hybrids and Part 6 use alpha_E = 0 (bitwise unchanged, checked above).
   - Consequence for Part 7: `twin_learned_d056` uses the ORIGINAL Part 4 `alpha_on` (as
     pre-specified in this entry), not the re-selected value.
+
+
+## D-057 Part 9 step 1: explainability (SHAP + templates, no LLM)
+- **Model explained:** the Part 5/6 population LightGBM (A0: CGM + time of day + meals + glycemic
+  static, delta target), one booster per horizon. TreeSHAP (LightGBM `pred_contrib`, restricted to
+  the `n_iter` trees the model uses) explains the predicted CHANGE in mg/dL: base value + sum of
+  contributions = predicted delta (checked on 60 training-patient rows: max |diff| 2e-13 at every
+  horizon; the `shap` package gives identical values, max |diff| 0.0).
+- **Template rules (`src/explain/templates.py`, `configs/explain.yaml`):** a feature is quoted
+  only if (i) the model really uses it (positive split gain in the used trees), (ii) |SHAP| >= 1
+  mg/dL at that horizon, (iii) the push points the way the sentence says (towards the event for
+  moderate / high / very high risk, away from it for low risk). One reason per topic (trend, meal,
+  level, activity, time, profile, data), at most two clauses; clinically meaningful topics are
+  listed before time of day / profile / data. Every number in a clause is read from the row; a
+  feature without a template raises `KeyError` (tested for every used feature).
+- **Wording of probabilities** (display choice, not a model result): < 10 % low, < 30 % moderate,
+  < 60 % high, otherwise very high. The probability itself is the Part 6 calibrated event
+  probability (Platt on training out-of-fold rows); not available is shown as "not available".
+- **Limits:** SHAP explains the model, not the physiology: a quoted feature is what moved the
+  forecast, not a cause. Time of day and HbA1c can appear as reasons when nothing else stands out.
+  Explanations exist for the population model only (not for the monotone model or the twin).
+- **Fonts (Part 9 design):** Atkinson Hyperlegible (Braille Institute) and Source Serif 4 (Adobe),
+  both SIL Open Font License 1.1, bundled locally as woff2 in `app/static/fonts` (latin subsets
+  fetched once from the fontsource packages at build time, never at run time).

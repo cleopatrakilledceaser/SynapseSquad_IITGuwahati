@@ -32,3 +32,6 @@ Thumbs.db
 
 # Local run logs and scratch scripts
 logs/
+
+# Part 9 demo artifacts are derived from CGMacros (CC BY-NC-SA): built locally by make app-data, never committed
+app/demo/
