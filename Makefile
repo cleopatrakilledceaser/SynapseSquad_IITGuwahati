@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -67,8 +67,14 @@ whatif:  ## Part 7 what-if engine: dev (fold-0 training) + final (run ONCE; lock
 figures:
 	$(PY) -m src.eval.eda
 
+app-data:
+	python -m src.appdata.build
+
+app-check:
+	python -m src.appdata.build --check
+
 app:
-	@echo "[app] not yet implemented"
+	streamlit run app/main.py
 
 test:
 	$(PY) -m pytest

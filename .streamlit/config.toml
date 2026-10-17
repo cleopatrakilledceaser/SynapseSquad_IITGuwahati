@@ -1,0 +1,14 @@
+# Part 9 dashboard: light theme only (docs/DESIGN.md), offline, no telemetry, local fonts.
+[server]
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#43285E"
+backgroundColor = "#F5F6F8"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B2230"
+font = "sans serif"
