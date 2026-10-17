@@ -1,0 +1,3232 @@
+{
+  "name": "transfer",
+  "timestamp_utc": "2026-10-17T17:12:46.702281+00:00",
+  "git_hash": "bd85ab3a5efe79194fe49875b57ff575953afd94",
+  "seed": 42,
+  "data_hash": "c8cbc8b295be85b8bc01ff9e3261a25b017be00685cade4ae180df223a077e43",
+  "config": {
+    "seed": 42,
+    "n_hours": 6,
+    "horizons_min": [
+      30,
+      60,
+      120
+    ],
+    "cv_repeat": 0,
+    "tables": {
+      "cgmacros": "cgmacros_15",
+      "shanghai_t2dm": "shanghai_t2dm"
+    },
+    "directions": [
+      [
+        "cgmacros",
+        "shanghai_t2dm"
+      ],
+      [
+        "shanghai_t2dm",
+        "cgmacros"
+      ]
+    ],
+    "common_static": [
+      "age_years",
+      "sex_male",
+      "bmi",
+      "hba1c_pct",
+      "fasting_glucose_mgdl"
+    ],
+    "tod_columns": [
+      "tod_sin",
+      "tod_cos"
+    ],
+    "feature_sets": {
+      "cgm_tod": [
+        "cgm",
+        "tod"
+      ],
+      "cgm_tod_static": [
+        "cgm",
+        "tod",
+        "static"
+      ]
+    },
+    "test_from_day": 3,
+    "min_test_anchors": 96,
+    "k_grid": [
+      1,
+      3
+    ],
+    "fewshot": {
+      "min_pairs": 24,
+      "offset_n0": 288,
+      "ridge_lambda": 1000.0,
+      "ridge_features": [
+        "cgm_now",
+        "cgm_delta_30",
+        "tod_sin",
+        "tod_cos"
+      ]
+    },
+    "subgroups": {
+      "cgmacros": {
+        "name": "T2D only",
+        "column": "diabetes_status",
+        "value": "t2d"
+      }
+    }
+  },
+  "metrics": {
+    "dropped_cgm_columns": [],
+    "n_features": {
+      "cgm_tod": 29,
+      "cgm_tod_static": 34
+    },
+    "cgmacros_to_shanghai_t2dm|cgm_tod": {
+      "n_source_patients": 45,
+      "n_target_patients": 95,
+      "all": {
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 11.547775960978855,
+            "mae_ci": [
+              11.016493939966749,
+              12.164662324080293
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 30,
+            "mae": 8.919172923879595,
+            "mae_ci": [
+              8.551307104405062,
+              9.323914258909982
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 11.5619594082566,
+            "mae_ci": [
+              11.076965992279227,
+              12.090414427249625
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 11.545194717408462,
+            "mae_ci": [
+              11.053851254152905,
+              12.062328841663204
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 11.523973383663936,
+            "mae_ci": [
+              11.020266899406199,
+              12.043455113251529
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 30,
+            "mae": 11.755455977399755,
+            "mae_ci": [
+              11.228621423038708,
+              12.299067795898992
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 30,
+            "mae": 10.961741540341743,
+            "mae_ci": [
+              10.501859857207197,
+              11.436420344937984
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 30,
+            "mae": 9.048342999905579,
+            "mae_ci": [
+              8.680137912342893,
+              9.454801781334236
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 19.500762786044767,
+            "mae_ci": [
+              18.46402622978716,
+              20.59123585573082
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 60,
+            "mae": 15.953196820129731,
+            "mae_ci": [
+              15.286922857794805,
+              16.654609415648206
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 19.367415501494474,
+            "mae_ci": [
+              18.420190519195756,
+              20.353255167300237
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 19.36733163486596,
+            "mae_ci": [
+              18.377740689586552,
+              20.35288051935973
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 19.32018111544226,
+            "mae_ci": [
+              18.3113080234378,
+              20.328462498227307
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 60,
+            "mae": 20.01971936894859,
+            "mae_ci": [
+              18.96324207394424,
+              21.19871772105685
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 60,
+            "mae": 18.536498378806073,
+            "mae_ci": [
+              17.57063019333212,
+              19.525840963214346
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 60,
+            "mae": 15.975555725210224,
+            "mae_ci": [
+              15.300404508891658,
+              16.681675321160835
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 30.12297699367221,
+            "mae_ci": [
+              28.310153027178398,
+              31.953871926722766
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 120,
+            "mae": 23.679581553668893,
+            "mae_ci": [
+              22.474138401345417,
+              24.861251839085593
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 27.383104181019586,
+            "mae_ci": [
+              25.753628641483132,
+              29.024502302235472
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 27.399569422986982,
+            "mae_ci": [
+              25.71660695483339,
+              29.003239046490997
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 27.242084446257387,
+            "mae_ci": [
+              25.520636373060338,
+              28.89811398740518
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 120,
+            "mae": 28.785903536358322,
+            "mae_ci": [
+              26.859401295915504,
+              30.863945400937137
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 120,
+            "mae": 26.216962924605006,
+            "mae_ci": [
+              24.485939194213223,
+              27.912422723239594
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 120,
+            "mae": 23.64011606950234,
+            "mae_ci": [
+              22.424614696291368,
+              24.87607014868412
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 2.6427864843770053,
+            "diff_mae_ci": [
+              2.345379815212513,
+              2.9532872086885225
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 3.4142186813647424,
+            "diff_mae_ci": [
+              2.8951194961865396,
+              3.978850706459105
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 3.7035226273506936,
+            "diff_mae_ci": [
+              2.8644960465171696,
+              4.6316127329726795
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 0.12917007602598396,
+            "diff_mae_ci": [
+              0.07006423082641704,
+              0.18533176364259799
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 0.022358905080492875,
+            "diff_mae_ci": [
+              -0.10937684434130625,
+              0.15441641158773559
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": -0.039465484166552045,
+            "diff_mae_ci": [
+              -0.2955142312907485,
+              0.24319222556353032
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -2.6286030370992606,
+            "diff_mae_ci": [
+              -2.930625934363603,
+              -2.3409451570837407
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -3.5475659659150356,
+            "diff_mae_ci": [
+              -4.130159317544202,
+              -3.0087034567287767
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.443395440003318,
+            "diff_mae_ci": [
+              -7.479836164990253,
+              -5.425443144901145
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": 0.014183447277744676,
+            "diff_mae_ci": [
+              -0.27901682910856085,
+              0.3238604672420974
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -0.1333472845502932,
+            "diff_mae_ci": [
+              -0.6169312775346548,
+              0.35458262103314453
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -2.7398728126526244,
+            "diff_mae_ci": [
+              -3.5926077086052017,
+              -1.8971259142385986
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -2.4994329610732766,
+            "diff_mae_ci": [
+              -2.7958379015084436,
+              -2.2182252293953915
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -3.5252070608345427,
+            "diff_mae_ci": [
+              -4.062887691555055,
+              -3.0035697487818993
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.48286092416987,
+            "diff_mae_ci": [
+              -7.464541232880999,
+              -5.535091009698292
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.03798602459266398,
+            "diff_mae_ci": [
+              -0.14075749351720002,
+              0.04373644662085819
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.04723438605221375,
+            "diff_mae_ci": [
+              -0.21749661808811432,
+              0.10246484197417098
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -0.14101973476219953,
+            "diff_mae_ci": [
+              -0.4152002189510046,
+              0.10537429951116241
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.6002178679148571,
+            "diff_mae_ci": [
+              -0.8044522693560691,
+              -0.4138851487652783
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.8309171226884011,
+            "diff_mae_ci": [
+              -1.188376782186533,
+              -0.5045806662303857
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -1.1661412564145799,
+            "diff_mae_ci": [
+              -1.7935387264956015,
+              -0.5258908622429216
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          }
+        ]
+      }
+    },
+    "cgmacros_to_shanghai_t2dm|cgm_tod_static": {
+      "n_source_patients": 45,
+      "n_target_patients": 95,
+      "all": {
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 11.547775960978855,
+            "mae_ci": [
+              11.016493939966749,
+              12.164662324080293
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 30,
+            "mae": 8.968561325251697,
+            "mae_ci": [
+              8.60910306999043,
+              9.370169865245371
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 11.703274973128178,
+            "mae_ci": [
+              11.241960433777665,
+              12.234979112511976
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 11.42159258646985,
+            "mae_ci": [
+              10.986801049635002,
+              11.895202476701314
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 11.123116453114251,
+            "mae_ci": [
+              10.707925527906795,
+              11.58761808557195
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 30,
+            "mae": 11.113343169469383,
+            "mae_ci": [
+              10.613199091689442,
+              11.700129072069801
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 30,
+            "mae": 10.576504815486318,
+            "mae_ci": [
+              10.091267242849694,
+              11.120315171382058
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 30,
+            "mae": 9.084316456333948,
+            "mae_ci": [
+              8.714366585093472,
+              9.473691298138004
+            ],
+            "n_patients": 95,
+            "n_rows": 72166
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 19.500762786044767,
+            "mae_ci": [
+              18.46402622978716,
+              20.59123585573082
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 60,
+            "mae": 16.041153536985437,
+            "mae_ci": [
+              15.367872488660762,
+              16.756275946863074
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 21.421225076329186,
+            "mae_ci": [
+              20.451548273821334,
+              22.434136997481655
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 20.608384821534244,
+            "mae_ci": [
+              19.703110747132083,
+              21.547423041493808
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 19.53017591504736,
+            "mae_ci": [
+              18.6728804717956,
+              20.42092561825121
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 60,
+            "mae": 19.035556937605506,
+            "mae_ci": [
+              17.936895872892855,
+              20.248559464971045
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 60,
+            "mae": 18.04734220075217,
+            "mae_ci": [
+              17.079032280172264,
+              19.138159796576623
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 60,
+            "mae": 16.25282912371946,
+            "mae_ci": [
+              15.554711866249226,
+              16.984377196182407
+            ],
+            "n_patients": 95,
+            "n_rows": 71973
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 30.12297699367221,
+            "mae_ci": [
+              28.310153027178398,
+              31.953871926722766
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 120,
+            "mae": 23.878750087752252,
+            "mae_ci": [
+              22.521235698151155,
+              25.212727342808755
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 31.529638009131553,
+            "mae_ci": [
+              29.800610235348312,
+              33.231150348594944
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 30.14918156453367,
+            "mae_ci": [
+              28.516168084901068,
+              31.724101055193923
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 27.984344650020645,
+            "mae_ci": [
+              26.460929949552757,
+              29.500982663817773
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 120,
+            "mae": 27.134893432249818,
+            "mae_ci": [
+              25.359836712012576,
+              29.17033277908056
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 120,
+            "mae": 25.52943414684663,
+            "mae_ci": [
+              23.890802880630623,
+              27.365701711741988
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 120,
+            "mae": 24.085048863049664,
+            "mae_ci": [
+              22.80456560476317,
+              25.4320708895924
+            ],
+            "n_patients": 95,
+            "n_rows": 71589
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 2.7347136478764806,
+            "diff_mae_ci": [
+              2.4420609943682456,
+              3.011554688991354
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 5.380071539343749,
+            "diff_mae_ci": [
+              4.651721659030847,
+              6.121766249373078
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 7.650887921379301,
+            "diff_mae_ci": [
+              6.280249655410218,
+              9.123353613201868
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 0.11575513108225088,
+            "diff_mae_ci": [
+              0.03771322881082093,
+              0.19476051388358587
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 0.21167558673402453,
+            "diff_mae_ci": [
+              0.025488655517451435,
+              0.3963158058387104
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 0.20629877529741236,
+            "diff_mae_ci": [
+              -0.266215011942174,
+              0.7128245431785694
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -2.5792146357271584,
+            "diff_mae_ci": [
+              -2.8832277520815053,
+              -2.2893206701599667
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -3.45960924905933,
+            "diff_mae_ci": [
+              -4.03246744039577,
+              -2.9028501516836664
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.244226905919959,
+            "diff_mae_ci": [
+              -7.400421529318184,
+              -5.115776654740129
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": 0.15549901214932227,
+            "diff_mae_ci": [
+              -0.26537485295486374,
+              0.5750659652620255
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": 1.9204622902844193,
+            "diff_mae_ci": [
+              0.9368388828191019,
+              2.9264891255259156
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": 1.406661015459342,
+            "diff_mae_ci": [
+              -0.6007051792664918,
+              3.2906551601822307
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -2.4634595046449075,
+            "diff_mae_ci": [
+              -2.773661188569956,
+              -2.179120000341558
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -3.2479336623253054,
+            "diff_mae_ci": [
+              -3.8750192516571866,
+              -2.6648537138500448
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.0379281306225465,
+            "diff_mae_ci": [
+              -7.19009580673751,
+              -4.935458015680721
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.5801585200139261,
+            "diff_mae_ci": [
+              -0.814044261591754,
+              -0.35956521921802226
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -1.8910491612818277,
+            "diff_mae_ci": [
+              -2.422306259544092,
+              -1.393229059414694
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -3.5452933591109073,
+            "diff_mae_ci": [
+              -4.4860151550015015,
+              -2.649776406550031
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -1.1267701576418592,
+            "diff_mae_ci": [
+              -1.4689045896953479,
+              -0.7645486738332254
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -3.373882875577017,
+            "diff_mae_ci": [
+              -4.251225517283529,
+              -2.545302637672765
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -6.000203862284923,
+            "diff_mae_ci": [
+              -7.63364491727388,
+              -4.423675501010444
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 95
+          }
+        ]
+      }
+    },
+    "shanghai_t2dm_to_cgmacros|cgm_tod": {
+      "n_source_patients": 100,
+      "n_target_patients": 45,
+      "all": {
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 13.198669396110542,
+            "mae_ci": [
+              12.32234656841862,
+              14.14230028418852
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 30,
+            "mae": 12.232647220576393,
+            "mae_ci": [
+              11.48938454436529,
+              12.987873305358342
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 13.913798192699858,
+            "mae_ci": [
+              13.21295054662983,
+              14.62603222798053
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 13.884438524677204,
+            "mae_ci": [
+              13.177927148013564,
+              14.60633933169996
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 13.862252293422909,
+            "mae_ci": [
+              13.149383182080044,
+              14.595702401288527
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 30,
+            "mae": 13.8842416044665,
+            "mae_ci": [
+              13.13776540086824,
+              14.670906283571448
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 30,
+            "mae": 13.562084842685149,
+            "mae_ci": [
+              12.829366330831306,
+              14.299705937608989
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 30,
+            "mae": 12.33014130465911,
+            "mae_ci": [
+              11.608974286138924,
+              13.078031483870422
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 19.313973784181524,
+            "mae_ci": [
+              17.61136820661147,
+              21.219861842066347
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 60,
+            "mae": 17.492316604367286,
+            "mae_ci": [
+              16.123174763153976,
+              19.042985330300453
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 20.076158160701006,
+            "mae_ci": [
+              18.948821419581424,
+              21.309628986482085
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 19.97481223661099,
+            "mae_ci": [
+              18.805275374500795,
+              21.22888068316383
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 19.819184657188043,
+            "mae_ci": [
+              18.614797508677697,
+              21.12595705211584
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 60,
+            "mae": 19.920031185990126,
+            "mae_ci": [
+              18.635550333163412,
+              21.39446573072421
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 60,
+            "mae": 19.214170543308263,
+            "mae_ci": [
+              17.995405594981797,
+              20.583563158018805
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 60,
+            "mae": 17.84828209426116,
+            "mae_ci": [
+              16.54744501337334,
+              19.23864384772076
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 26.47943506717189,
+            "mae_ci": [
+              23.648793368731738,
+              29.674950926538727
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 120,
+            "mae": 21.716133656211497,
+            "mae_ci": [
+              19.604004928292973,
+              24.106039756309148
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 25.286129887534404,
+            "mae_ci": [
+              23.47642334512974,
+              27.31936253516091
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 25.103666013375307,
+            "mae_ci": [
+              23.302726358440854,
+              27.168074673660676
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 24.74331443312203,
+            "mae_ci": [
+              22.874724111474666,
+              26.90049905132443
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 120,
+            "mae": 25.058172084695435,
+            "mae_ci": [
+              23.117033255967897,
+              27.50124422736025
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 120,
+            "mae": 23.530403412979034,
+            "mae_ci": [
+              21.65009211400119,
+              25.71237857980582
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 120,
+            "mae": 22.56603305084993,
+            "mae_ci": [
+              20.677353749919163,
+              24.73881288424964
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 1.681150972123465,
+            "diff_mae_ci": [
+              1.3005691518483824,
+              2.0294488135108826
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 2.58384155633372,
+            "diff_mae_ci": [
+              2.0652767536638206,
+              3.0328312046304675
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 3.569996231322907,
+            "diff_mae_ci": [
+              2.7842182306828187,
+              4.200835503125096
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 0.09749408408271698,
+            "diff_mae_ci": [
+              -0.05471026119985121,
+              0.23199356901444193
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 0.355965489893876,
+            "diff_mae_ci": [
+              0.09918718772007824,
+              0.5771162355532994
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 0.8498993946384346,
+            "diff_mae_ci": [
+              0.3666683431507639,
+              1.2704230489192692
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.9660221755341496,
+            "diff_mae_ci": [
+              -1.2209803957271714,
+              -0.7413004943318465
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.8216571798142382,
+            "diff_mae_ci": [
+              -2.303074590500492,
+              -1.3636922222995373
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -4.763301410960395,
+            "diff_mae_ci": [
+              -5.892905682536601,
+              -3.6903911362232718
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": 0.7151287965893154,
+            "diff_mae_ci": [
+              0.18720810596846468,
+              1.2118283424420966
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": 0.7621843765194818,
+            "diff_mae_ci": [
+              -0.0772590860245269,
+              1.4782343070576778
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -1.1933051796374876,
+            "diff_mae_ci": [
+              -2.632976200423628,
+              0.11489190042647088
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.8685280914514326,
+            "diff_mae_ci": [
+              -1.1765746484090143,
+              -0.5895525269748089
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.4656916899203623,
+            "diff_mae_ci": [
+              -2.090286899058902,
+              -0.9135528562292876
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -3.9134020163219603,
+            "diff_mae_ci": [
+              -5.214728620502273,
+              -2.680710262799373
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.05154589927694886,
+            "diff_mae_ci": [
+              -0.0756509317400289,
+              -0.028359119169594178
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.2569735035129632,
+            "diff_mae_ci": [
+              -0.37447718821421094,
+              -0.15365794619637782
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -0.5428154544123736,
+            "diff_mae_ci": [
+              -0.7846338723022469,
+              -0.32846046079357805
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.35171335001470894,
+            "diff_mae_ci": [
+              -0.45108899321028584,
+              -0.2531410797102329
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.8619876173927423,
+            "diff_mae_ci": [
+              -1.0597093965649882,
+              -0.6470359741501582
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -1.7557264745553702,
+            "diff_mae_ci": [
+              -2.118756330100358,
+              -1.4238128602126892
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          }
+        ]
+      },
+      "T2D only": {
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 15.252992559042381,
+            "mae_ci": [
+              14.050432707725916,
+              16.360329252742417
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 30,
+            "mae": 13.830482505680033,
+            "mae_ci": [
+              12.814424527212475,
+              14.745131820988032
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 14.533776021083561,
+            "mae_ci": [
+              13.43329082809225,
+              15.526059018208251
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 14.527909405629494,
+            "mae_ci": [
+              13.423712516945274,
+              15.51267139879208
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 14.524497019694051,
+            "mae_ci": [
+              13.40996277558477,
+              15.51147798748823
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 30,
+            "mae": 14.670154083390862,
+            "mae_ci": [
+              13.453498693620386,
+              15.784035747701713
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 30,
+            "mae": 14.340226240837916,
+            "mae_ci": [
+              13.172547866865058,
+              15.3657818659876
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 30,
+            "mae": 13.624976676224177,
+            "mae_ci": [
+              12.552011025944756,
+              14.58631779386084
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 24.312161869725166,
+            "mae_ci": [
+              22.084961349341715,
+              26.491873682843913
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 60,
+            "mae": 21.648139884599917,
+            "mae_ci": [
+              19.605854203224297,
+              23.590491631030137
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 23.001514873656024,
+            "mae_ci": [
+              21.329784317747336,
+              24.597794965354893
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 22.99386045563561,
+            "mae_ci": [
+              21.30846790281131,
+              24.57501551472793
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 22.939383230856542,
+            "mae_ci": [
+              21.25702779149327,
+              24.568057203527484
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 60,
+            "mae": 23.283707717523473,
+            "mae_ci": [
+              21.30573645164938,
+              25.237330898100566
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 60,
+            "mae": 22.4449717235497,
+            "mae_ci": [
+              20.575564503956347,
+              24.1779131411033
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 60,
+            "mae": 21.51642130988693,
+            "mae_ci": [
+              19.646049965030695,
+              23.248628329854142
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 35.34715871979099,
+            "mae_ci": [
+              31.21281515344842,
+              39.57381751786769
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 120,
+            "mae": 28.407953679954254,
+            "mae_ci": [
+              24.76150475095254,
+              31.917266038990665
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 30.976948739470554,
+            "mae_ci": [
+              28.08881473250258,
+              33.64687847078221
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 30.85835487133571,
+            "mae_ci": [
+              27.98110812454373,
+              33.50434064162793
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 30.678410318794963,
+            "mae_ci": [
+              27.765809506627583,
+              33.34019185135118
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 120,
+            "mae": 31.202604590809223,
+            "mae_ci": [
+              27.857000387328533,
+              34.38373528946507
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 120,
+            "mae": 29.480461488536385,
+            "mae_ci": [
+              26.448707126239665,
+              32.278790236488426
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 120,
+            "mae": 28.59426091980636,
+            "mae_ci": [
+              25.40468734655459,
+              31.509171712964903
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 0.7032935154035282,
+            "diff_mae_ci": [
+              0.16722712434914927,
+              1.204041718798337
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 1.3533749890561069,
+            "diff_mae_ci": [
+              0.46287703423130766,
+              2.301278154422713
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 2.5689950595163005,
+            "diff_mae_ci": [
+              0.8747465798706514,
+              4.138269612083022
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": -0.2055058294558556,
+            "diff_mae_ci": [
+              -0.5429588481894596,
+              0.06643001902094493
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": -0.13171857471298765,
+            "diff_mae_ci": [
+              -0.647948800376278,
+              0.4035085154674992
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 0.1863072398521055,
+            "diff_mae_ci": [
+              -0.796564506538609,
+              1.0924295028008633
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -1.4225100533623483,
+            "diff_mae_ci": [
+              -1.8480985197001643,
+              -0.9590434784054898
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -2.664021985125249,
+            "diff_mae_ci": [
+              -3.26722824769539,
+              -1.9753528747100568
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.939205039836736,
+            "diff_mae_ci": [
+              -8.4780219086441,
+              -5.294868138766863
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.71921653795882,
+            "diff_mae_ci": [
+              -1.4133720801844205,
+              0.05274449411834273
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.310646996069142,
+            "diff_mae_ci": [
+              -2.421667208009189,
+              -0.17075108079851392
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -4.3702099803204355,
+            "diff_mae_ci": [
+              -6.589146229900042,
+              -2.3855212146084788
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -1.6280158828182039,
+            "diff_mae_ci": [
+              -2.114307373596758,
+              -1.129054995573527
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -2.7957405598382365,
+            "diff_mae_ci": [
+              -3.5619502138183936,
+              -1.9704182076862273
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.7528977999846305,
+            "diff_mae_ci": [
+              -8.615076623194758,
+              -4.96422512459352
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.0092790013895101,
+            "diff_mae_ci": [
+              -0.04197246765248378,
+              0.017008486178673222
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.06213164279948202,
+            "diff_mae_ci": [
+              -0.17498780710464634,
+              0.017897793134441196
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -0.298538420675591,
+            "diff_mae_ci": [
+              -0.6074398470299767,
+              -0.0548128464867212
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.19354978024564495,
+            "diff_mae_ci": [
+              -0.3192786266842294,
+              -0.06757470312513973
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.5565431501063252,
+            "diff_mae_ci": [
+              -0.8773949329618492,
+              -0.23603334922205185
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -1.4964872509341696,
+            "diff_mae_ci": [
+              -2.0271817648185526,
+              -0.9966268648836634
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          }
+        ]
+      }
+    },
+    "shanghai_t2dm_to_cgmacros|cgm_tod_static": {
+      "n_source_patients": 100,
+      "n_target_patients": 45,
+      "all": {
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 13.198669396110542,
+            "mae_ci": [
+              12.32234656841862,
+              14.14230028418852
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 30,
+            "mae": 12.37784841414672,
+            "mae_ci": [
+              11.597384406341787,
+              13.19917423504347
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 13.627226535439979,
+            "mae_ci": [
+              12.866987892008874,
+              14.405061390589383
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 13.504429807971324,
+            "mae_ci": [
+              12.74429942903987,
+              14.2937942578395
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 13.366828184405499,
+            "mae_ci": [
+              12.619026851447902,
+              14.152399214164369
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 30,
+            "mae": 13.492622182315221,
+            "mae_ci": [
+              12.704387705086338,
+              14.322931370596036
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 30,
+            "mae": 13.169773672594436,
+            "mae_ci": [
+              12.408923741346204,
+              13.945120427065657
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 30,
+            "mae": 12.070091585055291,
+            "mae_ci": [
+              11.325154417328525,
+              12.824528875974677
+            ],
+            "n_patients": 45,
+            "n_rows": 29310
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 19.313973784181524,
+            "mae_ci": [
+              17.61136820661147,
+              21.219861842066347
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 60,
+            "mae": 17.769606832697832,
+            "mae_ci": [
+              16.31874062056669,
+              19.427900665247016
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 19.379698221602908,
+            "mae_ci": [
+              18.057450742173398,
+              20.881034366743105
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 19.015853863180283,
+            "mae_ci": [
+              17.70497121381734,
+              20.459327763028526
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 18.62104718736433,
+            "mae_ci": [
+              17.340287719939536,
+              20.01782861431571
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 60,
+            "mae": 18.998771907185265,
+            "mae_ci": [
+              17.638068852076312,
+              20.492177264092856
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 60,
+            "mae": 18.272227275702225,
+            "mae_ci": [
+              16.917536561277934,
+              19.696441401296987
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 60,
+            "mae": 17.123116776883617,
+            "mae_ci": [
+              15.71094478233727,
+              18.626086066028364
+            ],
+            "n_patients": 45,
+            "n_rows": 29219
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 26.47943506717189,
+            "mae_ci": [
+              23.648793368731738,
+              29.674950926538727
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 120,
+            "mae": 22.283844553462142,
+            "mae_ci": [
+              19.99906335915169,
+              24.80170036317213
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 24.95709488653931,
+            "mae_ci": [
+              22.770311079536413,
+              27.494645336196417
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 24.152235700703027,
+            "mae_ci": [
+              22.00422927283925,
+              26.639401185914654
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 23.30145961200816,
+            "mae_ci": [
+              21.24181755319198,
+              25.644187295576433
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 120,
+            "mae": 23.603846466783498,
+            "mae_ci": [
+              21.44888611255045,
+              26.04579670841035
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 120,
+            "mae": 22.30082406370765,
+            "mae_ci": [
+              20.245324999348895,
+              24.682092166413952
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 120,
+            "mae": 21.259908799491146,
+            "mae_ci": [
+              19.220648644846673,
+              23.62424113959694
+            ],
+            "n_patients": 45,
+            "n_rows": 29030
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": 1.2493781212932582,
+            "diff_mae_ci": [
+              0.7444548209832637,
+              1.6966320258960859
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": 1.6100913889050759,
+            "diff_mae_ci": [
+              0.682374427970008,
+              2.5074015707239052
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": 2.673250333077167,
+            "diff_mae_ci": [
+              1.1352425599366436,
+              4.137491262349556
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": -0.30775682909142965,
+            "diff_mae_ci": [
+              -0.514868388005226,
+              -0.13846920385176564
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": -0.6464900558142155,
+            "diff_mae_ci": [
+              -1.0786362990549172,
+              -0.2639367613868641
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": -1.0239357539709957,
+            "diff_mae_ci": [
+              -1.7922062054317833,
+              -0.3455875916483753
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.8208209819638217,
+            "diff_mae_ci": [
+              -1.1658746911111262,
+              -0.5176570551213971
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.544366951483692,
+            "diff_mae_ci": [
+              -2.2843429914377205,
+              -0.8628322305945437
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -4.19559051370975,
+            "diff_mae_ci": [
+              -5.758546146524424,
+              -2.7994911181166438
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": 0.4285571393294365,
+            "diff_mae_ci": [
+              -0.09397150944301164,
+              0.9252503691669839
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": 0.0657244374213839,
+            "diff_mae_ci": [
+              -0.8064695471861855,
+              0.8569301136185211
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -1.5223401806325825,
+            "diff_mae_ci": [
+              -2.9679849333695145,
+              -0.17438365446813064
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -1.1285778110552513,
+            "diff_mae_ci": [
+              -1.427821942030032,
+              -0.8671567758239542
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -2.1908570072979074,
+            "diff_mae_ci": [
+              -2.7146525031180513,
+              -1.720302164194825
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -5.219526267680745,
+            "diff_mae_ci": [
+              -6.476571485452849,
+              -4.071671597289487
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.26039835103448006,
+            "diff_mae_ci": [
+              -0.3795191399460314,
+              -0.16146436872667835
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.7586510342385786,
+            "diff_mae_ci": [
+              -1.0999882740535036,
+              -0.4778486507276726
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -1.65563527453115,
+            "diff_mae_ci": [
+              -2.214130776587588,
+              -1.159658004111864
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.45745286284554254,
+            "diff_mae_ci": [
+              -0.6475820667532314,
+              -0.276553229213013
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -1.1074709459006833,
+            "diff_mae_ci": [
+              -1.6060852673921782,
+              -0.6943176468594463
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -2.656270822831658,
+            "diff_mae_ci": [
+              -3.4673748496190258,
+              -1.9323089291643532
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 45
+          }
+        ]
+      },
+      "T2D only": {
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 15.252992559042381,
+            "mae_ci": [
+              14.050432707725916,
+              16.360329252742417
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 30,
+            "mae": 14.39163317401373,
+            "mae_ci": [
+              13.44067375342918,
+              15.181987989078271
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 14.356295536780852,
+            "mae_ci": [
+              13.172369991586734,
+              15.384349513522954
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 14.272773152196011,
+            "mae_ci": [
+              13.136459653109432,
+              15.26383763192664
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 14.200835945657563,
+            "mae_ci": [
+              13.093345688938797,
+              15.183578856665422
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 30,
+            "mae": 14.399540142215807,
+            "mae_ci": [
+              13.248797161304546,
+              15.439995544996446
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 30,
+            "mae": 14.108608890276308,
+            "mae_ci": [
+              12.974402136520302,
+              15.095971166844233
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 30,
+            "mae": 13.677071374681427,
+            "mae_ci": [
+              12.6746687966999,
+              14.577235197622063
+            ],
+            "n_patients": 14,
+            "n_rows": 9273
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 24.312161869725166,
+            "mae_ci": [
+              22.084961349341715,
+              26.491873682843913
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 60,
+            "mae": 22.896646617321423,
+            "mae_ci": [
+              21.189817126830935,
+              24.389579107389068
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 22.213031122634835,
+            "mae_ci": [
+              20.202229583873784,
+              24.04246645994612
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 21.976951531394334,
+            "mae_ci": [
+              20.09492823688715,
+              23.72299930694552
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 21.75541400937096,
+            "mae_ci": [
+              19.90453389097175,
+              23.446688755481436
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 60,
+            "mae": 22.209963905407736,
+            "mae_ci": [
+              20.092332562578168,
+              24.32186224188873
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 60,
+            "mae": 21.595370244226903,
+            "mae_ci": [
+              19.679976195384132,
+              23.451105104912408
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 60,
+            "mae": 21.449193344468142,
+            "mae_ci": [
+              19.645827460113367,
+              23.09197722186964
+            ],
+            "n_patients": 14,
+            "n_rows": 9242
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 35.34715871979099,
+            "mae_ci": [
+              31.21281515344842,
+              39.57381751786769
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "in_cohort",
+            "horizon_min": 120,
+            "mae": 30.668368339563546,
+            "mae_ci": [
+              27.48265639805374,
+              33.29019046796618
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 30.597842243288476,
+            "mae_ci": [
+              27.199835570874388,
+              33.829283848461124
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 29.966412539478917,
+            "mae_ci": [
+              26.67125626703563,
+              33.08075895936551
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 29.378097484517248,
+            "mae_ci": [
+              26.17030568288122,
+              32.49178848077938
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_ridge1",
+            "horizon_min": 120,
+            "mae": 29.70731382475167,
+            "mae_ci": [
+              26.236441642968153,
+              33.052833319538465
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "zeroshot_ridge3",
+            "horizon_min": 120,
+            "mae": 28.53820878786158,
+            "mae_ci": [
+              25.399775197682512,
+              31.64810824923555
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          },
+          {
+            "model": "pooled",
+            "horizon_min": 120,
+            "mae": 28.490918152489595,
+            "mae_ci": [
+              25.308304892396972,
+              31.212054996362383
+            ],
+            "n_patients": 14,
+            "n_rows": 9186
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": -0.035337637232878194,
+            "diff_mae_ci": [
+              -0.7994238329975212,
+              0.6404124929886501
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": -0.6836154946865882,
+            "diff_mae_ci": [
+              -2.1768026988032303,
+              0.701585027306808
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": -0.07052609627507067,
+            "diff_mae_ci": [
+              -2.699517827514124,
+              2.5133681564936188
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 30,
+            "diff_mae": -0.7145617993323032,
+            "diff_mae_ci": [
+              -1.2270219358196988,
+              -0.2872790475067365
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 60,
+            "diff_mae": -1.4474532728532807,
+            "diff_mae_ci": [
+              -2.522441319426031,
+              -0.5364897847025585
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "in_cohort",
+            "horizon_min": 120,
+            "diff_mae": -2.1774501870739513,
+            "diff_mae_ci": [
+              -3.884958530141403,
+              -0.5116573647853327
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.861359385028651,
+            "diff_mae_ci": [
+              -1.6261123634723829,
+              -0.035245324288267155
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.4155152524037433,
+            "diff_mae_ci": [
+              -2.9138416146152175,
+              0.20936587392033593
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 14
+          },
+          {
+            "model_1": "in_cohort",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -4.6787903802274435,
+            "diff_mae_ci": [
+              -8.027001090490735,
+              -1.33573324265524
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.8966970222615291,
+            "diff_mae_ci": [
+              -1.6237094483539039,
+              -0.11383782543279422
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -2.0991307470903315,
+            "diff_mae_ci": [
+              -3.103863108414609,
+              -0.9451937252183891
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -4.749316476502514,
+            "diff_mae_ci": [
+              -6.580161381016168,
+              -3.0032196784784904
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -1.5759211843609542,
+            "diff_mae_ci": [
+              -2.1287025514859934,
+              -0.9780867861686026
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -2.862968525257024,
+            "diff_mae_ci": [
+              -3.6642195233675343,
+              -2.0456483533234815
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "pooled",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -6.856240567301395,
+            "diff_mae_ci": [
+              -8.956560507070668,
+              -4.849091412247179
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.15545959112328944,
+            "diff_mae_ci": [
+              -0.30901485734459067,
+              -0.05601459900323494
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.45761711326387555,
+            "diff_mae_ci": [
+              -0.8475306874286135,
+              -0.18726164117552227
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -1.2197447587712276,
+            "diff_mae_ci": [
+              -1.8555109093236586,
+              -0.652936478190979
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.24768664650454397,
+            "diff_mae_ci": [
+              -0.44324515088953,
+              -0.08340929893709434
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.617660878407932,
+            "diff_mae_ci": [
+              -1.0969603491140587,
+              -0.17688628469748247
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          },
+          {
+            "model_1": "zeroshot_ridge3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -2.0596334554268942,
+            "diff_mae_ci": [
+              -2.8117546679472643,
+              -1.2657948907931567
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 14
+          }
+        ]
+      }
+    }
+  }
+}
