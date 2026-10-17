@@ -103,9 +103,19 @@ Where a result is negative or neutral, it is reported as found.
 
 ### 9.2 Adverse events and alarms
 
-- **Hyperglycaemia at +60 min:** AUROC 0.83 (> 180) and 0.78 (> 140) on CGMacros; 0.90 (> 180),
-  0.85 (> 140) and 0.90 (< 70) on Shanghai T2DM. Calibration error is at most 0.014 after
-  recalibration.
+- **Event discrimination (AUROC, 95 % CI) by how far ahead.** Two hours ahead, the competition's
+  example, the model still ranks risk well but less sharply than at 30 minutes:
+
+| Event | Cohort | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| Glucose above 180 | CGMacros | 0.90 | 0.83 | 0.76 [0.71, 0.81] |
+| Glucose above 180 | Shanghai T2DM | 0.96 | 0.90 | 0.82 [0.80, 0.85] |
+| Glucose above 140 | CGMacros | 0.86 | 0.78 | 0.72 [0.67, 0.76] |
+| Glucose above 140 | Shanghai T2DM | 0.92 | 0.85 | 0.80 [0.78, 0.83] |
+| Glucose below 70 | CGMacros (8 patients with events) | 0.95 | 0.88 | 0.78 [0.67, 0.87] |
+| Glucose below 70 | Shanghai T2DM | 0.97 | 0.90 | 0.81 [0.76, 0.85] |
+
+  Calibration error at +60 is at most 0.014 after recalibration.
 - **Alarms at about one false alarm per day:** the model beats a "current value" and a trend
   alert for hyperglycaemia (Shanghai > 180: 71 % sensitivity vs 59 % and 67 %). For
   hypoglycaemia on Shanghai a simple alert is better, and we say so.
