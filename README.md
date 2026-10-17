@@ -1,233 +1,243 @@
 # GlucoTwin
 
-A patient-specific **digital twin for glucose management** in Type 2 Diabetes / prediabetes,
-built for **clinicians** (Happiest Health Digital Twin Challenge 2026).
+**A clinician-facing digital twin for glucose management in Type 2 Diabetes.**
+Happiest Health Digital Twin Challenge 2026.
 
-> **Research prototype — not a medical device.** Outputs are decision support only; they are
-> not a diagnosis and do not prescribe treatment.
+> **Research prototype, not a medical device.** Outputs are decision support for a clinician.
+> They are not a diagnosis and do not prescribe treatment. Open data and clearly labelled
+> synthetic data only; no patient data is stored in this repository.
 
-GlucoTwin fuses static clinical data (the *prior*) with dynamic CGM + wearable + meal streams
-(the *evidence*) to forecast glucose at +30/+60/+120 min with calibrated uncertainty, fast
-per-patient personalization, a mechanistic+ML hybrid twin, and physiologically valid what-if
-simulation.
+## 1. Team details
 
-## Status
-See [docs/PROGRESS.md](docs/PROGRESS.md). Design choices: [docs/DECISIONS.md](docs/DECISIONS.md).
-Project rules: [docs/RULES.md](docs/RULES.md).
-
-## Part 4 results: mechanistic twin (honest summary)
-Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-031 to D-037.
-CGMacros: 45 patients, identical test windows from day 3 on. MAE in mg/dL at +30 / +60 / +120 min,
-k = 3 days of the patient's own data:
-
-| model | +30 | +60 | +120 |
-|---|---|---|---|
-| mechanistic twin | 12.7 | 18.1 | 23.2 |
-| per-patient AR (same 3 days) | 12.2 | 17.4 | 21.5 |
-| LightGBM (none of the patient's own days) | 11.4 | 16.6 | 20.8 |
-| persistence | 13.2 | 19.4 | 26.6 |
-
-- **The twin alone is not a competitive forecaster.** It beats persistence at +60/+120, is no
-  better than AR, and is worse than LightGBM at every horizon. The Shanghai T2DM cohort shows the
-  same pattern.
-- **Static clinical data help only without the patient's own data:** at k = 0 the static prior
-  improves MAE by 1.4 / 2.6 / 3.6; with 1 or more days its effect is 0.3 mg/dL or less.
-- **Activity has no measurable effect** in this model: MAE changes by 0.12 mg/dL or less.
-- **Only Gb (basal glucose) is stable per patient.** SG, SI, fc, kabs and beta are not
-  reproducible between two 3-day windows (test-retest r 0.14–0.24) and must not be shown to
-  clinicians as patient characteristics. SG sits at its lower bound in about 40–50% of fits.
-- The simulator and what-if outputs are SYNTHETIC illustrations, not forecasts.
-
-## Part 5 results: hybrid twin and fast personalization (honest summary)
-Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-038 to D-044.
-`make hybrid`, `make personalize`.
-
-**Hybrid twin (CGMacros, 45 patients, same Part 4 windows; MAE mg/dL at +30 / +60 / +120):**
-
-| model (k = 3 days) | overall | onset (rising past 140) |
-|---|---|---|
-| A0: LightGBM, CGM + meals + glycemic static | 11.4 / 16.8 / 21.1 | 19.5 / 24.0 / 24.7 |
-| A: A0 + causal twin features | 11.2 / 16.2 / 20.2 | 19.0 / 23.9 / 25.0 |
-| B: LightGBM on the twin's residual | 11.5 / 16.6 / 20.7 | 19.0 / 24.3 / 25.0 |
-| C: physics-informed GRU (5 seeds) | 11.5 / 16.3 / 20.8 | 21.6 / 27.0 / 28.0 |
-| twin alone | 12.7 / 18.1 / 23.2 | 23.9 / 29.6 / 31.8 |
-
-- **The twin adds a small amount beyond A0 once it has 3 days of data:**
-  - A − A0 = −0.18 / −0.55 / −0.85 mg/dL. Only +60 has a CI excluding 0; post-meal is −0.41 / −0.75.
-  - At k = 0 the gain is −0.21 mg/dL at +30 only. At k = 1 there is no gain.
-  - Activity features contribute about 0.1 mg/dL.
-  - It does not help onset windows.
-- **Hybrid B (residual) and C (physics loss) do not help.**
-  - B is never better than A0 overall, and is worse at k = 1.
-  - C is no better than A0 overall, and is 2–3 mg/dL worse on onsets.
-  - The physics term was chosen in only 2 of 5 folds, and only at its smallest weight.
-  - With λ = 0, C is equally good overall, so the physics loss itself adds nothing.
-- **Neural onset-weighted loss:** a trade-off, not a fix.
-  - The Part 3 GRU's onset MAE improves by 3–12 mg/dL in both cohorts.
-  - Overall MAE gets worse by 1–5 mg/dL.
-
-**Personalization (both cohorts; common test region day ≥ 7; 44 CGMacros / 71 Shanghai patients):**
-- **No static head start for the ML models:**
-  - At k = 0, adding static features changes +60 MAE by −0.13 (CGMacros) and −0.23 (Shanghai) mg/dL.
-  - Both CIs include 0, and the sign is "slightly worse with static".
-  - The crossover is therefore trivial (k\* = 0). There is no static advantage to overtake.
-- **The static prior helps only the mechanistic twin at k = 0** (CGMacros: +1.2 / +2.2 / +2.6
-  mg/dL head start). Its patient data overtake it at about 2 days (k\* 1.6–2.3 d).
-  - But the twin is 3–5 mg/dL worse than LightGBM at every k.
-- **Patient data do help, modestly:**
-  - LightGBM fine-tuning on the patient's own days improves +60 MAE by 0.3 / 0.9 / 1.3 mg/dL at
-    k = 1 / 3 / 5 (CGMacros, with static) and by 0.2 / 0.4 / 0.8 on Shanghai.
-  - At k = 3, 30 of 44 CGMacros patients improve.
-  - Continuous RLS correction (it keeps learning from every past reading) gives −0.7 to −1.1 mg/dL.
-  - Per-patient models from scratch are worse than the population model at every k.
-  - **Caveat on the online-learner (RLS) rows (D-043):** the RLS design was revised after
-    smoke runs printed MAE for fold 0's TEST patients. Hyperparameters are still chosen on
-    training patients only, but those test patients influenced the design.
-    - Re-evaluated without fold 0's test patients (36 CGMacros / 56 Shanghai; saved predictions,
-      no re-run; `personalize_excl_fold0.json`), +60 min, with static, vs no adaptation:
-      - continuous RLS: −0.84 [−1.20, −0.54] vs −1.13 with all patients (CGMacros);
-        −0.76 [−1.06, −0.47] vs −0.88 (Shanghai);
-      - frozen RLS at k = 3: −0.65 [−1.14, −0.20] vs −0.88 (CGMacros); −0.40 vs −0.43 (Shanghai);
-      - fine-tuning (not affected by the redesign) at k = 3: −0.69 vs −0.89 (CGMacros).
-    - The direction and significance hold; magnitudes are about 0.1–0.3 mg/dL smaller.
-- **The twin does not make personalization better:** hybrid − LightGBM after adaptation is within
-  ±0.5 mg/dL on CGMacros. On Shanghai the hybrid is 0.2–0.5 mg/dL better without adaptation.
-- **What the data do and do not support:**
-  - "The wearable stream keeps it current" is supported in the narrow sense that the patient's
-    own CGM history improves the model by about 1 mg/dL over days.
-  - "The clinical profile gives it a head start" is NOT supported for the ML models in these two
-    cohorts.
-
-## Part 6 results: uncertainty, alarms, robustness (honest summary)
-Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-045 to D-049. `make uncertainty`.
-Design A (headline: CV repeat 0, 44 CGMacros / 71 Shanghai test patients) and design B
-(confirmatory holdout: 9 / 14 test patients). B was never used for any choice.
-
-- **Interval coverage (80 % target, +60 min, population model, design A):**
-  - split conformal 80.8 % (CGMacros) / 79.5 % (Shanghai);
-  - CV+ 81.3 % / 81.2 %;
-  - CQR 80.8 % / 77.0 %. CQR undercovers on Shanghai at +60 and +120 (design A CI below
-    80 %).
-    - Design B points the same way (75–77 %), but its CI excludes 80 % only for the
-      personalized model.
-  - Median 80 % width is about 50 mg/dL at +60 min.
-- **Coverage is not equal across groups.** On CGMacros at +60 min, split conformal covers
-  87 % of healthy rows but only 73 % of T2D rows (CV+ 87 % / 73 %). Pooled coverage hides this.
-  On Shanghai, up to 17 % of patients (CQR; 4–8 % for split conformal / CV+) sit more than
-  10 points below target at +60.
-- **ACI is not informative here (D-049):** it reaches near-exact coverage only because 7–64 %
-  of its intervals are infinite. Do not use it as reported.
-- **Event probabilities:** AUROC 0.83 / 0.78 (CGMacros hyper > 180 / > 140, +60) and 0.90 / 0.85 /
-  0.90 (Shanghai > 180 / > 140 / < 70). After isotonic recalibration on training patients,
-  ECE is ≤ 0.014. CGMacros hypoglycemia (< 70) is limited evidence: only 8 patients have events.
-- **Alarms (60-min ahead, about 1 false alarm/day, design A):**
-  - Hyperglycemia: the model alert beats the naive "current value" and trend alerts.
-    - CGMacros > 140: sensitivity 37 % vs 16 % / 8 %.
-    - Shanghai > 180: 71 % vs 59 % / 67 %.
-    - Its median lead time is 15–30 min.
-  - **Hypoglycemia on Shanghai: the simple naive alert is better** (84 % vs 70 % sensitivity
-    at about 1 FA/day).
-  - Decision curves are positive for hyperglycemia at thresholds 5–40 %. For hypoglycemia, net
-    benefit is about 0 for every system.
-- **Selective prediction:** ranking by CQR width cuts the MAE-coverage area by 16–23 % vs
-  random. A data-quality score alone gives −1 to +3 %.
-- **Robustness (+60 min, faults after day 7):** sensor bias and drift are the main risk.
-  - A +20 mg/dL bias drops 80 % coverage to 65 % / 63 %. A 20 mg/dL/day drift drops it
-    to 46 % / 26 %.
-  - Gaps, dropout and compression degrade more gracefully: +0.2 to +4.4 mg/dL MAE and
-    ≤ 9 coverage points at the worst level.
-  - The data-quality score does not detect bias or drift (its mean stays at 0.97–0.99), and
-    its correlation with error is weak (Spearman 0.02–0.09; CGMacros CIs include 0). It flags
-    missing data, not wrong data.
-- **Item 2, patient level (next-day time above 180 / time in range):**
-  - Day-1 CGM beats static labs by 3.4–7.9 percentage points (CIs exclude 0).
-  - Adding static labs to day-1 CGM changes nothing (−0.2 to +0.3 points, CIs include 0).
-- **Disclosure:** a robustness bug was found after the first final scoring by a consistency
-  check, not by test metrics. The test windows were scored a second time; the interval / event /
-  alarm outputs were bit-identical (D-049).
-
-## Part 7 results: counterfactual what-if engine (honest summary)
-Full tables: [docs/RESULTS.md](docs/RESULTS.md); decisions D-050 to D-055. `make whatif`.
-What-ifs are **model-based associations, not causal guarantees**. Bands are observational
-(conformal for the ML models, filter variance for the twin), with no counterfactual coverage
-guarantee. CGMacros only: Shanghai has no meal macros. The final stage ran once (no forced
-re-run); 43 test patients for the plausibility suite, 87 within-patient breakfast pairs.
-
-| Effect | Learned from data or assumed? |
+| | |
 |---|---|
-| Carbs / protein / fat / fiber / timing (ML) | learned (population A0 LightGBM) |
-| Carbs / timing (twin) | learned (per-patient twin, first 3 days) |
-| Post-meal walk, ML | learned (`act_post_meal`); ML only sees a walk once it has happened |
-| Post-meal walk, `twin_learned` | learned Part 4 activity effect (effectively 0) |
-| Post-meal walk, `twin_assumed` | **ASSUMED**: 20 % lower 3-h iAUC (literature-bounded, D-052) |
-| India meal presets | **ASSUMED** recipes; macros from IFCT 2017; out of distribution |
+| Team leader | Jahnavi Harsha |
+| Team name | **[TEAM NAME: fill in]** |
+| Team members | Solo submission |
 
-- **Engine checks pass:** zero edits reproduce the stored forecasts exactly; edits never change
-  any forecast or filter state before the edited meal (100 % of about 2,500 checks per model).
-- **Carbs do not reliably raise the unconstrained model's forecast:** the peak rises across the
-  0 to 120 g carb grid in only 25 % of test windows (75 % within 2 mg/dL). The monotone model
-  passes by construction and costs nothing in accuracy (test MAE difference -0.16 to +0.16 mg/dL,
-  CIs include 0). The twin passes 98 %.
-- **Both ML models under-estimate the carb effect:** median 0.20 to 0.22 mg/dL per g of carbs,
-  below the pre-registered 0.3 to 1.3 (Franc et al. 2010). This test **failed**. The twin passes
-  (0.33). On matched breakfasts, the ML models predict about half of the observed peak difference
-  (mono: predicted 18 vs observed 39 mg/dL). The sign is right in 91 % of pairs, but the
-  correlation is weak (r = 0.39 to 0.41).
-- **Walk direction:** the learned ML model lowers or keeps the forecast in 69 % of post-meal
-  windows. The twin's direction pass (67 to 69 %) is limited by its structure: when glucose
-  is already below basal, the activity term pulls it up.
-- **Owner decisions (D-056):** `mono` is the default what-if model. Sizes are NOT rescaled; the
-  app shows direction and ranking with the fixed note *"Model-based estimate. In matched real
-  breakfasts the models predicted about half the observed rise; treat sizes as lower bounds."*,
-  and the twin's magnitude alongside, labelled.
+## 2. College / incubator
 
-**Part 7 limitations**
-- **Dose-response test failed (pre-registered).** Both ML models give 0.20-0.22 mg/dL per g of
-  carbs, below the pre-registered 0.3-1.3.
-- **Carb effects are understated by about half.** On matched real breakfasts the models predicted
-  about half the observed rise (e.g. 18 vs 39 mg/dL at the peak). Treat sizes as lower bounds.
-- **Twin walk issue and its fix (POST-HOC, D-056, not pre-registered).** The original twin
-  activity term pulled glucose towards basal from both sides, so a walk raised predicted glucose
-  when glucose was below basal (walk direction pass 67-69 %). The fixed term only adds uptake
-  above basal: pass 100 % on the same training and test windows (post-hoc; the test run is
-  forced re-run 1 of the locked final stage). An indirect effect remains: lower glucose lowers
-  the insulin surrogate, so the trajectory 3-4 h later can sit slightly higher (< 1 mg/dL in
-  synthetic checks).
-- **Parts 4/5 after the fix:** Part 5 and Part 6 (activity strength 0) and the Part 4 `actoff`
-  twin are bitwise unchanged. The Part 4 `acton` twin is NOT unchanged: re-selected on training
-  patients, its activity strength moves off the grid bottom and +60 MAE changes by -0.9 to
-  +0.1 mg/dL (k3: 18.11 -> 18.20). Stored Part 4 results are kept; see D-056.
-- Walks enter the ML models only once they have happened; only the twin plays a planned walk
-  forward. Shanghai has no meal what-ifs.
+Indian Institute of Technology Guwahati. Incubator: **[name, or "none"]**.
 
-## Quick start (Windows, PowerShell)
+## 3. Project title
+
+**GlucoTwin: a patient-specific glucose digital twin that fuses the electronic health record with
+CGM and wearable streams, forecasts glucose and adverse events, and answers "what if" questions.**
+
+## 4. Problem statement
+
+Type 2 Diabetes is managed between visits that are weeks or months apart. A clinician sees a
+HbA1c and a few lab values, while the patient generates thousands of glucose readings, meals and
+activity signals that nobody has time to read. India has one of the largest T2D populations in
+the world, a small number of diabetologists per patient, and very little tooling built for
+Indian diets.
+
+## 5. Healthcare use case
+
+A diabetologist opens one patient and sees, in one screen:
+
+1. **Where glucose is going.** A 30/60/120-minute forecast with an honest 80 % band, and the
+   probability of crossing 180 mg/dL (hyperglycaemia) or dropping below 70 mg/dL.
+2. **How the last two weeks went.** The standard Ambulatory Glucose Profile, time in range and
+   Glucose Management Indicator, following the 2019 international consensus.
+3. **What would change it.** A what-if lab (meal size, carbohydrate, timing, a post-meal walk,
+   Indian meal presets), always labelled as a model-based estimate.
+4. **How much to trust it.** Data quality, how much of the patient's own history the model has
+   seen, and which inputs mattered.
+
+The clinician stays the decision maker. The tool never recommends a dose or a drug.
+
+## 6. Technical stack
+
+Python 3.11, NumPy, pandas, LightGBM, scikit-learn, SHAP, PyTorch (GRU baseline, CPU),
+Streamlit and Plotly (dashboard), pytest, ruff, black, GitHub Actions, Docker.
+Everything runs on a laptop CPU.
+
+## 7. AI / ML model and framework
+
+| Layer | What it is |
+|---|---|
+| Fusion forecaster | LightGBM on causal features: recent CGM, time of day, meals, heart rate and activity, and static EHR (age, BMI, HbA1c, fasting glucose, ...). Targets are the change from the current value. |
+| Mechanistic twin | A minimal glucose-insulin ODE fitted per patient (RK4 integration, extended Kalman filter for the state). It is used for what-if simulation and as a feature source. |
+| Personalisation | The population model plus fine-tuning or a recursive-least-squares correction on the patient's own days. |
+| Uncertainty | Split-conformal and CV+ intervals (80 % target), Platt/isotonic calibration of event probabilities. |
+| What-if engine | Counterfactual edits to meals and activity, played through a monotone-in-carbohydrate LightGBM and through the twin. |
+| Federated simulation | NumPy MLP trained with FedAvg / FedProx across simulated clinics. |
+
+Design choices and every decision taken are in [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## 8. Data
+
+Only open or synthetic data. Nothing is committed to this repository; scripts under `data/` fetch
+the open datasets, and checksums are verified.
+
+| Data | Use | Licence |
+|---|---|---|
+| CGMacros (PhysioNet): 45 adults, CGM, Fitbit heart rate and activity, meal macros, labs | Main development cohort | CC BY-NC-SA 4.0 |
+| Shanghai T1DM/T2DM (figshare): 100 T2DM patients, CGM, meals, labs | Second cohort, transfer | CC BY 4.0 |
+| Synthetic Indian cohort (this repo's simulator) | Stress test, wearable detectability, demo | Generated; labelled **SIMULATED** everywhere |
+
+The data card is [docs/data_card.md](docs/data_card.md).
+
+## 9. Key results (all numbers come from `reports/metrics/*.json`)
+
+MAE in mg/dL at +60 min, 95 % patient-bootstrap intervals in brackets. All splits are by patient.
+Where a result is negative or neutral, it is reported as found.
+
+### 9.1 Forecasting and fusion (CGMacros, 45 patients)
+
+| Model | +30 | +60 | +120 |
+|---|---|---|---|
+| Persistence (last value) | 13.4 | 19.5 | 26.9 |
+| Per-patient autoregression | 12.2 | 17.4 | 21.8 |
+| LightGBM, CGM only | 12.3 | 17.7 | 22.0 |
+| LightGBM, CGM + wearable + meals | **11.6** | **16.8** | **21.2** |
+
+- **Meals are the signal that matters.** Adding meals to CGM and wearable data lowers MAE by
+  0.93 mg/dL at +60 (CI −1.18 to −0.67); in the 3 hours after a meal by 1.57.
+- **Wearable heart rate and activity add almost nothing on their own** (+0.04 at +60, CI
+  includes 0). We report this rather than hide it. Section 9.5 tests whether sleep, HRV and
+  steps would be detectable.
+- **Static EHR helps only when the patient has no history.** With 3 days of the patient's own
+  data its effect is 0.3 mg/dL or less.
+
+### 9.2 Adverse events and alarms
+
+- **Hyperglycaemia at +60 min:** AUROC 0.83 (> 180) and 0.78 (> 140) on CGMacros; 0.90 (> 180),
+  0.85 (> 140) and 0.90 (< 70) on Shanghai T2DM. Calibration error is at most 0.014 after
+  recalibration.
+- **Alarms at about one false alarm per day:** the model beats a "current value" and a trend
+  alert for hyperglycaemia (Shanghai > 180: 71 % sensitivity vs 59 % and 67 %). For
+  hypoglycaemia on Shanghai a simple alert is better, and we say so.
+- **Intervals:** 80 % bands cover 80.8 % (CGMacros) and 79.5 % (Shanghai) at +60 min. Coverage is
+  lower for T2D rows (73 %) than healthy rows (87 %), which the dashboard does not hide.
+- **Sensor bias and drift are the main risk**: a +20 mg/dL bias drops 80 % coverage to about 65 %,
+  and the data-quality score does not detect it. This is stated on the Data quality page.
+
+### 9.3 What-if engine
+
+Model-based associations, not causal guarantees. The carbohydrate effect is under-estimated by
+about half on matched real breakfasts (predicted 18 vs observed 39 mg/dL), so sizes are shown as
+lower bounds. A pre-registered dose-response test **failed** and is reported
+([docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md)).
+
+### 9.4 India readiness (Part 8, honest)
+
+**(a) Does a model trained on one population work on another? Not for free.**
+Cross-cohort transfer on a shared 15-minute grid, MAE at +60:
+
+| Direction | Persistence | Zero-shot | Trained in-cohort | Pooled |
+|---|---|---|---|---|
+| CGMacros → Shanghai T2DM | 19.50 | 19.37 | 15.95 | 15.98 |
+| Shanghai T2DM → CGMacros | 19.31 | 20.08 | 17.49 | 17.85 |
+
+A model trained elsewhere is 3.4 mg/dL worse than one trained on the target population
+(CI 2.9 to 4.0) and no better than persistence. Pooling the data recovers the loss. A few days of
+the new patient's data close part of the gap (ridge calibration with 3 days: −0.83, CI −1.19 to
+−0.50). **The lesson for India: the model must be trained or at least calibrated on Indian
+patients; a foreign model should not be deployed unchanged.**
+
+**(b) Synthetic Indian cohort (SIMULATED).** 100 virtual patients per setting, 10 days, 16 Indian
+meal presets (carbohydrate from IFCT 2017), insulin sensitivity lowered by 0.46 log units
+(JCEM 2001 clamp data). Zero-shot models trained on the real cohorts, MAE at +60:
+
+| Insulin-resistance strength | Persistence | Zero-shot | With 3-day calibration |
+|---|---|---|---|
+| none (control) | 15.40 | 15.21 | 14.35 |
+| mild | 16.57 | 17.04 | 15.87 |
+| moderate | 16.81 | 16.86 | 15.68 |
+| strong | 18.58 | 17.05 | 16.17 |
+
+Without calibration the model is not reliably better than persistence on a shifted population;
+with 3 days of calibration it is (−0.7 to −2.4, CIs mostly exclude 0). **Adding synthetic patients
+to training never helped** (+0.25 to +0.35 mg/dL, i.e. slightly worse), so the synthetic cohort is
+used to stress-test and demonstrate, not to train.
+
+**(c) Federated learning (SIMULATED clinics).** Open-cohort patients are grouped into clinics;
+raw records never leave a clinic and only model updates are shared. MAE at +60:
+
+| Layout | Persistence | Local only | Pooled (central) | FedAvg |
+|---|---|---|---|---|
+| 5 similar clinics | 19.97 | 19.54 | 17.10 | 17.19 |
+| 5 clinics split by HbA1c | 19.14 | 19.19 | 16.90 | 17.03 |
+| 2 cohorts as 2 sites | 19.77 | 17.81 | 17.83 | 17.64 |
+
+FedAvg matches pooled training (difference 0.09 to 0.12, CIs include 0) and beats a clinic alone by
+about 2 mg/dL when clinics are small. **Formal differential privacy is not claimed.** An
+exploratory sweep (D-063a) shows that with only a handful of clinics, adding enough noise for a
+meaningful guarantee (ε ≈ 50 to 650) makes the model as bad as or far worse than persistence;
+accuracy survives only at ε above 23,000, which is no guarantee. The honest claim is data
+minimisation: records stay at the clinic. Patient-level DP-SGD and secure aggregation are
+future work.
+
+### 9.5 Sleep, HRV and step count
+
+The competition names these signals, but CGMacros contains no sleep or HRV. We therefore tested,
+on a simulated cohort where sleep affects insulin sensitivity by construction, whether such
+signals would be detectable at all, with a false-positive control (multiplier 0).
+**[SLEEP RESULT: fill from reports/metrics/india_sleep_power.json after the run]**
+
+## 10. Dashboard
+
+`make app` starts a Streamlit dashboard in Happiest Health purple, with ten pages: Overview,
+Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state, Personalization,
+Input tiers, Data quality, Evidence and a PDF export. A units switch shows mg/dL or mmol/L. Every
+page carries the decision-support disclaimer.
+
+## 11. Demo video
+
+**[VIDEO LINK: unlisted YouTube or recorded slides]**
+
+## 12. Open-source licence
+
+Code: MIT ([LICENSE](LICENSE)). Datasets keep their own licences (section 8).
+
+## 13. Architecture diagram
+
+**[LINK: docs/architecture.pdf]**
+
+## 14. Presentation
+
+**[LINK: docs/GlucoTwin_presentation.pdf]**
+
+## 15. Limitations and responsible AI
+
+- 45 + 100 real patients: small cohorts, adults, two countries, none in India.
+- The India, wearable-sleep and federated results are **simulations**; they test design, not clinical
+  performance.
+- The what-if carbohydrate effect is under-estimated; magnitudes are lower bounds.
+- Sensor bias and drift are not detected by the quality score.
+- Hypoglycaemia evidence is thin (8 CGMacros patients with events).
+- Not validated prospectively; not a medical device. Decision support only.
+- Data handling is mapped to India's DPDP Act in [docs/limitations.md](docs/limitations.md).
+- More: [docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md) (Parts 4 to 7), [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## 16. Reproduce
+
 ```powershell
 py -3.11 -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
-make test      # unit tests
-make lint      # ruff + black --check
-make smoke     # tiny synthetic end-to-end check
+make test        # 212 unit tests
+make smoke       # tiny end-to-end check
+make app-data    # build the dashboard bundle (needs the open datasets, see data/)
+make app         # open the dashboard
 ```
-Linux/macOS: same, using `python3.11 -m venv .venv && . .venv/bin/activate`, then `make ... PY=python`.
 
-## Make targets
-`make all | data | features | models | figures | app | test | lint | smoke`
+Linux/macOS: `python3.11 -m venv .venv && . .venv/bin/activate`, then `make ... PY=python`.
+A `Dockerfile` is provided for the test and experiment environment.
 
-## Data
-No raw data is redistributed in this repository. Download scripts / instructions live under
-`data/` (added in Part 1 Step B). All splits are by patient; see `src/data/splits.py`.
+Make targets for each experiment: `fusion`, `mech`, `hybrid`, `personalize`, `uncertainty`,
+`whatif`, `transfer`, `india`, `federated`, `federated-privacy`, `sleep-power`.
 
 ## Repository layout
-```
-configs/   YAML config (seed, paths, thresholds, splits)
-data/      raw/ interim/ processed/ (gitignored) + download instructions
-src/       data features models mech hybrid personalize uncertainty whatif
-           robustness federated transfer india explain eval utils
-app/       Streamlit dashboard (later)
-reports/   metrics/*.json, figures/*.png
-docs/      RULES, PROGRESS, DECISIONS, data card
-tests/     pytest suite (toy synthetic fixtures)
-```
 
-## License
-Code: MIT (see `LICENSE`). Datasets remain under their own licenses.
+```
+configs/   YAML config (seed, thresholds, experiments)
+data/      download scripts and instructions (raw data is never committed)
+src/       data features models mech hybrid personalize uncertainty whatif
+           robustness federated transfer india dash eval utils
+app/       Streamlit dashboard
+reports/   metrics/*.json (every number above), figures/*.png
+docs/      DECISIONS, RESULTS, RESULTS_SUMMARY, PROGRESS, data card
+tests/     pytest suite
+```
