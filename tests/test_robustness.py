@@ -127,7 +127,8 @@ def test_dq_score_is_causal_and_drops_with_gaps():
 def test_calibration_patients_never_in_fit_sets(design: str):
     from pathlib import Path
 
-    if not (Path(__file__).resolve().parents[1] / "data" / "processed" / "splits" / "cgmacros_cv.csv").exists():
+    splits = Path(__file__).resolve().parents[1] / "data" / "processed" / "splits"
+    if not (splits / "cgmacros_cv.csv").exists():
         pytest.skip("split files not built (run `make data`)")
     for cohort in ("cgmacros", "shanghai_t2dm"):
         for d, c, f, tr, te in jobs([design], [cohort], UC):
