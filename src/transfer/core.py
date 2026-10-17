@@ -35,7 +35,9 @@ def feature_sets(
         if c not in shared:
             raise ValueError(f"column {c} is missing in one of the cohorts' tables")
     parts = {"cgm": cgm, "tod": tod, "static": static}
-    return {n: [c for g in groups for c in parts[g]] for n, groups in cfg["feature_sets"].items()}, dropped
+    return {
+        n: [c for g in groups for c in parts[g]] for n, groups in cfg["feature_sets"].items()
+    }, dropped
 
 
 def first_period(tab: pd.DataFrame) -> pd.DataFrame:

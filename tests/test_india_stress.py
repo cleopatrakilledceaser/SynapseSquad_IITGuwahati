@@ -10,7 +10,10 @@ from src.india import cohort as ic
 from src.india import stress
 from src.utils.config import PROJECT_ROOT, load_config
 
-SCFG = {"feature_groups": ["cgm", "tod", "wearable", "meals", "static"], "static": ["age_years", "bmi"]}
+SCFG = {
+    "feature_groups": ["cgm", "tod", "wearable", "meals", "static"],
+    "static": ["age_years", "bmi"],
+}
 
 
 def test_feature_columns_shared_only_and_no_targets():
@@ -18,7 +21,14 @@ def test_feature_columns_shared_only_and_no_targets():
             "static_fasting_insulin", "y_60", "days_since_start", "hyper180_60"]  # fmt: skip
     syn = [c for c in real if c != "static_fasting_insulin"]
     got = stress.feature_columns(real, syn, SCFG)
-    assert got == ["cgm_now", "tod_sin", "tod_cos", "hr_mean_1h", "meal_minutes_since_last", "static_age_years"]
+    assert got == [
+        "cgm_now",
+        "tod_sin",
+        "tod_cos",
+        "hr_mean_1h",
+        "meal_minutes_since_last",
+        "static_age_years",
+    ]
 
 
 def test_feature_columns_respects_groups():

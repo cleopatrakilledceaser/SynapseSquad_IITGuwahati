@@ -87,7 +87,9 @@ def run_direction(
     # in-cohort reference: repeated CV of the target cohort, same features, same split files
     oof = run_config(tt, cols, tgt, [cfg["cv_repeat"]], strata_of(strata, tgt, static), bc, hz,
                      "delta", "cgm_now", clip)  # fmt: skip
-    oof = oof[core.KEYS + [f"pred_{h}" for h in hz]].rename(columns={f"pred_{h}": f"pred_in_cohort_{h}" for h in hz})  # noqa: E501
+    oof = oof[core.KEYS + [f"pred_{h}" for h in hz]].rename(
+        columns={f"pred_{h}": f"pred_in_cohort_{h}" for h in hz}
+    )  # noqa: E501
     ev = ev.merge(oof, on=core.KEYS, how="left")
     print(f"    in-cohort CV {time.time() - t0:.0f}s", flush=True)
     # zero-shot: source patients only
@@ -115,7 +117,9 @@ def run_direction(
             predict_into(ev, rows, mp, "pooled", hz, clip)
     print(f"    all methods {time.time() - t0:.0f}s", flush=True)
     models = ["persistence", "in_cohort", "zeroshot"]
-    models += [f"zeroshot_{m}{k:g}" for m in ("offset", "ridge") for k in cfg["k_grid"]] + ["pooled"]
+    models += [f"zeroshot_{m}{k:g}" for m in ("offset", "ridge") for k in cfg["k_grid"]] + [
+        "pooled"
+    ]
     pairs = [("zeroshot", "in_cohort"), ("pooled", "in_cohort"), ("in_cohort", "persistence"),
              ("zeroshot", "persistence"), ("pooled", "persistence")]  # fmt: skip
     kmax = max(cfg["k_grid"])
@@ -131,7 +135,10 @@ def run_direction(
     for gname, d in groups.items():
         if d.patient_id.nunique() < 2:
             continue
-        res[gname] = {"mae": core.mae_rows(d, models, hz, boot), "diff": core.diff_rows(d, pairs, hz, boot)}
+        res[gname] = {
+            "mae": core.mae_rows(d, models, hz, boot),
+            "diff": core.diff_rows(d, pairs, hz, boot),
+        }
     OUT.mkdir(parents=True, exist_ok=True)
     ev.to_parquet(OUT / f"{src}_to_{tgt}_{fset}.parquet", index=False)
     return res
@@ -159,8 +166,12 @@ def main() -> None:
     for src, tgt in cfg["directions"]:
         for fset, cols in sets.items():
             print(f"{src} -> {tgt} [{fset}] ({len(cols)} features)", flush=True)
-            metrics[f"{src}_to_{tgt}|{fset}"] = run_direction(src, tgt, fset, cols, tabs, strata, static, bc, cfg)
-    files = [PROC / "static.parquet"] + [PROC / "features" / f"{n}_N{cfg['n_hours']}.parquet" for n in cfg["tables"].values()]
+            metrics[f"{src}_to_{tgt}|{fset}"] = run_direction(
+                src, tgt, fset, cols, tabs, strata, static, bc, cfg
+            )
+    files = [PROC / "static.parquet"] + [
+        PROC / "features" / f"{n}_N{cfg['n_hours']}.parquet" for n in cfg["tables"].values()
+    ]
     write_metrics("transfer", metrics, cfg, cfg["seed"], file_hash(files))
     print("wrote reports/metrics/transfer.json")
 

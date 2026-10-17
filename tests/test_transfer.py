@@ -37,7 +37,15 @@ def table(n_pat: int = 3, days: int = 6, bias: float = 20.0, seed: int = 0) -> p
 
 
 def test_feature_sets_use_only_shared_columns() -> None:
-    a = ["cgm_now", "cgm_lag_5", "cgm_lag_15", "tod_sin", "tod_cos", "static_age_years", "static_bmi"]
+    a = [
+        "cgm_now",
+        "cgm_lag_5",
+        "cgm_lag_15",
+        "tod_sin",
+        "tod_cos",
+        "static_age_years",
+        "static_bmi",
+    ]
     b = ["cgm_now", "cgm_lag_15", "tod_sin", "tod_cos", "static_age_years", "static_bmi", "meal_x"]
     sets, dropped = core.feature_sets(a, b, CFG)
     assert sets["cgm_tod"] == ["cgm_lag_15", "cgm_now", "tod_sin", "tod_cos"]

@@ -44,11 +44,15 @@ def main() -> None:
             r = rows[n]
             ax.barh(i, r["mae"], xerr=[[r["mae"] - r["mae_ci"][0]], [r["mae_ci"][1] - r["mae"]]],
                     color=OI[i % len(OI)], capsize=3)  # fmt: skip
-        ax.axvline(rows["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward")
+        ax.axvline(
+            rows["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward"
+        )
         ax.set_yticks(range(len(names)), [LABEL[n] for n in names], fontsize=8)
         ax.invert_yaxis()
         ax.set_xlabel("Mean absolute error at +60 min (mg/dL)")
-        ax.set_title(f"{NAME[src]} to {NAME[tgt]} (n = {m[key]['n_target_patients']} patients)", fontsize=10)
+        ax.set_title(
+            f"{NAME[src]} to {NAME[tgt]} (n = {m[key]['n_target_patients']} patients)", fontsize=10
+        )
         ax.legend(fontsize=8, loc="lower right")
     fig.tight_layout()
     out = PROJECT_ROOT / "reports" / "figures" / "transfer_matrix.png"

@@ -63,7 +63,11 @@ def meal_day(
             continue
         minute = float(np.clip(rng.normal(*s["time"]), 5, 1435))
         key = str(rng.choice(s["pool"]))
-        scale = s.get("portion", 1.0) * patient_factor * float(rng.lognormal(0, mcfg["portion_sd_meal"]))
+        scale = (
+            s.get("portion", 1.0)
+            * patient_factor
+            * float(rng.lognormal(0, mcfg["portion_sd_meal"]))
+        )
         mac = {k: float(v) * scale for k, v in lib["presets"][key]["macros"].items()}
         out.append({"slot": slot, "step": int(minute // DT_MIN), "minute": minute, "key": key,
                     "scale": scale, **mac})  # fmt: skip
@@ -85,7 +89,9 @@ def meal_inputs(
         for m in day:
             i = d * STEPS_PER_DAY + m["step"]
             carbs[i] += m["carbs_g"]
-            ratio[i] = (m["fat_g"] + w_protein * m["protein_g"] + m["fiber_g"]) / (m["carbs_g"] + 1.0)
+            ratio[i] = (m["fat_g"] + w_protein * m["protein_g"] + m["fiber_g"]) / (
+                m["carbs_g"] + 1.0
+            )
             meals.append({**m, "abs_step": i})
     slow = pd.Series(ratio).ffill().fillna(0.0).to_numpy()
     return carbs, slow, meals
@@ -114,7 +120,12 @@ def wearables(
     h = acfg["hr"]
     minute = (np.arange(len(act)) * DT_MIN) % 1440
     night = (minute < 360) | (minute >= 1320)
-    hr = h["rest_bpm"] + h["per_unit"] * act - h["night_dip"] * night + rng.normal(0, h["noise_sd"], len(act))
+    hr = (
+        h["rest_bpm"]
+        + h["per_unit"] * act
+        - h["night_dip"] * night
+        + rng.normal(0, h["noise_sd"], len(act))
+    )
     intensity = np.clip(np.round(act * acfg["intensity_per_unit"]), 0, 3)
     return hr, intensity, night & (act < 0.05)
 
@@ -126,10 +137,20 @@ def static_from_cgm(
     a1c = (float(np.mean(g)) - scfg["eag_intercept"]) / scfg["eag_slope"]
     minute = (np.arange(len(g)) * DT_MIN) % 1440
     fasting = float(np.median(g[(minute >= 240) & (minute < 360)]))
-    age = float(np.clip(rng.normal(scfg["age"]["mean"], scfg["age"]["sd"]), scfg["age"]["lo"], scfg["age"]["hi"]))
-    bmi = float(np.clip(rng.normal(scfg["bmi"]["mean"], scfg["bmi"]["sd"]), scfg["bmi"]["lo"], scfg["bmi"]["hi"]))
+    age = float(
+        np.clip(
+            rng.normal(scfg["age"]["mean"], scfg["age"]["sd"]), scfg["age"]["lo"], scfg["age"]["hi"]
+        )
+    )
+    bmi = float(
+        np.clip(
+            rng.normal(scfg["bmi"]["mean"], scfg["bmi"]["sd"]), scfg["bmi"]["lo"], scfg["bmi"]["hi"]
+        )
+    )
     bins, labels = scfg["hba1c_bins"], scfg["hba1c_labels"]
-    status = next(lab for lo, hi, lab in zip(bins[:-1], bins[1:], labels, strict=True) if lo <= a1c < hi)
+    status = next(
+        lab for lo, hi, lab in zip(bins[:-1], bins[1:], labels, strict=True) if lo <= a1c < hi
+    )
     return {"age_years": age, "sex": "M" if rng.random() < scfg["male_fraction"] else "F",
             "bmi": bmi, "hba1c_pct": a1c, "fasting_glucose_mgdl": fasting, "diabetes_status": status}  # fmt: skip
 
@@ -164,7 +185,10 @@ def generate(
         x = simulate(th, initial_state(float(np.exp(lp[0])), th), carbs, slow, act,
                      sc["dt_min"], sc["n_sub"], bounds_array(sc))  # fmt: skip
         n = len(x)
-        g = np.clip(x[:, 2] + ar1_noise(n, noise["white_sd"], noise["ar_sd"], noise["phi"], rng), *sc["g_bounds"])
+        g = np.clip(
+            x[:, 2] + ar1_noise(n, noise["white_sd"], noise["ar_sd"], noise["phi"], rng),
+            *sc["g_bounds"],
+        )
         hr, inten, rest = wearables(rng, act, icfg["activity"])
         t = t0 + pd.to_timedelta(np.arange(n) * DT_MIN, unit="m")
         grids.append(pd.DataFrame({
@@ -216,7 +240,10 @@ def summary(c: dict[str, pd.DataFrame], icfg: dict[str, Any]) -> dict[str, Any]:
     v = g["glucose"]
     pp = g.groupby("patient_id")["glucose"]
     m = c["meals"]
-    kcal_carb, kcal = 4 * m["carbs_g"].sum(), (4 * m["carbs_g"] + 4 * m["protein_g"] + 9 * m["fat_g"]).sum()
+    kcal_carb, kcal = (
+        4 * m["carbs_g"].sum(),
+        (4 * m["carbs_g"] + 4 * m["protein_g"] + 9 * m["fat_g"]).sum(),
+    )
     d = {"n_patients": int(g["patient_id"].nunique()), "n_days": float(g["days_since_start"].max()),
          "mean_glucose": float(v.mean()), "patient_mean_quartiles": pp.mean().quantile([0.25, 0.5, 0.75]).tolist(),
          "cv_pct_median": float((100 * pp.std() / pp.mean()).median()),

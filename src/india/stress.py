@@ -45,15 +45,7 @@ def feature_columns(real_cols: list[str], syn_cols: list[str], scfg: dict[str, A
     groups = set(scfg["feature_groups"])
     out: list[str] = []
     for c in shared:
-        if c.startswith("cgm_") and "cgm" in groups:
-            out.append(c)
-        elif c in TOD and "tod" in groups:
-            out.append(c)
-        elif c.startswith(WEAR_PREFIXES) and "wearable" in groups:
-            out.append(c)
-        elif c.startswith(MEAL_PREFIX) and "meals" in groups:
-            out.append(c)
-        elif c in {f"static_{s}" for s in scfg["static"]} and "static" in groups:
+        if c.startswith("cgm_") and "cgm" in groups or c in TOD and "tod" in groups or c.startswith(WEAR_PREFIXES) and "wearable" in groups or c.startswith(MEAL_PREFIX) and "meals" in groups or c in {f"static_{s}" for s in scfg["static"]} and "static" in groups:
             out.append(c)
     if "days_since_start" in out:
         out.remove("days_since_start")
@@ -136,8 +128,11 @@ def augmentation(
         if not len(rows):
             continue
         for n, extra in [("real_only", None)] + [(f"real_plus_{k}", v) for k, v in extras.items()]:
-            tab = real[real.patient_id.isin(tr)] if extra is None else pd.concat(
-                [real[real.patient_id.isin(tr)], extra], ignore_index=True)
+            tab = (
+                real[real.patient_id.isin(tr)]
+                if extra is None
+                else pd.concat([real[real.patient_id.isin(tr)], extra], ignore_index=True)
+            )
             pids = tr if extra is None else tr + sorted(extra.patient_id.unique())
             m = fit_model(tab, pids, strata, cols, bc, hz, seed + rep)
             predict_into(ev, rows, m, n, hz, clip)
@@ -146,10 +141,16 @@ def augmentation(
         for n in names:
             for h in hz:
                 ev[f"pred_{n}_offset{k:g}_{h}"] = np.clip(
-                    core.fewshot(ev, f"pred_{n}_{h}", h, k, "offset", load_config("transfer")["fewshot"]), *clip)
+                    core.fewshot(
+                        ev, f"pred_{n}_{h}", h, k, "offset", load_config("transfer")["fewshot"]
+                    ),
+                    *clip,
+                )
     models = ["persistence"] + names + [f"{n}_offset{k:g}" for k in scfg["k_grid"] for n in names]
     pairs = [(n, "real_only") for n in names[1:]]
-    pairs += [(f"{n}_offset{k:g}", f"real_only_offset{k:g}") for k in scfg["k_grid"] for n in names[1:]]
+    pairs += [
+        (f"{n}_offset{k:g}", f"real_only_offset{k:g}") for k in scfg["k_grid"] for n in names[1:]
+    ]
     boot = bc["bootstrap"]
     region = ev[ev["days_since_start"] >= scfg["test_from_day"]]
     ev.to_parquet(OUT / "augmentation_cgmacros.parquet", index=False)
@@ -164,7 +165,8 @@ def main() -> None:
     scfg, tcfg = icfg["stress"], load_config("transfer")
     static = pd.read_parquet(PROC / "static.parquet")
     real = load_tables(
-        {**tcfg, "tables": {"cgmacros": tcfg["tables"]["cgmacros"]}, "n_hours": scfg["n_hours"]}, static
+        {**tcfg, "tables": {"cgmacros": tcfg["tables"]["cgmacros"]}, "n_hours": scfg["n_hours"]},
+        static,
     )["cgmacros"]
     clip = tuple(load_config("data")["cgm"]["glucose_range_mgdl"]["cgmacros"])
     fits = ic.load_fits(icfg)
@@ -175,7 +177,9 @@ def main() -> None:
         c = ic.generate(icfg, mc, strength, tag, scfg["seeds"][tag], scfg["n_patients"], scfg["days"],
                         fits, noise, alpha)  # fmt: skip
         tabs[tag] = synthetic_table(c, icfg, fcfg, scfg)
-        tabs[tag] = tabs[tag].assign(_status=tabs[tag].patient_id.map(c["static"].set_index("patient_id")["diabetes_status"]))
+        tabs[tag] = tabs[tag].assign(
+            _status=tabs[tag].patient_id.map(c["static"].set_index("patient_id")["diabetes_status"])
+        )
         summ[tag] = ic.summary(c, icfg)
         print(f"  cohort {tag}: {len(tabs[tag])} anchors ({time.time() - t0:.0f}s)", flush=True)
     cols = feature_columns(list(real.columns), list(tabs["control"].columns), scfg)
@@ -201,11 +205,16 @@ def main() -> None:
     oof = oof[core.KEYS + [f"pred_{h}" for h in scfg["horizons_min"]]]
     oof = oof.rename(columns={f"pred_{h}": f"pred_in_cohort_{h}" for h in scfg["horizons_min"]})
     ref_ev = ref_ev.merge(oof, on=core.KEYS, how="left")
-    metrics["in_cohort_reference"] = core.mae_rows(ref_ev, ["persistence", "in_cohort"], scfg["horizons_min"], bc["bootstrap"])
+    metrics["in_cohort_reference"] = core.mae_rows(
+        ref_ev, ["persistence", "in_cohort"], scfg["horizons_min"], bc["bootstrap"]
+    )
     print("B. augmentation", flush=True)
     extras = {k: tabs[v] for k, v in scfg["augment"].items()}
     metrics["augmentation"] = augmentation(real, extras, cols, strata, bc, scfg, clip, icfg["seed"])
-    files = [PROC / "static.parquet", PROC / "features" / f"{tcfg['tables']['cgmacros']}_N{scfg['n_hours']}.parquet"]
+    files = [
+        PROC / "static.parquet",
+        PROC / "features" / f"{tcfg['tables']['cgmacros']}_N{scfg['n_hours']}.parquet",
+    ]
     write_metrics("india_stress", metrics, icfg, icfg["seed"], file_hash(files))
     print("wrote reports/metrics/india_stress.json")
 
