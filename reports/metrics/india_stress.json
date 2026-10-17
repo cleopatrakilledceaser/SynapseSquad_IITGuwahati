@@ -1,0 +1,2237 @@
+{
+  "name": "india_stress",
+  "timestamp_utc": "2026-10-17T17:29:10.976292+00:00",
+  "git_hash": "c27dd95c2cbcc264f51ca2b940cf9ce9bc6bbea4-dirty",
+  "seed": 42,
+  "data_hash": "327d23e38f8372846fc37bd9009f23afe8363a9e7d138d8942a48b761903debf",
+  "config": {
+    "seed": 42,
+    "name": "synthetic_india_v1",
+    "n_patients": 100,
+    "days": 10,
+    "start_datetime": "2026-01-05 00:00",
+    "fit_source": {
+      "csv": "reports/metrics/mech_fitted_params.csv",
+      "model": "twin_pop_actoff_k3",
+      "cohort": "cgmacros"
+    },
+    "noise_source": {
+      "json": "reports/metrics/mech_cgmacros.json"
+    },
+    "shifts": {
+      "SI": -0.46,
+      "Gb": 0.05,
+      "kabs": 0.15
+    },
+    "strengths": {
+      "control": 0.0,
+      "mild": 0.5,
+      "moderate": 1.0,
+      "strong": 1.5
+    },
+    "main_strength": "moderate",
+    "meals": {
+      "portion_sd_patient": 0.2,
+      "portion_sd_meal": 0.15,
+      "slots": {
+        "breakfast": {
+          "time": [
+            480,
+            40
+          ],
+          "p": 1.0,
+          "pool": [
+            "idli_sambar",
+            "plain_dosa",
+            "masala_dosa",
+            "poha",
+            "upma",
+            "aloo_paratha"
+          ]
+        },
+        "lunch": {
+          "time": [
+            810,
+            45
+          ],
+          "p": 1.0,
+          "pool": [
+            "roti_2_dal_sabzi",
+            "rice_1katori_dal_sabzi",
+            "rice_2katori_dal_sabzi",
+            "veg_thali",
+            "dal_chawal",
+            "rajma_chawal",
+            "curd_rice"
+          ]
+        },
+        "snack": {
+          "time": [
+            1020,
+            40
+          ],
+          "p": 0.5,
+          "pool": [
+            "upma",
+            "poha"
+          ],
+          "portion": 0.4
+        },
+        "dinner": {
+          "time": [
+            1230,
+            40
+          ],
+          "p": 1.0,
+          "pool": [
+            "roti_2_dal_sabzi",
+            "rice_1katori_dal_sabzi",
+            "veg_biryani",
+            "chicken_biryani",
+            "dal_chawal",
+            "chole_bhature",
+            "curd_rice"
+          ]
+        }
+      },
+      "carb_energy_share_reference": 0.62
+    },
+    "activity": {
+      "morning": {
+        "p": 0.5,
+        "time": [
+          390,
+          30
+        ],
+        "duration": [
+          20,
+          45
+        ],
+        "level": [
+          1.0,
+          2.0
+        ]
+      },
+      "evening": {
+        "p": 0.6,
+        "time": [
+          1110,
+          40
+        ],
+        "duration": [
+          20,
+          45
+        ],
+        "level": [
+          1.0,
+          2.0
+        ]
+      },
+      "daytime_base": {
+        "from_min": 540,
+        "to_min": 1200,
+        "level": 0.2
+      },
+      "hr": {
+        "rest_bpm": 64,
+        "per_unit": 18,
+        "night_dip": 6,
+        "noise_sd": 3
+      },
+      "intensity_per_unit": 1.2
+    },
+    "static": {
+      "age": {
+        "mean": 52,
+        "sd": 9,
+        "lo": 30,
+        "hi": 75
+      },
+      "male_fraction": 0.6,
+      "bmi": {
+        "mean": 25.5,
+        "sd": 3.2,
+        "lo": 18,
+        "hi": 38
+      },
+      "eag_slope": 28.7,
+      "eag_intercept": -46.7,
+      "hba1c_bins": [
+        0.0,
+        5.7,
+        6.5,
+        99.0
+      ],
+      "hba1c_labels": [
+        "healthy",
+        "prediabetes",
+        "t2d"
+      ]
+    },
+    "stress": {
+      "n_patients": 100,
+      "days": 10,
+      "seeds": {
+        "control": 101,
+        "mild": 102,
+        "moderate": 103,
+        "strong": 104
+      },
+      "n_hours": 6,
+      "horizons_min": [
+        30,
+        60,
+        120
+      ],
+      "test_from_day": 3,
+      "min_test_anchors": 96,
+      "cv_repeat": 0,
+      "k_grid": [
+        1,
+        3
+      ],
+      "augment": {
+        "control": "control",
+        "india": "moderate"
+      },
+      "feature_groups": [
+        "cgm",
+        "tod",
+        "wearable",
+        "meals",
+        "static"
+      ],
+      "static": [
+        "age_years",
+        "sex_male",
+        "bmi",
+        "hba1c_pct",
+        "fasting_glucose_mgdl"
+      ]
+    }
+  },
+  "metrics": {
+    "n_features": 80,
+    "dropped_constant_in_real": [
+      "meal_last_type_unknown"
+    ],
+    "cohort_summary": {
+      "control": {
+        "n_patients": 100,
+        "n_days": 9.996527777777779,
+        "mean_glucose": 137.93758425164742,
+        "patient_mean_quartiles": [
+          116.85333415855114,
+          135.18544209762103,
+          153.46411480095398
+        ],
+        "cv_pct_median": 10.603102134000931,
+        "pct_gt180": 11.056597222222223,
+        "pct_lt70": 1.9302083333333335,
+        "pct_70_180": 87.01319444444444,
+        "carb_energy_share": 0.6047581338895113,
+        "carb_energy_share_reference": 0.62,
+        "mean_meal_carbs_g": 67.96419735825046,
+        "hba1c_quartiles": [
+          5.69872244454882,
+          6.337471850091325,
+          6.974359400730105
+        ],
+        "status_counts": {
+          "t2d": 44,
+          "prediabetes": 31,
+          "healthy": 25
+        }
+      },
+      "mild": {
+        "n_patients": 100,
+        "n_days": 9.996527777777779,
+        "mean_glucose": 153.15576703185846,
+        "patient_mean_quartiles": [
+          133.68910111968867,
+          148.36712713423603,
+          170.11065510384947
+        ],
+        "cv_pct_median": 12.312814472875703,
+        "pct_gt180": 18.992708333333333,
+        "pct_lt70": 1.4975694444444445,
+        "pct_70_180": 79.50972222222222,
+        "carb_energy_share": 0.608215358679492,
+        "carb_energy_share_reference": 0.62,
+        "mean_meal_carbs_g": 67.72363139849578,
+        "hba1c_quartiles": [
+          6.285334533787061,
+          6.7967640116458545,
+          7.554378226614963
+        ],
+        "status_counts": {
+          "t2d": 66,
+          "prediabetes": 24,
+          "healthy": 10
+        }
+      },
+      "moderate": {
+        "n_patients": 100,
+        "n_days": 9.996527777777779,
+        "mean_glucose": 163.35935859743833,
+        "patient_mean_quartiles": [
+          133.8387256254795,
+          154.56023671716216,
+          180.92076492283738
+        ],
+        "cv_pct_median": 11.958187463087869,
+        "pct_gt180": 28.51111111111111,
+        "pct_lt70": 1.3618055555555555,
+        "pct_70_180": 70.12708333333333,
+        "carb_energy_share": 0.6044580806954386,
+        "carb_energy_share_reference": 0.62,
+        "mean_meal_carbs_g": 67.98902380610234,
+        "hba1c_quartiles": [
+          6.2905479312013775,
+          7.012551801991712,
+          7.931037105325345
+        ],
+        "status_counts": {
+          "t2d": 68,
+          "prediabetes": 22,
+          "healthy": 10
+        }
+      },
+      "strong": {
+        "n_patients": 100,
+        "n_days": 9.996527777777779,
+        "mean_glucose": 164.08047503069136,
+        "patient_mean_quartiles": [
+          133.26886636849167,
+          153.31649085170227,
+          189.03746646013752
+        ],
+        "cv_pct_median": 13.936614207324562,
+        "pct_gt180": 31.422222222222224,
+        "pct_lt70": 1.2319444444444443,
+        "pct_70_180": 67.34583333333333,
+        "carb_energy_share": 0.6056143732502168,
+        "carb_energy_share_reference": 0.62,
+        "mean_meal_carbs_g": 69.25620080967404,
+        "hba1c_quartiles": [
+          6.270692207961383,
+          6.969215709118545,
+          8.213849005579707
+        ],
+        "status_counts": {
+          "t2d": 68,
+          "prediabetes": 25,
+          "healthy": 7
+        }
+      }
+    },
+    "SYNTHETIC": true,
+    "stress": {
+      "control": {
+        "n_patients": 100,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 10.47045222973379,
+            "mae_ci": [
+              9.487090529191974,
+              11.62368220489502
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 10.411614497485047,
+            "mae_ci": [
+              9.699349491352862,
+              11.260236344987142
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 10.278163490172085,
+            "mae_ci": [
+              9.570326925971305,
+              11.14424472416781
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 10.192515656915116,
+            "mae_ci": [
+              9.47615482034809,
+              11.074982690561463
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 15.404154999568533,
+            "mae_ci": [
+              13.44926106052414,
+              17.649561069884186
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 15.207648923635332,
+            "mae_ci": [
+              13.865571597583196,
+              16.74191653756489
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 14.731563221298856,
+            "mae_ci": [
+              13.343973915543788,
+              16.30192451341941
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 14.35149492320041,
+            "mae_ci": [
+              12.922478735581041,
+              15.958706186848
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 21.557258196733457,
+            "mae_ci": [
+              18.20636158085271,
+              25.390133379580476
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 20.571228252723433,
+            "mae_ci": [
+              18.457575822120607,
+              23.042095340315353
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 19.364962977772006,
+            "mae_ci": [
+              17.3015718814951,
+              21.81929947325554
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 18.123308905916613,
+            "mae_ci": [
+              16.01890805584655,
+              20.542943525166173
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.058837732248742114,
+            "diff_mae_ci": [
+              -0.6409018341761603,
+              0.43906252676786817
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -0.19650607593320046,
+            "diff_mae_ci": [
+              -1.2733431180390442,
+              0.7878609891853592
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -0.9860299440100242,
+            "diff_mae_ci": [
+              -2.8107718808397006,
+              0.8361301193043914
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.2779365728186729,
+            "diff_mae_ci": [
+              -0.8263596020961783,
+              0.20710456436793256
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.0526600763681238,
+            "diff_mae_ci": [
+              -2.022074143813501,
+              -0.19196206512650074
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -3.4339492908168445,
+            "diff_mae_ci": [
+              -4.928361715566462,
+              -2.0758922655536347
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.2190988405699308,
+            "diff_mae_ci": [
+              -0.2893707388167094,
+              -0.1554180634871324
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.8561540004349233,
+            "diff_mae_ci": [
+              -1.0519462765493388,
+              -0.6644906592656616
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -2.4479193468068203,
+            "diff_mae_ci": [
+              -3.0177239188652387,
+              -1.9290052865990268
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          }
+        ],
+        "bias": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "bias": -0.0006965311973409925,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "bias": 2.5101472682014445,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "bias": 1.8624915758353644,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "bias": 1.2014905273283596,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "bias": -0.022274073329216913,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "bias": 5.857070700367894,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "bias": 4.538902971805051,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "bias": 2.9256601312334167,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "bias": -0.13550838006383784,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "bias": 10.78223995905656,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "bias": 8.59782739918943,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "bias": 5.556163905618385,
+            "n_rows": 66400
+          }
+        ]
+      },
+      "mild": {
+        "n_patients": 100,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 11.04649683924544,
+            "mae_ci": [
+              9.966838270346933,
+              12.45239947591274
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 11.098717022748101,
+            "mae_ci": [
+              10.214788426090037,
+              12.300786745652431
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 10.978337382330958,
+            "mae_ci": [
+              10.099498133320898,
+              12.179663332911703
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 10.912805839330945,
+            "mae_ci": [
+              10.023171957906277,
+              12.111945806567546
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 16.56653373513254,
+            "mae_ci": [
+              14.594518095844325,
+              19.052060090653683
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 17.03683352409563,
+            "mae_ci": [
+              15.57432569322466,
+              18.94007412643488
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 16.374759999054923,
+            "mae_ci": [
+              14.936102098362698,
+              18.365358410058516
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 15.866479423097143,
+            "mae_ci": [
+              14.424571382456692,
+              17.86268690224326
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 23.660888048955556,
+            "mae_ci": [
+              20.56249602875443,
+              27.192627025648903
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 24.412269958494864,
+            "mae_ci": [
+              22.221248148839784,
+              26.837651484820164
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 22.71480658379469,
+            "mae_ci": [
+              20.600745403522836,
+              25.22420934362931
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 20.925366582263415,
+            "mae_ci": [
+              18.76572157827546,
+              23.499788074026178
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": 0.05222018350266033,
+            "diff_mae_ci": [
+              -0.485286581596521,
+              0.620552005358413
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": 0.4702997889630893,
+            "diff_mae_ci": [
+              -0.6443810615596065,
+              1.596933955199146
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": 0.7513819095393082,
+            "diff_mae_ci": [
+              -1.4112407063874501,
+              3.0271977328307074
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.13369099991449573,
+            "diff_mae_ci": [
+              -0.6380486551690121,
+              0.39113781475336734
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -0.7000543120353981,
+            "diff_mae_ci": [
+              -1.6247163187894782,
+              0.21092270749802233
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -2.7355214666921412,
+            "diff_mae_ci": [
+              -4.312312523721834,
+              -1.1819057559686204
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.18591118341715607,
+            "diff_mae_ci": [
+              -0.2729015815845424,
+              -0.11794121494308324
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -1.1703541009984875,
+            "diff_mae_ci": [
+              -1.474293970143446,
+              -0.8827636888095756
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -3.4869033762314494,
+            "diff_mae_ci": [
+              -4.237119455876893,
+              -2.700193526925025
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          }
+        ],
+        "bias": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "bias": -0.008802269870658647,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "bias": 1.482077769119392,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "bias": 1.029778559492854,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "bias": 0.6017538471784205,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "bias": -0.0372411719439555,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "bias": 5.722948400686031,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "bias": 4.339786789680185,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "bias": 2.773048886902805,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "bias": -0.15292675669191047,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "bias": 12.520041375347155,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "bias": 9.950305993279912,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "bias": 6.455160286301459,
+            "n_rows": 66400
+          }
+        ]
+      },
+      "moderate": {
+        "n_patients": 100,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 11.122766673683907,
+            "mae_ci": [
+              10.048514410432105,
+              12.30832788586014
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 11.37173893033191,
+            "mae_ci": [
+              10.467466879453356,
+              12.43548484685575
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 11.215212234488792,
+            "mae_ci": [
+              10.315108513982759,
+              12.280582014658318
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 11.096738257494787,
+            "mae_ci": [
+              10.18328328273372,
+              12.152591283940634
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 16.81473450316901,
+            "mae_ci": [
+              14.692505723840224,
+              19.099717313220562
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 16.863180504665337,
+            "mae_ci": [
+              15.299366496483636,
+              18.672217815040128
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 16.216973527716437,
+            "mae_ci": [
+              14.688105618409809,
+              17.958999622177046
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 15.675618230732278,
+            "mae_ci": [
+              14.187033921874628,
+              17.4475356025286
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 24.306816826172888,
+            "mae_ci": [
+              20.849044530910607,
+              27.992936179888154
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 24.548283842238,
+            "mae_ci": [
+              22.046071425369153,
+              27.214070982188044
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 22.93475017406264,
+            "mae_ci": [
+              20.493212825045763,
+              25.496225775836024
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 21.10702851979613,
+            "mae_ci": [
+              18.786745006793996,
+              23.705413756075252
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": 0.2489722566480026,
+            "diff_mae_ci": [
+              -0.3538071029350696,
+              0.9244285814260271
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": 0.04844600149632683,
+            "diff_mae_ci": [
+              -1.1514741669910136,
+              1.2853843975764179
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": 0.241467016065112,
+            "diff_mae_ci": [
+              -1.824085016959115,
+              2.4183070289539152
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.026028416189120662,
+            "diff_mae_ci": [
+              -0.5615947120890715,
+              0.5537380125836702
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.1391162724367323,
+            "diff_mae_ci": [
+              -2.0672419693858655,
+              -0.16519062084431976
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -3.1997883063767567,
+            "diff_mae_ci": [
+              -4.772174601652528,
+              -1.6390410419247539
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.27500067283712326,
+            "diff_mae_ci": [
+              -0.41207244198400667,
+              -0.1680755203253424
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -1.1875622739330591,
+            "diff_mae_ci": [
+              -1.5847690314427918,
+              -0.8541503795816494
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -3.4412553224418687,
+            "diff_mae_ci": [
+              -4.247755280437458,
+              -2.7384538606192232
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          }
+        ],
+        "bias": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "bias": -0.02097622533937717,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "bias": 0.4855431939782603,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "bias": 0.2898803052804833,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "bias": 0.16678000232811535,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "bias": -0.07032406496029041,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "bias": 3.6681840901179337,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "bias": 2.8426119127053697,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "bias": 1.8640815318532538,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "bias": -0.2246518129825987,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "bias": 9.632736040187101,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "bias": 7.867158271058477,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "bias": 5.125969786544972,
+            "n_rows": 66400
+          }
+        ]
+      },
+      "strong": {
+        "n_patients": 100,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 11.988159201858563,
+            "mae_ci": [
+              11.002994132183318,
+              13.24229601921171
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "mae": 11.289751200167277,
+            "mae_ci": [
+              10.517418902225245,
+              12.338669026088382
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "mae": 11.125212341530618,
+            "mae_ci": [
+              10.372826132275682,
+              12.155880872133991
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "mae": 10.990086960444636,
+            "mae_ci": [
+              10.229525577503901,
+              12.007356774867354
+            ],
+            "n_patients": 100,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 18.577391363297206,
+            "mae_ci": [
+              16.75307447446796,
+              20.901884176110258
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "mae": 17.048754408978766,
+            "mae_ci": [
+              15.722983352108054,
+              18.756017237733637
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "mae": 16.56168633453062,
+            "mae_ci": [
+              15.220386178460135,
+              18.250382985552015
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "mae": 16.172527662491884,
+            "mae_ci": [
+              14.856038240483713,
+              17.890383364211672
+            ],
+            "n_patients": 100,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 27.233777437595077,
+            "mae_ci": [
+              24.271435009690844,
+              30.87008212237957
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "mae": 25.132938256796187,
+            "mae_ci": [
+              23.097549693979982,
+              27.496890302939732
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "mae": 23.78238802138759,
+            "mae_ci": [
+              21.831329433243475,
+              26.247974605158163
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "mae": 22.238154939100408,
+            "mae_ci": [
+              20.35393852551564,
+              24.70016109272217
+            ],
+            "n_patients": 100,
+            "n_rows": 66400
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.6984080016912859,
+            "diff_mae_ci": [
+              -1.3345227713285552,
+              -0.08215757382015085
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -1.52863695431844,
+            "diff_mae_ci": [
+              -2.717462350206028,
+              -0.3328783960389255
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -2.1008391807988893,
+            "diff_mae_ci": [
+              -4.005979585090145,
+              -0.15944964498052533
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 30,
+            "diff_mae": -0.9980722414139276,
+            "diff_mae_ci": [
+              -1.5754987832472271,
+              -0.4772953511091254
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 60,
+            "diff_mae": -2.404863700805322,
+            "diff_mae_ci": [
+              -3.408786637396366,
+              -1.371302918063523
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "persistence",
+            "horizon_min": 120,
+            "diff_mae": -4.995622498494669,
+            "diff_mae_ci": [
+              -6.509470355366567,
+              -3.550842761689867
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 30,
+            "diff_mae": -0.29966423972264167,
+            "diff_mae_ci": [
+              -0.4562938532710085,
+              -0.1829144453065272
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 60,
+            "diff_mae": -0.876226746486882,
+            "diff_mae_ci": [
+              -1.225053798426086,
+              -0.6068427802130003
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          },
+          {
+            "model_1": "zeroshot_offset3",
+            "model_2": "zeroshot",
+            "horizon_min": 120,
+            "diff_mae": -2.8947833176957793,
+            "diff_mae_ci": [
+              -3.5483188714999763,
+              -2.2648345305008855
+            ],
+            "distinguishable_from_zero": true,
+            "n_patients": 100
+          }
+        ],
+        "bias": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "bias": -0.0213654381590454,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 30,
+            "bias": 0.30364830190305014,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 30,
+            "bias": 0.13038621427304511,
+            "n_rows": 67000
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 30,
+            "bias": 0.11079051764467246,
+            "n_rows": 67000
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "bias": -0.0772935567214455,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 60,
+            "bias": 2.731100072662655,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 60,
+            "bias": 2.0003285624149787,
+            "n_rows": 66800
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 60,
+            "bias": 1.349574473972541,
+            "n_rows": 66800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "bias": -0.2599978844392377,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot",
+            "horizon_min": 120,
+            "bias": 9.284619694923391,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset1",
+            "horizon_min": 120,
+            "bias": 7.59241641357235,
+            "n_rows": 66400
+          },
+          {
+            "model": "zeroshot_offset3",
+            "horizon_min": 120,
+            "bias": 5.059218051326659,
+            "n_rows": 66400
+          }
+        ]
+      }
+    },
+    "in_cohort_reference": [
+      {
+        "model": "persistence",
+        "horizon_min": 30,
+        "mae": 13.198669396110542,
+        "mae_ci": [
+          12.32234656841862,
+          14.14230028418852
+        ],
+        "n_patients": 45,
+        "n_rows": 29310
+      },
+      {
+        "model": "in_cohort",
+        "horizon_min": 30,
+        "mae": 11.590066036529441,
+        "mae_ci": [
+          10.766642227981523,
+          12.41201081160661
+        ],
+        "n_patients": 45,
+        "n_rows": 29310
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 60,
+        "mae": 19.313973784181524,
+        "mae_ci": [
+          17.61136820661147,
+          21.219861842066347
+        ],
+        "n_patients": 45,
+        "n_rows": 29219
+      },
+      {
+        "model": "in_cohort",
+        "horizon_min": 60,
+        "mae": 16.862532610826435,
+        "mae_ci": [
+          15.371950154134016,
+          18.485447820784326
+        ],
+        "n_patients": 45,
+        "n_rows": 29219
+      },
+      {
+        "model": "persistence",
+        "horizon_min": 120,
+        "mae": 26.47943506717189,
+        "mae_ci": [
+          23.648793368731738,
+          29.674950926538727
+        ],
+        "n_patients": 45,
+        "n_rows": 29030
+      },
+      {
+        "model": "in_cohort",
+        "horizon_min": 120,
+        "mae": 21.53309549606978,
+        "mae_ci": [
+          19.170024249191542,
+          24.092953507817786
+        ],
+        "n_patients": 45,
+        "n_rows": 29030
+      }
+    ],
+    "augmentation": {
+      "n_patients": 45,
+      "mae": [
+        {
+          "model": "persistence",
+          "horizon_min": 30,
+          "mae": 13.198669396110542,
+          "mae_ci": [
+            12.32234656841862,
+            14.14230028418852
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_only",
+          "horizon_min": 30,
+          "mae": 11.590066036529441,
+          "mae_ci": [
+            10.766642227981523,
+            12.41201081160661
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_plus_control",
+          "horizon_min": 30,
+          "mae": 11.704513606847616,
+          "mae_ci": [
+            10.942427823857061,
+            12.488928045970257
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_plus_india",
+          "horizon_min": 30,
+          "mae": 11.670720410567279,
+          "mae_ci": [
+            10.859412552564422,
+            12.437835078375516
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_only_offset1",
+          "horizon_min": 30,
+          "mae": 11.488808152556366,
+          "mae_ci": [
+            10.674414561788954,
+            12.253943023878234
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_plus_control_offset1",
+          "horizon_min": 30,
+          "mae": 11.611442029143465,
+          "mae_ci": [
+            10.852723135893184,
+            12.377656949242702
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_plus_india_offset1",
+          "horizon_min": 30,
+          "mae": 11.616689803560108,
+          "mae_ci": [
+            10.818561129915022,
+            12.369465517434547
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_only_offset3",
+          "horizon_min": 30,
+          "mae": 11.371760035874422,
+          "mae_ci": [
+            10.574678837042448,
+            12.133320846785795
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_plus_control_offset3",
+          "horizon_min": 30,
+          "mae": 11.48015034881359,
+          "mae_ci": [
+            10.689623448263081,
+            12.227909762909162
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "real_plus_india_offset3",
+          "horizon_min": 30,
+          "mae": 11.487537688738744,
+          "mae_ci": [
+            10.686460674460893,
+            12.230296233291405
+          ],
+          "n_patients": 45,
+          "n_rows": 29310
+        },
+        {
+          "model": "persistence",
+          "horizon_min": 60,
+          "mae": 19.313973784181524,
+          "mae_ci": [
+            17.61136820661147,
+            21.219861842066347
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_only",
+          "horizon_min": 60,
+          "mae": 16.862532610826435,
+          "mae_ci": [
+            15.371950154134016,
+            18.485447820784326
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_plus_control",
+          "horizon_min": 60,
+          "mae": 17.11417361349105,
+          "mae_ci": [
+            15.706239781404124,
+            18.672851920645574
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_plus_india",
+          "horizon_min": 60,
+          "mae": 17.155283938073364,
+          "mae_ci": [
+            15.606443085153016,
+            18.838663417670546
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_only_offset1",
+          "horizon_min": 60,
+          "mae": 16.584755901902184,
+          "mae_ci": [
+            15.110147956563958,
+            18.155372923153283
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_plus_control_offset1",
+          "horizon_min": 60,
+          "mae": 16.895263513301447,
+          "mae_ci": [
+            15.47418761428585,
+            18.476330612334582
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_plus_india_offset1",
+          "horizon_min": 60,
+          "mae": 16.95099438946906,
+          "mae_ci": [
+            15.461565598352522,
+            18.628805545323203
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_only_offset3",
+          "horizon_min": 60,
+          "mae": 16.222374207329207,
+          "mae_ci": [
+            14.802113349998525,
+            17.723509454488934
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_plus_control_offset3",
+          "horizon_min": 60,
+          "mae": 16.538702450399683,
+          "mae_ci": [
+            15.102844853054583,
+            18.098412779145384
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "real_plus_india_offset3",
+          "horizon_min": 60,
+          "mae": 16.576261531367948,
+          "mae_ci": [
+            15.083594117339949,
+            18.157169566964164
+          ],
+          "n_patients": 45,
+          "n_rows": 29219
+        },
+        {
+          "model": "persistence",
+          "horizon_min": 120,
+          "mae": 26.47943506717189,
+          "mae_ci": [
+            23.648793368731738,
+            29.674950926538727
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_only",
+          "horizon_min": 120,
+          "mae": 21.53309549606978,
+          "mae_ci": [
+            19.170024249191542,
+            24.092953507817786
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_plus_control",
+          "horizon_min": 120,
+          "mae": 22.16200067542976,
+          "mae_ci": [
+            19.6787717554446,
+            24.887435762967947
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_plus_india",
+          "horizon_min": 120,
+          "mae": 21.615133056278257,
+          "mae_ci": [
+            19.34873767459843,
+            24.09976870904931
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_only_offset1",
+          "horizon_min": 120,
+          "mae": 20.970497591605568,
+          "mae_ci": [
+            18.709557798566816,
+            23.44802939874718
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_plus_control_offset1",
+          "horizon_min": 120,
+          "mae": 21.56648105194101,
+          "mae_ci": [
+            19.1232914808552,
+            24.290513855974016
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_plus_india_offset1",
+          "horizon_min": 120,
+          "mae": 21.126859509161456,
+          "mae_ci": [
+            18.94161491162523,
+            23.643385987183898
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_only_offset3",
+          "horizon_min": 120,
+          "mae": 20.177257563526002,
+          "mae_ci": [
+            18.079526637893338,
+            22.63138282980749
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_plus_control_offset3",
+          "horizon_min": 120,
+          "mae": 20.846700505561888,
+          "mae_ci": [
+            18.488920613215555,
+            23.511943799587474
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        },
+        {
+          "model": "real_plus_india_offset3",
+          "horizon_min": 120,
+          "mae": 20.468893980529398,
+          "mae_ci": [
+            18.293716020894223,
+            22.927917771546
+          ],
+          "n_patients": 45,
+          "n_rows": 29030
+        }
+      ],
+      "diff": [
+        {
+          "model_1": "real_plus_control",
+          "model_2": "real_only",
+          "horizon_min": 30,
+          "diff_mae": 0.1144475703181751,
+          "diff_mae_ci": [
+            -0.03592867921407618,
+            0.2558074007727124
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control",
+          "model_2": "real_only",
+          "horizon_min": 60,
+          "diff_mae": 0.2516410026646163,
+          "diff_mae_ci": [
+            -0.17529049029561256,
+            0.6313943552940279
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control",
+          "model_2": "real_only",
+          "horizon_min": 120,
+          "diff_mae": 0.6289051793599789,
+          "diff_mae_ci": [
+            -0.06011618875975662,
+            1.409728419335972
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india",
+          "model_2": "real_only",
+          "horizon_min": 30,
+          "diff_mae": 0.08065437403783804,
+          "diff_mae_ci": [
+            -0.09409138322330002,
+            0.2371588040814042
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india",
+          "model_2": "real_only",
+          "horizon_min": 60,
+          "diff_mae": 0.2927513272469291,
+          "diff_mae_ci": [
+            -0.10314193784912622,
+            0.6466355645836707
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india",
+          "model_2": "real_only",
+          "horizon_min": 120,
+          "diff_mae": 0.08203756020847663,
+          "diff_mae_ci": [
+            -0.6454875230491692,
+            0.7186414767679875
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control_offset1",
+          "model_2": "real_only_offset1",
+          "horizon_min": 30,
+          "diff_mae": 0.12263387658709846,
+          "diff_mae_ci": [
+            -0.019965924947012263,
+            0.25468607280018085
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control_offset1",
+          "model_2": "real_only_offset1",
+          "horizon_min": 60,
+          "diff_mae": 0.3105076113992631,
+          "diff_mae_ci": [
+            -0.056327353471561994,
+            0.6594378041182848
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control_offset1",
+          "model_2": "real_only_offset1",
+          "horizon_min": 120,
+          "diff_mae": 0.595983460335443,
+          "diff_mae_ci": [
+            0.015204056685239867,
+            1.2413611385381031
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india_offset1",
+          "model_2": "real_only_offset1",
+          "horizon_min": 30,
+          "diff_mae": 0.12788165100374194,
+          "diff_mae_ci": [
+            -0.03317357409284312,
+            0.279232030921691
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india_offset1",
+          "model_2": "real_only_offset1",
+          "horizon_min": 60,
+          "diff_mae": 0.36623848756687494,
+          "diff_mae_ci": [
+            0.021075086219322806,
+            0.6890927199883493
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india_offset1",
+          "model_2": "real_only_offset1",
+          "horizon_min": 120,
+          "diff_mae": 0.1563619175558877,
+          "diff_mae_ci": [
+            -0.4135877331538588,
+            0.6573904914010273
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control_offset3",
+          "model_2": "real_only_offset3",
+          "horizon_min": 30,
+          "diff_mae": 0.1083903129391679,
+          "diff_mae_ci": [
+            -0.014581376004301167,
+            0.22348953387386183
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control_offset3",
+          "model_2": "real_only_offset3",
+          "horizon_min": 60,
+          "diff_mae": 0.31632824307047613,
+          "diff_mae_ci": [
+            0.026381318870361724,
+            0.5949558854600422
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_control_offset3",
+          "model_2": "real_only_offset3",
+          "horizon_min": 120,
+          "diff_mae": 0.6694429420358858,
+          "diff_mae_ci": [
+            0.16420904757970683,
+            1.2550171108940023
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india_offset3",
+          "model_2": "real_only_offset3",
+          "horizon_min": 30,
+          "diff_mae": 0.11577765286432218,
+          "diff_mae_ci": [
+            -0.027827306955058476,
+            0.2461242352431329
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india_offset3",
+          "model_2": "real_only_offset3",
+          "horizon_min": 60,
+          "diff_mae": 0.353887324038741,
+          "diff_mae_ci": [
+            0.0550987933900911,
+            0.6573258634946775
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 45
+        },
+        {
+          "model_1": "real_plus_india_offset3",
+          "model_2": "real_only_offset3",
+          "horizon_min": 120,
+          "diff_mae": 0.2916364170033958,
+          "diff_mae_ci": [
+            -0.10086357973390601,
+            0.6824238581751346
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 45
+        }
+      ]
+    }
+  }
+}

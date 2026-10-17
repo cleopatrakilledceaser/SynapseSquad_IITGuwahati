@@ -48,6 +48,12 @@ def test_bias_rows_sign():
     assert r["bias"] == pytest.approx(15.0) and r["n_rows"] == 2
 
 
+def test_scoring_region_excludes_adaptation_days():
+    ev = pd.DataFrame({"days_since_start": [0.0, 1.0, 2.99, 3.0, 5.0]})
+    got = stress.scoring_region(ev, {"test_from_day": 3})
+    assert got["days_since_start"].tolist() == [3.0, 5.0]
+
+
 def _need_inputs():
     if not (PROJECT_ROOT / "reports" / "metrics" / "mech_fitted_params.csv").exists():
         pytest.skip("mechanistic fits not available")

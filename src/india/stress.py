@@ -74,6 +74,15 @@ def synthetic_table(
     return tabs[scfg["n_hours"]]
 
 
+def scoring_region(ev: pd.DataFrame, scfg: dict[str, Any]) -> pd.DataFrame:
+    """Rows that are scored: day >= ``test_from_day`` (D-061 rule, also used by D-062).
+
+    ``core.eval_table`` keeps the earlier days because the few-shot corrections adapt on them;
+    scoring them would test the k-day corrections on their own adaptation data.
+    """
+    return ev[ev["days_since_start"] >= scfg["test_from_day"]]
+
+
 def bias_rows(df: pd.DataFrame, models: list[str], horizons: list[int]) -> list[dict[str, Any]]:
     """Mean signed error (prediction minus truth, mg/dL) per model and horizon."""
     rows = []
@@ -110,8 +119,9 @@ def stress_one(
     boot = bc["bootstrap"]
     OUT.mkdir(parents=True, exist_ok=True)
     ev.to_parquet(OUT / f"stress_{name}.parquet", index=False)
-    return {"n_patients": int(ev.patient_id.nunique()), "mae": core.mae_rows(ev, models, hz, boot),
-            "diff": core.diff_rows(ev, pairs, hz, boot), "bias": bias_rows(ev, models, hz)}  # fmt: skip
+    region = scoring_region(ev, scfg)
+    return {"n_patients": int(region.patient_id.nunique()), "mae": core.mae_rows(region, models, hz, boot),
+            "diff": core.diff_rows(region, pairs, hz, boot), "bias": bias_rows(region, models, hz)}  # fmt: skip
 
 
 def augmentation(
@@ -157,7 +167,7 @@ def augmentation(
         (f"{n}_offset{k:g}", f"real_only_offset{k:g}") for k in scfg["k_grid"] for n in names[1:]
     ]
     boot = bc["bootstrap"]
-    region = ev[ev["days_since_start"] >= scfg["test_from_day"]]
+    region = scoring_region(ev, scfg)
     ev.to_parquet(OUT / "augmentation_cgmacros.parquet", index=False)
     return {"n_patients": int(region.patient_id.nunique()), "mae": core.mae_rows(region, models, hz, boot),
             "diff": core.diff_rows(region, pairs, hz, boot)}  # fmt: skip
@@ -211,7 +221,10 @@ def main() -> None:
     oof = oof.rename(columns={f"pred_{h}": f"pred_in_cohort_{h}" for h in scfg["horizons_min"]})
     ref_ev = ref_ev.merge(oof, on=core.KEYS, how="left")
     metrics["in_cohort_reference"] = core.mae_rows(
-        ref_ev, ["persistence", "in_cohort"], scfg["horizons_min"], bc["bootstrap"]
+        scoring_region(ref_ev, scfg),
+        ["persistence", "in_cohort"],
+        scfg["horizons_min"],
+        bc["bootstrap"],
     )
     print("B. augmentation", flush=True)
     extras = {k: tabs[v] for k, v in scfg["augment"].items()}
