@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from src.dash import bundle as B
-from src.dash import charts, ref
+from src.dash import agp, charts, ref, units
 from src.dash import text as T
 from src.dash import whatif as W
 from src.dash.bundle import HORIZONS, Bundle, PatientData
@@ -49,13 +49,15 @@ def plot(fig: Any) -> None:
 
 
 def table(df: pd.DataFrame) -> None:
-    """Static-looking table, no index column."""
+    """Static-looking table, no index column (glucose numbers follow the unit switch)."""
+    if units.unit() != units.MGDL:
+        df = df.apply(lambda col: col.map(units.localize) if col.dtype == object else col)
     _wide(st.dataframe, df, hide_index=True)
 
 
 def html_block(s: str) -> None:
     """Raw HTML block (all dynamic text is escaped by the caller)."""
-    st.markdown(s, unsafe_allow_html=True)
+    st.markdown(units.localize(s), unsafe_allow_html=True)
 
 
 def esc(s: Any) -> str:
@@ -84,8 +86,14 @@ def get_state(pid: str) -> Any:
     return W.patient_state(b.patient(pid), b.context, get_forms()["mono"].cols)
 
 
+def sync_units() -> None:
+    """Apply the unit chosen in the sidebar (also inside fragments, which rerun on their own)."""
+    units.set_unit(st.session_state.get("unit", units.MGDL))
+
+
 def bundle_or_stop() -> Bundle:
     """The bundle, or a plain instruction and a stop if it has not been built."""
+    sync_units()
     try:
         return get_bundle()
     except B.BundleMissing as e:
@@ -145,9 +153,9 @@ def kpi_html(row: dict[str, Any], cfg: dict[str, Any]) -> str:
     interval = f'80% interval {T.mgdl(row.get("lo80|60"))} to {T.mgdl(row.get("hi80|60"))}'
     return (
         '<div class="kpis">'
-        f'<div class="kpi"><div class="k">Glucose now</div><div class="v">{esc(T.mgdl(now).replace(" mg/dL", ""))}<small>mg/dL</small></div>'
+        f'<div class="kpi"><div class="k">Glucose now</div><div class="v">{esc(T.mgdl_num(now))}<small>{units.unit()}</small></div>'
         f'<div class="s">{esc(trend.capitalize() if trend != T.NA else "Trend not available")}</div></div>'
-        f'<div class="kpi"><div class="k">In 60 minutes</div><div class="v">{esc(T.mgdl(p60).replace(" mg/dL", ""))}<small>mg/dL</small></div>'
+        f'<div class="kpi"><div class="k">In 60 minutes</div><div class="v">{esc(T.mgdl_num(p60))}<small>{units.unit()}</small></div>'
         f'<div class="s">{esc(interval)}</div></div>'
         f'<div class="kpi"><div class="k">Chance {esc(T.EVENT_TEXT[ev][2])}</div><div class="v">{third}</div>'
         f'<div class="s">{sub}</div></div></div>'
@@ -254,7 +262,7 @@ def why_drawer(p: PatientData, row: pd.Series) -> None:
             key=f"why_{p.pid}",
         )
         for s in T.explain_sentences(p.explain, row["t"], int(hz)):
-            st.markdown(f"- {s}")
+            st.markdown(units.localize(f"- {s}"))
         st.caption(
             "What moved the model's forecast, not a physiological cause. Time of day and HbA1c can appear when nothing else stands out."
         )
@@ -263,7 +271,7 @@ def why_drawer(p: PatientData, row: pd.Series) -> None:
 def decision_block(b: Bundle, p: PatientData, row: pd.Series) -> None:
     """Decision sentence, forecast line, confidence, uncertain banner and the 'why' drawer."""
     decision_block_light(b, p, row)
-    st.markdown(T.forecast_line(row.to_dict(), 60))
+    st.markdown(units.localize(T.forecast_line(row.to_dict(), 60)))
     why_drawer(p, row)
 
 
@@ -296,7 +304,7 @@ def overview() -> None:
             with st.container(border=True):
                 html_block(
                     f'<div class="pcard"><div><span class="name">{esc(name_of(qp.meta))}</span>{tag} {sel}</div>'
-                    f'<div class="big">{esc(T.mgdl(qrow.get("cgm_now")).replace(" mg/dL", ""))} <small>mg/dL</small></div>'
+                    f'<div class="big">{esc(T.mgdl_num(qrow.get("cgm_now")))} <small>{units.unit()}</small></div>'
                     f'<div class="st">{esc(T.short_status(qrow, cfg))}</div></div>'
                 )
                 st.button("Selected" if q == pid else "View", key=f"sel_{q}", on_click=_select, args=(q,),
@@ -357,6 +365,7 @@ def live_twin() -> None:
     rate = int(b.calib.get("fa_per_day", 2))
 
     def view() -> None:
+        sync_units()
         key = f"idx_{pid}"
         i = anchor_index(pid, n)
         if st.session_state.get("playing", False) and i < n - 1:
@@ -443,6 +452,69 @@ def _alert_lines(r: dict[str, Any], stats: dict[str, Any], rate: int) -> None:
     st.caption(
         "Alerts here use only readings up to the forecast time (a display rule that differs slightly from the Part 6 test)."
     )
+
+
+# --------------------------------------------------------------------------- glucose report
+
+
+def _report_tile(k: str, v: str, small: str, sub: str) -> str:
+    return (
+        f'<div class="kpi"><div class="k">{esc(k)}</div><div class="v">{esc(v)}<small>{esc(small)}</small></div>'
+        f'<div class="s">{esc(sub)}</div></div>'
+    )
+
+
+def glucose_report() -> None:
+    """Standard CGM report: time in ranges against consensus targets, GMI, variability, AGP."""
+    b = bundle_or_stop()
+    cfg = display_cfg(b)
+    header(
+        "Glucose report",
+        "The summary clinicians already read from a CGM record: time in range, GMI and the daily profile.",
+        "Report",
+    )
+    with st.container(border=True):
+        pid = topline(b, "report")
+    p = b.patient(pid)
+    df = history(p)
+    r = agp.report(df, cfg["zones"])
+    sh, cov = r["shares"], r["coverage"]
+    html_block(
+        '<div class="kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">'
+        + _report_tile("Mean glucose", units.num(r["mean"]), units.unit(), f"{r['n']} readings")
+        + _report_tile("GMI", f"{r['gmi']:.1f}", "%", "Estimated from mean glucose; not an HbA1c result")
+        + _report_tile("Variability (CV)", f"{r['cv']:.0f}", "%", f"Consensus target at most {agp.CV_TARGET:.0f}%")
+        + _report_tile("Time in range", f"{sh['range']:.0f}", "%", "Target above 70%")
+        + "</div>"
+    )
+    with st.container(border=True):
+        st.markdown("#### Time in ranges")
+        plot(charts.tir_figure(sh))
+        rows = []
+        for key, label, _, limit in agp.TARGETS:
+            direction = "above" if key == "range" else "below"
+            rows.append({"Range": label, "Your readings": f"{sh[key]:.1f}%",
+                         "Consensus target": f"{direction} {limit:g}%",
+                         "Meets target": "Yes" if agp.meets(key, sh[key]) else "No"})  # fmt: skip
+        table(pd.DataFrame(rows))
+        st.caption(
+            "Consensus targets for people with diabetes in general (Battelino et al., Diabetes Care 2019). "
+            "They are population values; a clinician sets the goal for each patient."
+        )
+    with st.container(border=True):
+        st.markdown("#### Daily profile")
+        plot(charts.agp_figure(agp.agp_profile(df), cfg))
+        st.caption(
+            "All days laid over one 24-hour clock. Dark line: median. Darker band: middle half of readings. "
+            "Lighter band: 90% of readings."
+        )
+    short = cov["days"] < agp.MIN_DAYS or cov["fraction"] < 0.7
+    st.info(
+        f"This record covers {cov['days']:.1f} days with {100 * cov['fraction']:.0f}% of expected readings. "
+        f"The consensus asks for {agp.MIN_DAYS} days and at least 70% of readings"
+        + (", so treat these numbers as a rough picture." if short else ".")
+    )
+    footer()
 
 
 # --------------------------------------------------------------------------- what-if lab
@@ -540,7 +612,7 @@ def what_if_lab() -> None:
         table(ref.dose_table(b.stats))
     with st.expander("What this tool cannot tell you"):
         for s in LIMITS_TEXT:
-            st.markdown(f"- {s}")
+            st.markdown(units.localize(f"- {s}"))
     footer()
 
 

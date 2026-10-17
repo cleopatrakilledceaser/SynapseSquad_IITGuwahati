@@ -11,6 +11,8 @@ from typing import Any
 
 import pandas as pd
 
+from src.dash import units
+
 INK, SLATE, RULE, DAMSON = "#1B2230", "#5A6478", "#E6E2EC", "#43285E"
 PAPER, SURFACE = "#F4F2F7", "#FFFFFF"
 FONT = "Segoe UI Variable Text, Segoe UI, system-ui, -apple-system, Roboto, Arial, sans-serif"
@@ -22,6 +24,12 @@ ZONES = [  # (key, label, pattern colour, pattern shape or None, flat tint under
     ("high", "High, above 180", "#E09A12", ".", "rgba(224,154,18,0.08)"),
     ("very_high", "Very high, above 250", "#8C1D2B", "+", "rgba(140,29,43,0.07)"),
 ]
+
+SOLID = {  # flat colour under each zone's pattern in the single-bar view
+    "very_low": "rgba(43,108,176,0.55)", "low": "rgba(43,108,176,0.32)",
+    "range": "rgba(154,211,184,0.95)", "high": "rgba(224,154,18,0.50)",
+    "very_high": "rgba(140,29,43,0.50)",
+}  # fmt: skip
 
 
 def _bounds(cfg: dict[str, Any]) -> list[tuple[float, float]]:
@@ -51,7 +59,22 @@ def hero_figure(
         minutes=cfg["forecast_min"]
     )
     fig = go.Figure()
-    for (ya, yb), (_, label, colour, shape, tint) in zip(_bounds(cfg), ZONES, strict=True):
+    hover = (
+        "%{x|%H:%M}  %{y:.0f} mg/dL<extra></extra>"
+        if units.unit() == units.MGDL
+        else "%{x|%H:%M}  %{customdata:.1f} mmol/L<extra></extra>"
+    )
+    zl = cfg["zones"]
+    labels = [
+        f"Very low, below {units.num(zl['very_low'])}",
+        f"Low, below {units.num(zl['low'])}",
+        f"In range, {units.num(zl['low'])} to {units.num(zl['high'])}",
+        f"High, above {units.num(zl['high'])}",
+        f"Very high, above {units.num(zl['very_high'])}",
+    ]
+    for (ya, yb), (_, _, colour, shape, tint), label in zip(
+        _bounds(cfg), ZONES, labels, strict=True
+    ):
         pat = (
             dict(shape=shape, fgcolor=colour, bgcolor=tint, size=6, solidity=0.16)
             if shape
@@ -76,7 +99,7 @@ def hero_figure(
         ht.append(t), hv.append(g)
     fig.add_trace(go.Scatter(
         x=ht, y=hv, mode="lines", line=dict(color=INK, width=2), name="Glucose history",
-        hovertemplate="%{x|%H:%M}  %{y:.0f} mg/dL<extra></extra>",
+        customdata=[None if v is None else units.conv(v) for v in hv], hovertemplate=hover,
     ))  # fmt: skip
 
     def fan(
@@ -95,7 +118,7 @@ def hero_figure(
             x=ts, y=mean, mode="lines+markers", name=name,
             line=dict(color=DAMSON, width=3, dash=dash or "solid"),
             marker=dict(size=[0] + [9] * len(f), color=DAMSON, symbol="circle"),
-            hovertemplate="%{x|%H:%M}  %{y:.0f} mg/dL<extra></extra>",
+            customdata=[units.conv(v) for v in mean], hovertemplate=hover,
         ))  # fmt: skip
 
     fan(fc, None, "rgba(67,40,94,0.22)", "Forecast (median)", True)
@@ -114,16 +137,19 @@ def hero_figure(
         ))  # fmt: skip
     fig.add_vline(x=now, line=dict(color=INK, width=1))
     fig.add_annotation(x=now, y=cfg["y_range"][1] - 6, yref="y", yanchor="top", xanchor="right", showarrow=False,
-                       text=f"<b>Now {now_value:.0f} mg/dL</b>", font=dict(size=13, color=INK, family=FONT),
+                       text=f"<b>Now {units.fmt(now_value)}</b>", font=dict(size=13, color=INK, family=FONT),
                        bgcolor="rgba(255,255,255,0.92)", bordercolor=RULE, borderwidth=1, borderpad=4, xshift=-6)  # fmt: skip
     fig.update_layout(
         height=height, margin=dict(l=56, r=16, t=16, b=64), paper_bgcolor=SURFACE, plot_bgcolor=SURFACE,
         font=dict(family=FONT, color=INK, size=14), hovermode="closest", dragmode=False,
         legend=dict(orientation="h", y=-0.12, x=0, font=dict(size=13)),
         xaxis=dict(range=[x0, x1], tickformat="%H:%M", showgrid=False, linecolor=RULE, ticks="outside"),
-        yaxis=dict(range=list(cfg["y_range"]), title=dict(text="Glucose (mg/dL)", font=dict(size=13, color=SLATE)),
+        yaxis=dict(range=list(cfg["y_range"]), title=dict(text=f"Glucose ({units.unit()})", font=dict(size=13, color=SLATE)),
                    showgrid=False, linecolor=RULE, ticks="outside", fixedrange=True),
     )  # fmt: skip
+    ticks = units.axis_ticks(*cfg["y_range"])
+    if ticks:
+        fig.update_yaxes(tickmode="array", tickvals=ticks[0], ticktext=ticks[1])
     return fig
 
 
@@ -148,5 +174,77 @@ def curve_figure(curve: pd.DataFrame, title: str) -> Any:
         xaxis=dict(title=dict(text="Days of the patient's own data used (k)", font=dict(size=13, color=SLATE)),
                    showgrid=False, linecolor=RULE, ticks="outside"),
         yaxis=dict(title=dict(text=title, font=dict(size=13, color=SLATE)), gridcolor=RULE, linecolor=RULE),
+    )  # fmt: skip
+    return fig
+
+
+def agp_figure(profile: pd.DataFrame, cfg: dict[str, Any], height: int = 430) -> Any:
+    """Ambulatory glucose profile: median, 25-75% and 5-95% bands by time of day."""
+    import plotly.graph_objects as go
+
+    base = pd.Timestamp("2000-01-01")
+    x = [base + pd.Timedelta(minutes=int(m)) for m in profile["minute"]]
+    z = cfg["zones"]
+    y0, y1 = cfg["y_range"]
+    y1 = max(y1, float(profile["q95"].max()) + 15)
+    fig = go.Figure()
+    fig.add_shape(type="rect", xref="paper", x0=0, x1=1, y0=z["low"], y1=z["high"],
+                  fillcolor="rgba(154,211,184,0.22)", line=dict(width=0), layer="below")  # fmt: skip
+    for edge in (z["low"], z["high"]):
+        fig.add_hline(y=edge, line=dict(color=SLATE, width=1, dash="dot"))
+    fig.add_annotation(
+        x=0.008, xref="paper", xanchor="left", y=z["high"] - 4, yref="y", yanchor="top",
+        text=f"Target range, {units.num(z['low'])} to {units.num(z['high'])}", showarrow=False,
+        font=dict(size=11, color=SLATE, family=FONT), bgcolor="rgba(255,255,255,0.85)", borderpad=2,
+    )  # fmt: skip
+    for lo, hi, fill, name in (("q05", "q95", "rgba(67,40,94,0.12)", "5 to 95% of readings"),
+                               ("q25", "q75", "rgba(67,40,94,0.26)", "25 to 75% of readings")):  # fmt: skip
+        fig.add_trace(go.Scatter(
+            x=x + x[::-1], y=list(profile[hi]) + list(profile[lo])[::-1], mode="lines",
+            line=dict(width=0), fill="toself", fillcolor=fill, name=name, hoverinfo="skip",
+        ))  # fmt: skip
+    hover = (
+        "%{x|%H:%M}  median %{y:.0f} mg/dL<extra></extra>"
+        if units.unit() == units.MGDL
+        else "%{x|%H:%M}  median %{customdata:.1f} mmol/L<extra></extra>"
+    )
+    fig.add_trace(go.Scatter(
+        x=x, y=profile["q50"], mode="lines", name="Median", line=dict(color=DAMSON, width=3),
+        customdata=[units.conv(v) for v in profile["q50"]], hovertemplate=hover,
+    ))  # fmt: skip
+    fig.update_layout(
+        height=height, margin=dict(l=56, r=16, t=16, b=64), paper_bgcolor=SURFACE, plot_bgcolor=SURFACE,
+        font=dict(family=FONT, color=INK, size=14), hovermode="closest", dragmode=False,
+        legend=dict(orientation="h", y=-0.14, x=0, font=dict(size=13)),
+        xaxis=dict(tickformat="%H:%M", dtick=3 * 3600 * 1000, showgrid=False, linecolor=RULE, ticks="outside"),
+        yaxis=dict(range=[y0, y1], title=dict(text=f"Glucose ({units.unit()})", font=dict(size=13, color=SLATE)),
+                   showgrid=False, linecolor=RULE, ticks="outside", fixedrange=True),
+    )  # fmt: skip
+    ticks = units.axis_ticks(y0, y1)
+    if ticks:
+        fig.update_yaxes(tickmode="array", tickvals=ticks[0], ticktext=ticks[1])
+    return fig
+
+
+def tir_figure(shares: dict[str, float], height: int = 150) -> Any:
+    """One stacked bar of the five glucose zones (pattern and label on every segment)."""
+    import plotly.graph_objects as go
+
+    names = {"very_low": "Very low", "low": "Low", "range": "In range", "high": "High", "very_high": "Very high"}
+    fig = go.Figure()
+    for key, _, colour, shape, _tint in ZONES:
+        v = shares.get(key, 0.0)
+        pat = dict(shape=shape, fgcolor=colour, size=6, solidity=0.3) if shape else None
+        fig.add_trace(go.Bar(
+            x=[v], y=[""], orientation="h", name=names[key], text=[f"{v:.0f}%" if v >= 4 else ""],
+            textposition="inside", insidetextanchor="middle",
+            marker=dict(color=SOLID[key], pattern=pat, line=dict(color="white", width=1)),
+            hovertemplate=f"{names[key]}: {v:.1f}%<extra></extra>",
+        ))  # fmt: skip
+    fig.update_layout(
+        barmode="stack", height=height, margin=dict(l=8, r=8, t=8, b=56), paper_bgcolor=SURFACE,
+        plot_bgcolor=SURFACE, font=dict(family=FONT, color=INK, size=14),
+        legend=dict(orientation="h", y=-0.5, x=0, font=dict(size=13)),
+        xaxis=dict(range=[0, 100], showgrid=False, visible=False), yaxis=dict(visible=False), dragmode=False,
     )  # fmt: skip
     return fig

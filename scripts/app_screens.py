@@ -11,7 +11,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-PAGES = ["overview", "live", "whatif", "twin", "personalization", "tiers", "quality", "evidence", "export"]
+PAGES = ["overview", "live", "report", "whatif", "twin", "personalization", "tiers", "quality", "evidence", "export"]
 PORT = 8599
 OUT = Path("reports/screens")
 

@@ -13,6 +13,7 @@ from typing import Any
 
 import pandas as pd
 
+from src.dash import units
 from src.explain.templates import risk_word, trend_word
 
 NA = "not available"
@@ -45,8 +46,13 @@ def clock(ts: Any) -> str:
 
 
 def mgdl(v: Any) -> str:
-    """'168 mg/dL' or 'not available'."""
-    return f"{float(v):.0f} mg/dL" if isnum(v) else NA
+    """'168 mg/dL' (or '9.3 mmol/L' when selected) or 'not available'."""
+    return units.fmt(float(v)) if isnum(v) else NA
+
+
+def mgdl_num(v: Any) -> str:
+    """The number alone in the display unit, or 'not available'."""
+    return units.num(float(v)) if isnum(v) else NA
 
 
 def pct(p: Any) -> str:
