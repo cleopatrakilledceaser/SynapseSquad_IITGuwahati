@@ -221,8 +221,10 @@ def agp_figure(profile: pd.DataFrame, cfg: dict[str, Any], height: int = 430) ->
                    showgrid=False, linecolor=RULE, ticks="outside", fixedrange=True),
     )  # fmt: skip
     ticks = units.axis_ticks(y0, y1)
-    if ticks:
-        fig.update_yaxes(tickmode="array", tickvals=ticks[0], ticktext=ticks[1])
+    if ticks:  # the profile has no 40 / 54 bands; fewer low ticks keep the labels apart
+        keep = [i for i, v in enumerate(ticks[0]) if v >= 70]
+        fig.update_yaxes(tickmode="array", tickvals=[ticks[0][i] for i in keep],
+                         ticktext=[ticks[1][i] for i in keep])  # fmt: skip
     return fig
 
 
