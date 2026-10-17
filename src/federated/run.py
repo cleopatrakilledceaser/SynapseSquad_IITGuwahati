@@ -115,6 +115,9 @@ def one_split(
         wd = fc.federated_train(clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 6000 + split),
                                 dp={"clip": cfg["dp"]["clip"], "z": z})  # fmt: skip
         put(f"fedavg_dp_z{z:g}", predict(wd, shapes, x_te_std, now, scale, clip))
+    bad = [c for c in te_ev if c.startswith("pred_") and te_ev[c].isna().any()]
+    if bad:  # MAE would silently drop these rows and score a subset of patients
+        raise RuntimeError(f"non-finite predictions, layout {layout}, split {split}: {bad}")
     te_ev["split"] = split
     te_ev["patient_id"] = te_ev["patient_id"].astype(str) + f"|s{split}"
     return te_ev

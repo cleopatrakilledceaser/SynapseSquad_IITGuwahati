@@ -82,6 +82,12 @@ def test_clip_update_bounds_norm_and_keeps_direction():
     assert np.array_equal(fc.clip_update(d, 10.0), d)
 
 
+def test_clip_update_bounds_non_finite_updates():
+    for bad in (np.array([np.inf, 1.0]), np.array([np.nan, 1.0])):
+        c = fc.clip_update(bad, 1.0)
+        assert np.isfinite(c).all() and np.linalg.norm(c) <= 1.0
+
+
 def test_dp_with_zero_noise_equals_clipped_mean_and_noise_changes_result():
     sets = [toy(100, seed=s) for s in range(3)]
     p0 = fc.init_params(4, [4], 2, np.random.default_rng(0))

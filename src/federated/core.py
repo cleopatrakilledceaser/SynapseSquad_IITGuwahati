@@ -107,7 +107,13 @@ def local_train(
 
 
 def clip_update(delta: np.ndarray, clip: float) -> np.ndarray:
-    """Scale ``delta`` so its L2 norm is at most ``clip``."""
+    """Scale ``delta`` so its L2 norm is at most ``clip``.
+
+    A non-finite update (local training diverged) becomes a zero update, so the norm bound that
+    the DP accounting relies on holds for every input.
+    """
+    if not np.isfinite(delta).all():
+        return np.zeros_like(delta)
     norm = float(np.linalg.norm(delta))
     return delta if norm <= clip else delta * (clip / norm)
 
