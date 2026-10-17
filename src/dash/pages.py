@@ -13,8 +13,8 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from src.dash import bundle as B
 from src.dash import agp, charts, ref, units
+from src.dash import bundle as B
 from src.dash import text as T
 from src.dash import whatif as W
 from src.dash.bundle import HORIZONS, Bundle, PatientData
@@ -482,8 +482,15 @@ def glucose_report() -> None:
     html_block(
         '<div class="kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">'
         + _report_tile("Mean glucose", units.num(r["mean"]), units.unit(), f"{r['n']} readings")
-        + _report_tile("GMI", f"{r['gmi']:.1f}", "%", "Estimated from mean glucose; not an HbA1c result")
-        + _report_tile("Variability (CV)", f"{r['cv']:.0f}", "%", f"Consensus target at most {agp.CV_TARGET:.0f}%")
+        + _report_tile(
+            "GMI", f"{r['gmi']:.1f}", "%", "Estimated from mean glucose; not an HbA1c result"
+        )
+        + _report_tile(
+            "Variability (CV)",
+            f"{r['cv']:.0f}",
+            "%",
+            f"Consensus target at most {agp.CV_TARGET:.0f}%",
+        )
         + _report_tile("Time in range", f"{sh['range']:.0f}", "%", "Target above 70%")
         + "</div>"
     )

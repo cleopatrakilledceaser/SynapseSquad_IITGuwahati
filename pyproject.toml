@@ -36,6 +36,7 @@ convention = "google"
 "src/appdata/rt.py" = ["E501", "N803", "N806"]
 "src/appdata/whatif_grid.py" = ["E501"]
 "tests/test_dash.py" = ["E501", "N812"]
+"tests/test_units.py" = ["N812"]
 "tests/test_appdata_rt.py" = ["N803", "N806"]
 # fit/predict implement a documented common protocol (module docstring); per-method docstrings
 # would only repeat it.

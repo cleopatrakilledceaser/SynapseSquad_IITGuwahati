@@ -36,7 +36,9 @@ def test_localize_text_single_range_signed_and_untouched_words():
     units.set_unit(units.MMOLL)
     out = units.localize("Forecast at +60 min: 180 mg/dL (80% interval 144 to 198 mg/dL).")
     assert out == "Forecast at +60 min: 10.0 mmol/L (80% interval 8.0 to 11.0 mmol/L)."
-    assert units.localize("Change +18 mg/dL, below 70 mg/dL") == "Change +1.0 mmol/L, below 3.9 mmol/L"
+    assert (
+        units.localize("Change +18 mg/dL, below 70 mg/dL") == "Change +1.0 mmol/L, below 3.9 mmol/L"
+    )
     assert units.localize("62% chance, 3 days") == "62% chance, 3 days"  # no unit, no change
     assert units.localize(42) == 42
 
@@ -44,7 +46,9 @@ def test_localize_text_single_range_signed_and_untouched_words():
 def test_roundtrip_error_is_small():
     units.set_unit(units.MMOLL)
     for v in (40, 54, 70, 126, 180, 250, 400):
-        assert float(units.num(v)) * units.FACTOR == pytest.approx(v, abs=units.FACTOR * 0.05 + 0.01)
+        assert float(units.num(v)) * units.FACTOR == pytest.approx(
+            v, abs=units.FACTOR * 0.05 + 0.01
+        )
 
 
 def test_axis_ticks_only_in_mmol():
@@ -78,4 +82,6 @@ def test_hero_chart_default_labels_unchanged_and_mmol_labels_converted():
     assert f.layout.yaxis.title.text == "Glucose (mmol/L)"
     assert list(f.layout.yaxis.tickvals)[:2] == [40, 54]
     hist_trace = next(t for t in f.data if t.name == "Glucose history")
-    assert "mmol/L" in hist_trace.hovertemplate and hist_trace.customdata[0] == pytest.approx(150 / 18.016)
+    assert "mmol/L" in hist_trace.hovertemplate and hist_trace.customdata[0] == pytest.approx(
+        150 / 18.016
+    )

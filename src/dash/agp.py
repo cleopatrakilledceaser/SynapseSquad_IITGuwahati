@@ -71,7 +71,10 @@ def coverage(df: pd.DataFrame) -> dict[str, float]:
     step = t.diff().dropna().median()
     span = t.iloc[-1] - t.iloc[0]
     expected = span / step + 1
-    return {"days": float(span / pd.Timedelta(days=1)), "fraction": float(min(len(t) / expected, 1.0))}
+    return {
+        "days": float(span / pd.Timedelta(days=1)),
+        "fraction": float(min(len(t) / expected, 1.0)),
+    }
 
 
 def agp_profile(df: pd.DataFrame, bin_min: int = 30) -> pd.DataFrame:
@@ -83,7 +86,13 @@ def agp_profile(df: pd.DataFrame, bin_min: int = 30) -> pd.DataFrame:
         v = g.dropna().to_numpy(float)
         if len(v) < 3:
             continue
-        rows.append({"minute": int(m), "n": len(v), **{f"q{q:02d}": float(np.percentile(v, q)) for q in QUANTILES}})
+        rows.append(
+            {
+                "minute": int(m),
+                "n": len(v),
+                **{f"q{q:02d}": float(np.percentile(v, q)) for q in QUANTILES},
+            }
+        )
     return pd.DataFrame(rows).sort_values("minute").reset_index(drop=True)
 
 

@@ -92,7 +92,9 @@ def privacy_figure() -> None:
                     color=OI[3], marker="o", capsize=3, label="Federated + privacy noise")  # fmt: skip
         ref = {r["model"]: r for r in b[lay]["mae"] if r["horizon_min"] == 60}
         ax.axhline(ref["fedavg"]["mae"], color=OI[2], lw=1.5, label="Federated, no noise")
-        ax.axhline(ref["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward")
+        ax.axhline(
+            ref["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward"
+        )
         for z in zs:
             ax.annotate(f"e={pts[z][3]:.0f}" if pts[z][3] < 1e4 else f"e={pts[z][3]:.0e}", (z, pts[z][0]),
                         textcoords="offset points", xytext=(4, 8), fontsize=7)  # fmt: skip

@@ -37,7 +37,10 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, layout in cfg["layouts"].items():
         t0 = time.time()
-        parts = [one_split(layout, i, pool, rows, ev, cols, cfg, sweep_z=zs) for i in range(cfg["n_splits"])]
+        parts = [
+            one_split(layout, i, pool, rows, ev, cols, cfg, sweep_z=zs)
+            for i in range(cfg["n_splits"])
+        ]
         res: pd.DataFrame = pd.concat(parts, ignore_index=True)
         res.to_parquet(OUT / f"sweep_{name}.parquet", index=False)
         metrics[name] = {"clinics": layout["clinics"],

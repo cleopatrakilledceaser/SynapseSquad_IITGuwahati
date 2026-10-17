@@ -230,7 +230,13 @@ def tir_figure(shares: dict[str, float], height: int = 150) -> Any:
     """One stacked bar of the five glucose zones (pattern and label on every segment)."""
     import plotly.graph_objects as go
 
-    names = {"very_low": "Very low", "low": "Low", "range": "In range", "high": "High", "very_high": "Very high"}
+    names = {
+        "very_low": "Very low",
+        "low": "Low",
+        "range": "In range",
+        "high": "High",
+        "very_high": "Very high",
+    }
     fig = go.Figure()
     for key, _, colour, shape, _tint in ZONES:
         v = shares.get(key, 0.0)
