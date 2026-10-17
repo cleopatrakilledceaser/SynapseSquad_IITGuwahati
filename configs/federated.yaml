@@ -1,0 +1,19 @@
+# Part 8c: federated learning simulation (D-063). All values fixed before the first run.
+seed: 42
+n_hours: 6
+horizons_min: [30, 60, 120]
+feature_set: cgm_tod_static        # from transfer.core.feature_sets (columns present in both cohorts)
+test_from_day: 3
+min_test_anchors: 96
+holdout_fraction: 0.2
+n_splits: 5                        # random hold-out splits (seeds seed + i)
+
+layouts:                           # name: {scheme, clinics}
+  iid: {scheme: iid, clinics: 5}
+  hba1c: {scheme: hba1c, clinics: 5}
+  dataset: {scheme: dataset, clinics: 2}
+
+model: {hidden: [64, 32], target_scale_mgdl: 30.0}
+train: {rounds: 40, local_epochs: 1, batch: 256, lr: 0.02}
+fedprox: {mu: 0.05}
+dp: {clip: 1.0, noise_multipliers: [0.5, 1.0], delta: 1.0e-5}
