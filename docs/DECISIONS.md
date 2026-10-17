@@ -1463,3 +1463,21 @@ Reading the result: if C - B is indistinguishable from 0 at m = 1 and negative o
 ### D-063a: exploratory noise sweep (added AFTER the first federated run; not pre-registered)
 
 The two noise multipliers fixed in D-063 (z = 0.5 and 1.0) both ruined the model (about +20 to +155 mg/dL at +60 min, epsilon 50 to 141), which is the outcome D-063 said to expect with 2 to 5 clinics. To show where accuracy survives and what privacy that buys, a sweep over smaller multipliers z = 0.01, 0.03, 0.1, 0.2 is run with everything else unchanged (same clip, rounds, splits, seeds, same FedAvg reference). It is labelled EXPLORATORY in the metrics file and in every figure because it was chosen after seeing the first result. It is a privacy-utility curve, not a tuned model: no setting is selected on test patients and no setting is proposed for use. Expected reading: accuracy returns only when the noise is so small that epsilon is in the thousands or more, i.e. client-level differential privacy is not usable with a handful of clinics; a real deployment would need many more clients or patient-level DP-SGD (still deferred).
+
+## D-065: Part 10 tuned LightGBM (protocol written before any run)
+
+Why: the shipped forecaster uses a squared-error loss and tunes only the number of leaves, while it is scored on absolute error. A wider search and an absolute-error-type loss may lower MAE. Because Parts 2 to 9 looked at the same patients many times, the protocol below limits how much a gain can be due to selection.
+
+Candidates (`configs/improve.yaml`): 16 candidates, the first one is exactly the Part 2/3 setting, the rest are seeded random draws over loss (squared, absolute, Huber with alpha 10 and 25), leaves, minimum child samples, learning rate, column and row subsampling and L1/L2 penalties. The candidate list is identical for every fold and horizon.
+
+Selection: inside each outer training fold, on the INNER validation patients only (the Part 2 inner split). Score = MAE. The 3 best candidates are averaged. Test patients are never used for any choice, so the search cannot do worse than the status quo on inner validation but may do worse on test.
+
+Feature sets: CGMacros D_cgm_wear_meal and E_full, Shanghai T2DM E_full (fusion.yaml), delta target. Nothing else changes.
+
+Design A (cv): outer CV repeat 0 (5 patient-grouped folds), status quo refitted on the same folds, paired patient-bootstrap difference tuned minus status quo at +30/+60/+120.
+Design B (holdout): the holdout test patients (never used for any choice in Parts 2 to 9; used in Part 6 only for evaluation), run ONCE after the design A result is recorded, train = holdout train patients, validation = holdout calibration patients. The runner refuses a second run.
+
+Decision rule (fixed now): the tuned model becomes the default forecaster only if (1) on design A its +60 min difference has a CI entirely below 0 in at least one cohort, (2) its point difference is below 0 at all three horizons for every cohort and config, and (3) the holdout +60 point difference has the same sign. Otherwise the status quo stays and the result is reported as found. Either way the numbers go in the README.
+
+What this does not do: it does not change event classifiers, intervals, the twin or the what-if engine. If tuned forecasts are adopted, intervals and event scores are NOT recomputed in this part; that would be a new, separately documented step.
+
