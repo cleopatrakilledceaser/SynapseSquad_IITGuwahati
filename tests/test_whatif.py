@@ -243,6 +243,10 @@ def test_india_library_schema() -> None:
 
 
 def test_dev_stage_uses_training_patients_only() -> None:
+    from pathlib import Path
+
+    if not (Path(__file__).resolve().parents[1] / "data" / "processed" / "splits" / "cgmacros_cv.csv").exists():
+        pytest.skip("split files not built (run `make data`)")
     from src.models.fusion_lgbm import folds
 
     for _, f, tr, te in folds("cgmacros", [WC["cv_repeat"]]):
