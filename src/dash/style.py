@@ -44,6 +44,16 @@ h3 {{ font-size: 16px; line-height: 24px; }}
 [data-testid="stSidebarNavLink"]:hover {{ background: rgba(255,255,255,.08); }}
 [data-testid="stSidebarNavLink"][aria-current="page"] {{ background: rgba(255,255,255,.16); box-shadow: inset 3px 0 0 var(--mint); }}
 [data-testid="stSidebarNavLink"][aria-current="page"] span {{ color: #fff; font-weight: 700; }}
+/* sidebar widgets (glucose-unit switch): light text on the damson background, aligned with the nav */
+[data-testid="stSidebarUserContent"] {{ padding-left: 24px; padding-right: 24px; }}
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"], [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {{ color: #CDBFE0; }}
+[data-testid="stSidebar"] [role="radiogroup"] label, [data-testid="stSidebar"] [role="radiogroup"] label p {{ color: #E9E1F3; }}
+[data-testid="stSidebar"] [data-testid="stTooltipIcon"] button, [data-testid="stSidebar"] [data-testid="stTooltipIcon"] svg {{ color: #CDBFE0 !important; stroke: #CDBFE0 !important; opacity: 1 !important; }}
+/* radio circles: outlined when not chosen, filled mint with a dark dot when chosen (default looked inverted on damson) */
+[data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div > div:first-child {{ background: transparent !important; border: 2px solid #CDBFE0 !important; box-shadow: none !important; }}
+[data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div > div:first-child > div {{ background: transparent !important; }}
+[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] > div > div > div:first-child {{ background: var(--mint) !important; border-color: var(--mint) !important; }}
+[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] > div > div > div:first-child > div {{ background: var(--deep) !important; }}
 
 /* cards: every bordered container is a white card */
 [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {{ border-radius: 16px; }}
