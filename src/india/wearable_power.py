@@ -45,7 +45,9 @@ def add_sleep_features(tab: pd.DataFrame, c: dict[str, pd.DataFrame]) -> pd.Data
     merged = pd.merge_asof(left, nights.sort_values("wake_t"), left_on="t", right_on="wake_t",
                            by="patient_id", direction="backward")  # fmt: skip
     g = c["grid"][["patient_id", "t", "steps"]].copy()
-    g["steps_1h"] = g.groupby("patient_id")["steps"].transform(lambda s: s.rolling(12, min_periods=1).sum())
+    g["steps_1h"] = g.groupby("patient_id")["steps"].transform(
+        lambda s: s.rolling(12, min_periods=1).sum()
+    )
     merged = merged.merge(g[["patient_id", "t", "steps_1h"]], on=["patient_id", "t"], how="left")
     merged = merged.sort_values("_i").drop(columns=["wake_t"])
     return merged.reset_index(drop=True)

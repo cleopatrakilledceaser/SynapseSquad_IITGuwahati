@@ -18,7 +18,9 @@ from src.mech.model import bounds_array, initial_state, rk4_step, simulate, thet
 STEP_MIN = 5.0
 
 
-def draw_nights(rng: np.random.Generator, n_nights: int, scfg: dict[str, Any]) -> dict[str, np.ndarray]:
+def draw_nights(
+    rng: np.random.Generator, n_nights: int, scfg: dict[str, Any]
+) -> dict[str, np.ndarray]:
     """One night of sleep before each day: duration, efficiency, deep fraction, HRV (RMSSD, ms)."""
 
     def tn(c: dict[str, float]) -> np.ndarray:
@@ -28,7 +30,9 @@ def draw_nights(rng: np.random.Generator, n_nights: int, scfg: dict[str, Any]) -
     eff, deep = tn(scfg["efficiency"]), tn(scfg["deep_frac"])
     h = scfg["hrv"]
     deficit = np.maximum(scfg["baseline_h"] - dur, 0.0)
-    hrv = h["mean_ms"] * np.exp(-h["per_hour_deficit"] * deficit + rng.normal(0, h["noise_sd_log"], n_nights))
+    hrv = h["mean_ms"] * np.exp(
+        -h["per_hour_deficit"] * deficit + rng.normal(0, h["noise_sd_log"], n_nights)
+    )
     return {"sleep_h": dur, "sleep_eff": eff, "sleep_deep": deep, "hrv_rmssd": hrv}
 
 
@@ -75,7 +79,9 @@ def simulate_segmented(
     return out
 
 
-def steps_from_activity(rng: np.random.Generator, act: np.ndarray, scfg: dict[str, Any]) -> np.ndarray:
+def steps_from_activity(
+    rng: np.random.Generator, act: np.ndarray, scfg: dict[str, Any]
+) -> np.ndarray:
     """Steps per 5 minutes from the simulated activity input (zero when the input is zero)."""
     s = scfg["steps"]
     raw = act * s["per_activity_unit_5min"] + rng.normal(0.0, s["noise_sd"], len(act))

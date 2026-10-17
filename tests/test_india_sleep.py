@@ -23,7 +23,9 @@ def gen(mult, n=3, days=4, seed=5):
 def test_zero_multiplier_reproduces_legacy_simulation_exactly():
     _need_inputs()
     a, b = gen(None), gen(0.0)
-    assert np.array_equal(a["grid"]["glucose_true"].to_numpy(), b["grid"]["glucose_true"].to_numpy())
+    assert np.array_equal(
+        a["grid"]["glucose_true"].to_numpy(), b["grid"]["glucose_true"].to_numpy()
+    )
     assert np.array_equal(a["grid"]["glucose"].to_numpy(), b["grid"]["glucose"].to_numpy())
     assert "sleep" not in a and "steps" not in a["grid"].columns
     assert "steps" in b["grid"].columns and len(b["sleep"]) == 3 * 4
@@ -38,7 +40,9 @@ def test_positive_multiplier_lowers_sensitivity_and_only_after_first_wake():
     first = sl.wake_steps(1, scfg)[0]
     for pid, ga in a["grid"].groupby("patient_id"):
         gb = b["grid"][b["grid"].patient_id == pid]
-        assert np.array_equal(ga["glucose_true"].to_numpy()[:first], gb["glucose_true"].to_numpy()[:first])
+        assert np.array_equal(
+            ga["glucose_true"].to_numpy()[:first], gb["glucose_true"].to_numpy()[:first]
+        )
     # lower insulin sensitivity: glucose is higher on average over the cohort
     assert b["grid"]["glucose_true"].mean() > a["grid"]["glucose_true"].mean()
 
@@ -46,7 +50,10 @@ def test_positive_multiplier_lowers_sensitivity_and_only_after_first_wake():
 def test_draws_in_range_and_deficit_never_negative():
     scfg = load_config("india")["sleep"]
     n = sl.draw_nights(np.random.default_rng(0), 500, scfg)
-    assert n["sleep_h"].min() >= scfg["duration"]["lo"] and n["sleep_h"].max() <= scfg["duration"]["hi"]
+    assert (
+        n["sleep_h"].min() >= scfg["duration"]["lo"]
+        and n["sleep_h"].max() <= scfg["duration"]["hi"]
+    )
     assert (n["hrv_rmssd"] > 0).all()
     shift = sl.si_shift(np.array([5.0, 7.0, 9.0]), scfg, 2.0)
     assert shift[0] < 0 and shift[1] == 0 and shift[2] == 0
@@ -68,7 +75,8 @@ def test_steps_zero_when_no_activity_and_scale_with_activity():
 
 def test_sleep_features_are_causal_and_aligned():
     _need_inputs()
-    from src.india import stress, wearable_power as wp
+    from src.india import stress
+    from src.india import wearable_power as wp
 
     icfg, mc, fcfg = load_config("india"), load_config("mech"), load_config("features")
     c = ic.generate(icfg, mc, 1.0, "t", 5, n_patients=2, days=5, sleep_mult=1.0)

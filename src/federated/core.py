@@ -190,7 +190,10 @@ def partition(
     if scheme == "hba1c":
         h = patients["hba1c"].astype(float).fillna(patients["hba1c"].median())
         order = np.argsort(h.to_numpy(), kind="stable")
-        return {f"c{j}": [str(ids[i]) for i in chunk] for j, chunk in enumerate(np.array_split(order, k))}
+        return {
+            f"c{j}": [str(ids[i]) for i in chunk]
+            for j, chunk in enumerate(np.array_split(order, k))
+        }
     raise ValueError(f"unknown scheme {scheme}")
 
 

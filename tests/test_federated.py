@@ -124,7 +124,8 @@ def test_hba1c_partition_is_ordered_and_dataset_partition_is_pure():
     means = [h[v].mean() for v in c.values()]
     assert means == sorted(means)
     d = fc.partition(p, "dataset", 2, np.random.default_rng(1))
-    assert all(p.set_index("patient_id").loc[v, "cohort"].nunique() == 1 for v in d.values())
+    cohort = p.set_index("patient_id")["cohort"]
+    assert all((cohort[v] == cohort[v].iloc[0]).all() for v in d.values())
 
 
 def test_holdout_disjoint_and_nonempty():

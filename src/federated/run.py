@@ -54,7 +54,10 @@ def one_split(
     tr, te = fc.holdout(clinics, cfg["holdout_fraction"], rng)
     x_all, y_all, m_all = arrays(rows, cols, hz, scale)
     pid = rows["patient_id"].to_numpy()
-    raw = {n: (x_all[np.isin(pid, p)], y_all[np.isin(pid, p)], m_all[np.isin(pid, p)]) for n, p in tr.items()}
+    raw = {
+        n: (x_all[np.isin(pid, p)], y_all[np.isin(pid, p)], m_all[np.isin(pid, p)])
+        for n, p in tr.items()
+    }
     names = list(tr)
     mean, sd = fc.federated_stats([raw[n][0] for n in names])
     std = {n: (fc.standardize(raw[n][0], mean, sd), raw[n][1], raw[n][2]) for n in names}
@@ -92,10 +95,18 @@ def one_split(
         wl = fc.local_train(w0, shapes, (fc.standardize(xl, mn, s), yl, ml),
                             tcfg["rounds"] * tcfg["local_epochs"], tcfg["batch"], tcfg["lr"],
                             np.random.default_rng(cfg["seed"] + 2000 + split))  # fmt: skip
-        put("local_only", predict(wl, shapes, fc.standardize(x_te[mk], mn, s), now[mk], scale, clip), mk)
-    wc = fc.central_train(clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 3000 + split))
+        put(
+            "local_only",
+            predict(wl, shapes, fc.standardize(x_te[mk], mn, s), now[mk], scale, clip),
+            mk,
+        )
+    wc = fc.central_train(
+        clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 3000 + split)
+    )
     put("central", predict(wc, shapes, x_te_std, now, scale, clip))
-    wf = fc.federated_train(clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 4000 + split))
+    wf = fc.federated_train(
+        clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 4000 + split)
+    )
     put("fedavg", predict(wf, shapes, x_te_std, now, scale, clip))
     wp = fc.federated_train(clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 5000 + split),
                             mu=cfg["fedprox"]["mu"])  # fmt: skip
@@ -157,7 +168,9 @@ def main() -> None:
             "diff": tc.diff_rows(res, pairs, hz, bc["bootstrap"]),
         }  # fmt: skip
         print(f"  layout {name}: {time.time() - t0:.0f}s", flush=True)
-    files = [PROC / "static.parquet"] + [PROC / "features" / f"{n}_N{tcfg['n_hours']}.parquet" for n in tcfg["tables"].values()]
+    files = [PROC / "static.parquet"] + [
+        PROC / "features" / f"{n}_N{tcfg['n_hours']}.parquet" for n in tcfg["tables"].values()
+    ]
     write_metrics("federated", metrics, cfg, cfg["seed"], file_hash(files))
     print("wrote reports/metrics/federated.json")
 

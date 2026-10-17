@@ -23,17 +23,25 @@ LABEL = {
     "fedavg": "Federated (FedAvg)",
     "fedprox": "Federated (FedProx)",
 }
-TITLE = {"iid": "5 similar clinics", "hba1c": "5 clinics split by HbA1c", "dataset": "2 clinics = 2 cohorts"}
+TITLE = {
+    "iid": "5 similar clinics",
+    "hba1c": "5 clinics split by HbA1c",
+    "dataset": "2 clinics = 2 cohorts",
+}
 
 
 def main() -> None:
     """Draw the federated figure and print the results table."""
-    m = json.loads((PROJECT_ROOT / "reports" / "metrics" / "federated.json").read_text("utf-8"))["metrics"]
+    m = json.loads((PROJECT_ROOT / "reports" / "metrics" / "federated.json").read_text("utf-8"))[
+        "metrics"
+    ]
     layouts = [k for k in TITLE if k in m]
     dps = sorted(k for k in m["epsilon"])
     label = dict(LABEL)
     for z in dps:
-        label[f"fedavg_dp_{z}"] = f"FedAvg + privacy noise (z={z[1:]}, epsilon {m['epsilon'][z]:.1f})"
+        label[f"fedavg_dp_{z}"] = (
+            f"FedAvg + privacy noise (z={z[1:]}, epsilon {m['epsilon'][z]:.1f})"
+        )
     fig, axes = plt.subplots(1, len(layouts), figsize=(5.6 * len(layouts), 4.6))
     axes = [axes] if len(layouts) == 1 else list(axes)
     for ax, lay in zip(axes, layouts, strict=True):
@@ -43,8 +51,12 @@ def main() -> None:
             r = rows[n]
             ax.barh(i, r["mae"], xerr=[[r["mae"] - r["mae_ci"][0]], [r["mae_ci"][1] - r["mae"]]],
                     color=OI[i % len(OI)], capsize=3)  # fmt: skip
-            print(f"{lay:8s} {label[n]:55s} MAE +60 {r['mae']:.2f} ({r['mae_ci'][0]:.2f} to {r['mae_ci'][1]:.2f})")
-        ax.axvline(rows["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward")
+            print(
+                f"{lay:8s} {label[n]:55s} MAE +60 {r['mae']:.2f} ({r['mae_ci'][0]:.2f} to {r['mae_ci'][1]:.2f})"
+            )
+        ax.axvline(
+            rows["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward"
+        )
         ax.set_yticks(range(len(names)), [label[n] for n in names], fontsize=8)
         ax.invert_yaxis()
         ax.set_xlabel("Mean absolute error at +60 min (mg/dL)")
