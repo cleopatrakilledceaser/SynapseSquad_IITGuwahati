@@ -10,7 +10,7 @@ A. Stress test: LightGBM trained on all real CGMacros patients, applied to synth
 B. Augmentation: in CGMacros CV (repeat 0) compare training on real patients only with training on
    real + synthetic patients; the evaluation patients are always real.
 
-Run: ``python -W ignore -u -m src.india.stress`` (about 15 to 30 minutes). Needs ``make data`` first.
+Run: ``python -W ignore -u -m src.india.stress`` (about 15 to 30 minutes; needs ``make data``).
 """
 
 from __future__ import annotations
@@ -43,10 +43,15 @@ def feature_columns(real_cols: list[str], syn_cols: list[str], scfg: dict[str, A
     """Features present in BOTH tables for the configured groups (never targets or calendar)."""
     shared = [c for c in real_cols if c in set(syn_cols) and not is_target(c)]
     groups = set(scfg["feature_groups"])
-    out: list[str] = []
-    for c in shared:
-        if c.startswith("cgm_") and "cgm" in groups or c in TOD and "tod" in groups or c.startswith(WEAR_PREFIXES) and "wearable" in groups or c.startswith(MEAL_PREFIX) and "meals" in groups or c in {f"static_{s}" for s in scfg["static"]} and "static" in groups:
-            out.append(c)
+    static = {f"static_{x}" for x in scfg["static"]}
+    rules = [
+        ("cgm", lambda c: c.startswith("cgm_")),
+        ("tod", lambda c: c in TOD),
+        ("wearable", lambda c: c.startswith(WEAR_PREFIXES)),
+        ("meals", lambda c: c.startswith(MEAL_PREFIX)),
+        ("static", lambda c: c in static),
+    ]
+    out = [c for c in shared if any(g in groups and ok(c) for g, ok in rules)]
     if "days_since_start" in out:
         out.remove("days_since_start")
     return out
@@ -54,7 +59,7 @@ def feature_columns(real_cols: list[str], syn_cols: list[str], scfg: dict[str, A
 
 def constant_columns(tab: pd.DataFrame, cols: list[str]) -> list[str]:
     """Columns with no variation in ``tab`` (a sign a channel carries no information)."""
-    return [c for c in cols if tab[c].nunique(dropna=True) <= 1]
+    return [c for c in cols if tab[c].dropna().unique().size <= 1]
 
 
 def synthetic_table(
@@ -187,7 +192,7 @@ def main() -> None:
     cols = [c for c in cols if c not in dead]
     print(f"{len(cols)} shared features (dropped constant in real: {len(dead)})", flush=True)
     strata = {p: f"cgmacros|{v}" for p, v in strata_for(static, "cgmacros", sc).items()}
-    for tag, t in tabs.items():
+    for t in tabs.values():
         strata |= {p: f"{SYN}|{s}" for p, s in t.groupby("patient_id")["_status"].first().items()}
     metrics: dict[str, Any] = {"n_features": len(cols), "dropped_constant_in_real": dead,
                                "cohort_summary": summ, "SYNTHETIC": True}  # fmt: skip
