@@ -37,43 +37,78 @@ _TREE_KEYS = (
 _DEFAULT_LEFT = 2
 
 
-class Tree:
-    """One parsed LightGBM regression tree (num_cat = 0: no categorical splits in these models)."""
+class Forest:
+    """All trees of one booster as flat arrays; every tree and row is walked in one vectorized pass.
 
-    __slots__ = ("feat", "thr", "dec", "left", "right", "leaf")
+    Split rule = LightGBM's numerical split: a value goes left if ``x <= threshold``. ``decision_type``
+    bit 1 is "default left"; bits 2-3 are the missing type (0 none, 1 zero, 2 NaN). With missing type
+    NaN a NaN follows the default direction; with type zero, NaN becomes 0 and a (near) zero follows
+    the default direction; with type none, NaN becomes 0 and is compared as a number. Categorical
+    splits are not used by these models and raise.
+    """
 
-    def __init__(self, t: dict[str, list[str]]) -> None:
-        if int(t.get("num_cat", ["0"])[0]) != 0:
-            raise ValueError("categorical splits are not supported by the app runtime")
-        self.feat = np.asarray(t["split_feature"], np.int32)
-        self.thr = np.asarray(t["threshold"], float)
-        self.dec = np.asarray(t["decision_type"], np.int32)
-        self.left = np.asarray(t["left_child"], np.int32)
-        self.right = np.asarray(t["right_child"], np.int32)
-        self.leaf = np.asarray(t["leaf_value"], float)
+    def __init__(self, trees: list[dict[str, list[str]]]) -> None:
+        feat, thr, dec, left, right, leaf, roots = [], [], [], [], [], [], []
+        n_node = n_leaf = 0
+        for t in trees:
+            if int(t.get("num_cat", ["0"])[0]) != 0:
+                raise ValueError("categorical splits are not supported by the app runtime")
+            lv = np.asarray(t["leaf_value"], float)
+            lc = np.asarray(t.get("left_child", []), np.int64)
+            rc = np.asarray(t.get("right_child", []), np.int64)
+            k = len(lc)  # internal nodes (0 for a single-leaf tree)
+            # child ids: >= 0 internal node, < 0 leaf (-1 - leaf index); make them global
+            def glob(c: np.ndarray) -> np.ndarray:
+                return np.where(c >= 0, c + n_node, -1 - ((-1 - c) + n_leaf))
+
+            feat.append(np.asarray(t.get("split_feature", []), np.int64))
+            thr.append(np.asarray(t.get("threshold", []), float))
+            dec.append(np.asarray(t.get("decision_type", []), np.int64))
+            left.append(glob(lc))
+            right.append(glob(rc))
+            roots.append(n_node if k > 0 else -1 - n_leaf)
+            leaf.append(lv)
+            n_node += k
+            n_leaf += len(lv)
+        cat = lambda xs, dt: np.concatenate(xs).astype(dt) if xs else np.zeros(0, dt)  # noqa: E731
+        self.feat, self.thr, self.dec = cat(feat, np.int64), cat(thr, float), cat(dec, np.int64)
+        self.left, self.right = cat(left, np.int64), cat(right, np.int64)
+        self.leaf, self.roots = cat(leaf, float), np.asarray(roots, np.int64)
+        self.default_left = (self.dec & _DEFAULT_LEFT) != 0
+        self.missing = (self.dec >> 2) & 3
+
+    def __len__(self) -> int:
+        return len(self.roots)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """Booster output (delta mg/dL) of every row of ``X`` (columns = model columns)."""
-        out = np.empty(len(X))
-        for i, row in enumerate(np.asarray(X, float)):
-            node = 0
-            while self.left[node] >= 0:
-                v = row[self.feat[node]]
-                go_left = bool(self.dec[node] & _DEFAULT_LEFT) if np.isnan(v) else bool(v <= self.thr[node])
-                node = int(self.left[node] if go_left else self.right[node])
-            out[i] = self.leaf[-node - 1]
-        return out
+        """Sum of the leaf values of every tree for every row of ``X`` (booster output, mg/dL)."""
+        X = np.asarray(X, float)
+        n, T = len(X), len(self.roots)
+        cur = np.repeat(self.roots[:, None], n, axis=1).ravel()
+        row = np.tile(np.arange(n), T)
+        act = np.flatnonzero(cur >= 0)
+        while act.size:
+            nd = cur[act]
+            v = X[row[act], self.feat[nd]]
+            mt = self.missing[nd]
+            nan = np.isnan(v)
+            v = np.where(nan & (mt != 2), 0.0, v)  # NaN is a number (0) unless the type is NaN
+            miss = (nan & (mt == 2)) | ((mt == 1) & (np.abs(v) <= 1e-35))
+            go_left = np.where(miss, self.default_left[nd], v <= self.thr[nd])
+            cur[act] = np.where(go_left, self.left[nd], self.right[nd])
+            act = act[cur[act] >= 0]
+        return self.leaf[-1 - cur].reshape(T, n).sum(axis=0)
 
 
-def parse_model_text(text: str) -> list[Tree]:
+def parse_model_text(text: str) -> Forest:
     """Every tree of a LightGBM ``model_to_string`` dump, in order."""
-    trees: list[Tree] = []
+    trees: list[dict[str, list[str]]] = []
     cur: dict[str, list[str]] = {}
     for line in text.splitlines():
         line = line.strip()
         if line.startswith("Tree="):
             if "leaf_value" in cur:
-                trees.append(Tree(cur))
+                trees.append(cur)
             cur = {}
         elif line.startswith("end of trees"):
             break
@@ -82,14 +117,14 @@ def parse_model_text(text: str) -> list[Tree]:
             if k in _TREE_KEYS:
                 cur[k] = v.split()
     if "leaf_value" in cur:
-        trees.append(Tree(cur))
+        trees.append(cur)
     if not trees:
         raise ValueError("no trees parsed from the model string")
-    return trees
+    return Forest(trees)
 
 
-def read_model(path: Path) -> list[Tree]:
-    """Trees of one exported ``.txt.gz`` booster."""
+def read_model(path: Path) -> Forest:
+    """Forest of one exported ``.txt.gz`` booster."""
     with gzip.open(path, "rt", encoding="utf-8") as fh:
         return parse_model_text(fh.read())
 
@@ -102,8 +137,8 @@ class RtForm:
     base: str
     cols: list[str]
     horizons: list[int]
-    pop: dict[int, list[Tree]]
-    inner: dict[int, dict[int, list[Tree]]] = field(default_factory=dict)
+    pop: dict[int, Forest]
+    inner: dict[int, dict[int, Forest]] = field(default_factory=dict)
     res: dict[int, dict[int, np.ndarray]] = field(default_factory=dict)
 
     @classmethod
@@ -115,7 +150,7 @@ class RtForm:
         base = spec["base"][str(hs[0])]
         pop = {h: read_model(models / f"{name}_{h}_pop.txt.gz") for h in hs}
         zf = np.load(models / "residuals.npz")
-        inner: dict[int, dict[int, list[Tree]]] = {}
+        inner: dict[int, dict[int, Forest]] = {}
         res: dict[int, dict[int, np.ndarray]] = {h: {} for h in hs}
         for j in spec["inner"]:
             inner[j] = {h: read_model(models / f"{name}_{h}_in{j}.txt.gz") for h in hs}
@@ -124,11 +159,8 @@ class RtForm:
         return cls(name, base, list(meta["cols"]), hs, pop, inner, res)
 
     def _raw(self, X: np.ndarray, h: int, j: int | None = None) -> np.ndarray:
-        trees = self.pop[h] if j is None else self.inner[j][h]
-        out = np.zeros(len(X))
-        for tr in trees:
-            out += tr.predict(X)
-        return out
+        forest = self.pop[h] if j is None else self.inner[j][h]
+        return forest.predict(X)
 
     def predict(self, df: pd.DataFrame, h: int) -> np.ndarray:
         """Absolute glucose forecast (mg/dL) = base column + booster output."""
