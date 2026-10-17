@@ -1371,7 +1371,7 @@ Status: written before the first run of the builder; the guard values below are 
   then the next T2D patient), plus one SYNTHETIC patient from the Part 4 simulator (the simulated
   patient whose Gb is closest to the cohort median), labelled synthetic on every page.
 - **No outcome is ever used for a displayed patient:** the builder reads the test patients'
-  anchor rows only after dropping `y_*`, `*_any_*` and `cgm_slope_30`; every forecast is from a
+  anchor rows only after dropping `y_*` and `*_any_*` columns (`cgm_slope_30` is a trailing-slope input, kept); every forecast is from a
   fold model that never saw the patient; calibration and alert thresholds are fitted on training
   patients only. A guard fails the build if an outcome column appears in any output frame.
 - **Live what-if:** meal and activity inputs are recomputed on the period prefix with the Part 2

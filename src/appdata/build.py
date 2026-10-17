@@ -54,7 +54,7 @@ from src.explain import shap_values as shap
 from src.explain import templates as tp
 from src.hybrid.twin_features import HORIZONS
 from src.mech.model import FIT_PARAMS
-from src.uncertainty.common import LABEL_COLS, UNC, groups
+from src.uncertainty.common import UNC, groups
 from src.utils.config import PROJECT_ROOT, load_config
 from src.whatif import context as cx
 from src.whatif import edits as ed
@@ -79,10 +79,13 @@ def load_cfgs() -> dict[str, dict[str, Any]]:
 
 
 def is_label(col: str) -> bool:
-    """Outcome columns: ``y_*``, ``*_any_*`` and the future-slope label (never shown or stored)."""
-    return col.startswith("y_") or col.startswith("y|") or any(m in col for m in LABEL_MARKERS) or (
-        col in LABEL_COLS
-    )
+    """Outcome columns: ``y_*`` / ``y|*`` and ``*_any_*`` (never shown or stored).
+
+    ``cgm_slope_30`` is NOT an outcome: it is the trailing least-squares slope of the last 30 min
+    of CGM (``src.features.build``), the input of the trend alert. Part 6 merely stores it with the
+    labels because the out-of-fold frames do not carry it.
+    """
+    return col.startswith(("y_", "y|")) or any(m in col for m in LABEL_MARKERS)
 
 
 def label_free(df: pd.DataFrame) -> pd.DataFrame:
@@ -252,8 +255,10 @@ def main(check: bool = False) -> None:
     oof = pd.read_parquet(UNC / f"unc_A_{COHORT}_fold{fold}_oof.parquet")
     if not set(oof["patient_id"].astype(str)) <= set(train):
         raise RuntimeError("calibration rows include a non-training patient")
-    need = [f"{e}_any_{h}" for e in ev.EV for h in HORIZONS]
-    if any(c not in oof.columns for c in need):
+    slope = unc["alerts"]["trend_slope_feature"]  # trailing CGM slope: a causal feature, not a label
+    need = [f"{e}_any_{h}" for e in ev.EV for h in HORIZONS] + [slope]
+    need = [c for c in need if c not in oof.columns]
+    if need:  # training patients' rows only (the oof frame holds nothing else, checked above)
         lab = tab[tab["patient_id"].isin(train)][KEYS + need]
         oof = oof.merge(lab, on=KEYS, how="left", validate="one_to_one")
     cal = rp.Calib(oof, unc["alerts"], list(app["alerts"]["events"]),
