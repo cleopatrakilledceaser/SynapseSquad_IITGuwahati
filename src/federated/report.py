@@ -69,5 +69,44 @@ def main() -> None:
     print("privacy budget (delta {:g}, {} rounds):".format(m["delta"], m["rounds"]), m["epsilon"])
 
 
+def privacy_figure() -> None:
+    """Privacy-utility curve (EXPLORATORY, D-063a): +60 min MAE against the noise multiplier."""
+    root = PROJECT_ROOT / "reports" / "metrics"
+    main_p, sweep_p = root / "federated.json", root / "federated_privacy.json"
+    if not (main_p.exists() and sweep_p.exists()):
+        print("privacy sweep not run yet (python -m src.federated.privacy_sweep)")
+        return
+    a = json.loads(main_p.read_text("utf-8"))["metrics"]
+    b = json.loads(sweep_p.read_text("utf-8"))["metrics"]
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.6), sharey=False)
+    for ax, lay in zip(axes, TITLE, strict=True):
+        pts = {}  # z -> (mae, lo, hi, epsilon)
+        for src, eps in ((a, a["epsilon"]), (b, b["epsilon"])):
+            for r in src[lay]["mae"]:
+                if r["horizon_min"] == 60 and "_dp_z" in r["model"]:
+                    z = r["model"].split("_dp_z")[1]
+                    pts[float(z)] = (r["mae"], r["mae_ci"][0], r["mae_ci"][1], eps[f"z{z}"])
+        zs = sorted(pts)
+        ax.errorbar(zs, [pts[z][0] for z in zs],
+                    yerr=[[pts[z][0] - pts[z][1] for z in zs], [pts[z][2] - pts[z][0] for z in zs]],
+                    color=OI[3], marker="o", capsize=3, label="Federated + privacy noise")  # fmt: skip
+        ref = {r["model"]: r for r in b[lay]["mae"] if r["horizon_min"] == 60}
+        ax.axhline(ref["fedavg"]["mae"], color=OI[2], lw=1.5, label="Federated, no noise")
+        ax.axhline(ref["persistence"]["mae"], color="k", ls="--", lw=1, label="Last value carried forward")
+        for z in zs:
+            ax.annotate(f"e={pts[z][3]:.0f}" if pts[z][3] < 1e4 else f"e={pts[z][3]:.0e}", (z, pts[z][0]),
+                        textcoords="offset points", xytext=(4, 8), fontsize=7)  # fmt: skip
+        ax.set_xscale("log")
+        ax.set_xlabel("Noise multiplier z (more noise to the right)")
+        ax.set_ylabel("MAE at +60 min (mg/dL)")
+        ax.set_title(f"{TITLE[lay]} (SIMULATION, EXPLORATORY)", fontsize=10)
+        ax.legend(fontsize=7)
+    fig.tight_layout()
+    out = PROJECT_ROOT / "reports" / "figures" / "federated_privacy.png"
+    fig.savefig(out, dpi=300)
+    print(f"wrote {out}")
+
+
 if __name__ == "__main__":
     main()
+    privacy_figure()

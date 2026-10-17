@@ -44,9 +44,13 @@ def predict(
 
 def one_split(
     layout: dict[str, Any], split: int, pool: pd.DataFrame, rows: pd.DataFrame, ev: pd.DataFrame,
-    cols: list[str], cfg: dict[str, Any],
+    cols: list[str], cfg: dict[str, Any], sweep_z: list[float] | None = None,
 ) -> pd.DataFrame:  # fmt: skip
-    """All methods for one clinic layout and one random hold-out split; returns test predictions."""
+    """All methods for one clinic layout and one random hold-out split; returns test predictions.
+
+    With ``sweep_z`` only persistence, FedAvg and FedAvg with those noise multipliers are run
+    (the exploratory privacy sweep of D-063a; same seeds as the main run).
+    """
     hz, scale = cfg["horizons_min"], cfg["model"]["target_scale_mgdl"]
     clip = tuple(load_config("features")["glucose_clip_mgdl"])
     rng = np.random.default_rng(cfg["seed"] + split)
@@ -85,6 +89,16 @@ def one_split(
 
     for h in hz:
         te_ev[f"pred_persistence_{h}"] = te_ev["cgm_now"]
+    if sweep_z is not None:
+        wf = fc.federated_train(
+            clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 4000 + split)
+        )
+        put("fedavg", predict(wf, shapes, x_te_std, now, scale, clip))
+        for z in sweep_z:
+            wd = fc.federated_train(clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 6000 + split),
+                                    dp={"clip": cfg["dp"]["clip"], "z": z})  # fmt: skip
+            put(f"fedavg_dp_z{z:g}", predict(wd, shapes, x_te_std, now, scale, clip))
+        return finish(te_ev, layout, split)
     # local-only: each clinic alone, its own standardization, tested on its own held-out patients
     for n in names:
         mk = (te_ev["clinic"] == n).to_numpy()
@@ -115,6 +129,11 @@ def one_split(
         wd = fc.federated_train(clients, shapes, w0, tcfg, np.random.default_rng(cfg["seed"] + 6000 + split),
                                 dp={"clip": cfg["dp"]["clip"], "z": z})  # fmt: skip
         put(f"fedavg_dp_z{z:g}", predict(wd, shapes, x_te_std, now, scale, clip))
+    return finish(te_ev, layout, split)
+
+
+def finish(te_ev: pd.DataFrame, layout: dict[str, Any], split: int) -> pd.DataFrame:
+    """Refuse non-finite predictions, tag the split and namespace the patient ids."""
     bad = [c for c in te_ev if c.startswith("pred_") and te_ev[c].isna().any()]
     if bad:  # MAE would silently drop these rows and score a subset of patients
         raise RuntimeError(f"non-finite predictions, layout {layout}, split {split}: {bad}")
@@ -123,10 +142,10 @@ def one_split(
     return te_ev
 
 
-def main() -> None:
-    """Run all layouts and splits, write reports/metrics/federated.json."""
-    cfg, tcfg = load_config("federated"), load_config("transfer")
-    bc = load_config("baselines")
+def load_data(
+    cfg: dict[str, Any], tcfg: dict[str, Any]
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list[str]]:
+    """All anchor rows, the D-061 evaluation rows, the patient pool and the feature columns."""
     static = pd.read_parquet(PROC / "static.parquet")
     tabs = load_tables(tcfg, static)
     a, b = (list(t.columns) for t in tabs.values())
@@ -146,6 +165,14 @@ def main() -> None:
         .reset_index()
     )
     print(f"{len(cols)} features, {len(pool)} patients, {len(ev)} evaluation rows", flush=True)
+    return rows, ev, pool, cols
+
+
+def main() -> None:
+    """Run all layouts and splits, write reports/metrics/federated.json."""
+    cfg, tcfg = load_config("federated"), load_config("transfer")
+    bc = load_config("baselines")
+    rows, ev, pool, cols = load_data(cfg, tcfg)
     hz = cfg["horizons_min"]
     dps = [f"fedavg_dp_z{z:g}" for z in cfg["dp"]["noise_multipliers"]]
     models = ["persistence", "local_only", "central", "fedavg", "fedprox", *dps]

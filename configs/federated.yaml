@@ -17,3 +17,4 @@ model: {hidden: [64, 32], target_scale_mgdl: 30.0}
 train: {rounds: 40, local_epochs: 1, batch: 256, lr: 0.02}
 fedprox: {mu: 0.05}
 dp: {clip: 1.0, noise_multipliers: [0.5, 1.0], delta: 1.0e-5}
+sweep_noise_multipliers: [0.01, 0.03, 0.1, 0.2]   # D-063a, EXPLORATORY (added after the first run)
