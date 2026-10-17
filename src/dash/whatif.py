@@ -156,9 +156,6 @@ def comparison_table(res: dict[str, Any]) -> pd.DataFrame:
 
 
 def window_label(pdata: PatientData, w: dict[str, Any]) -> str:
-    """'Meal at 08:10 (45 g carbohydrate), viewed 45 min after'."""
+    """'09:33 meal, 66 g carbs (22 min in)'."""
     m = pdata.meals.loc[w["meal_idx"]]
-    return (
-        f"Meal at {pd.Timestamp(m['t']).strftime('%H:%M')} ({float(m['carbs_g']):.0f} g carbohydrate), "
-        f"viewed {w['offset_min']:.0f} min after"
-    )
+    return f"{pd.Timestamp(m['t']).strftime('%a %H:%M')} meal, {float(m['carbs_g']):.0f} g carbs ({w['offset_min']:.0f} min in)"

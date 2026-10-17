@@ -41,8 +41,8 @@ def main() -> int:
             errors = []
             pg.on("pageerror", lambda e: errors.append(str(e)))
             for name in PAGES:
-                pg.goto(f"http://localhost:{PORT}/{name}")
-                pg.wait_for_timeout(4000)
+                pg.goto(f"http://localhost:{PORT}/" + ("" if name == "overview" else name))
+                pg.wait_for_timeout(6000)
                 exc = pg.locator("[data-testid=stException]").count()
                 pg.screenshot(path=str(OUT / f"{name}.png"), full_page=True)
                 print(f"{name}: saved, exceptions on page: {exc}")

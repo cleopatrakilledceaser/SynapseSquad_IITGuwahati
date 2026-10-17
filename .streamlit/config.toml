@@ -2,13 +2,16 @@
 [server]
 enableStaticServing = true
 
+[client]
+toolbarMode = "minimal"
+
 [browser]
 gatherUsageStats = false
 
 [theme]
 base = "light"
 primaryColor = "#43285E"
-backgroundColor = "#F5F6F8"
+backgroundColor = "#F4F2F7"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#1B2230"
 font = "sans serif"

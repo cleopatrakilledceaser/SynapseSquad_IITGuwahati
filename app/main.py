@@ -20,15 +20,16 @@ from src.dash import pages, style  # noqa: E402
 st.set_page_config(page_title="GlucoTwin", layout="wide", initial_sidebar_state="expanded")
 style.inject()
 
-NAV = [
-    st.Page(pages.overview, title="Overview", url_path="overview", default=True),
-    st.Page(pages.live_twin, title="Live twin", url_path="live"),
-    st.Page(pages.what_if_lab, title="What-if lab", url_path="whatif"),
-    st.Page(pages.twin_state, title="Twin state", url_path="twin"),
-    st.Page(pages.personalization, title="Personalization", url_path="personalization"),
-    st.Page(pages.input_tiers, title="Input tiers", url_path="tiers"),
-    st.Page(pages.data_quality, title="Data quality", url_path="quality"),
-    st.Page(pages.evidence, title="Evidence", url_path="evidence"),
-    st.Page(pages.export, title="Export", url_path="export"),
-]
-st.navigation(NAV, position="sidebar").run()
+PAGES = {
+    "overview": st.Page(pages.overview, title="Overview", icon=":material/dashboard:", default=True),
+    "live": st.Page(pages.live_twin, title="Live twin", icon=":material/monitor_heart:", url_path="live"),
+    "whatif": st.Page(pages.what_if_lab, title="What-if lab", icon=":material/science:", url_path="whatif"),
+    "twin": st.Page(pages.twin_state, title="Twin state", icon=":material/hub:", url_path="twin"),
+    "personalization": st.Page(pages.personalization, title="Personalization", icon=":material/person_search:", url_path="personalization"),
+    "tiers": st.Page(pages.input_tiers, title="Input tiers", icon=":material/stacked_bar_chart:", url_path="tiers"),
+    "quality": st.Page(pages.data_quality, title="Data quality", icon=":material/verified:", url_path="quality"),
+    "evidence": st.Page(pages.evidence, title="Evidence", icon=":material/fact_check:", url_path="evidence"),
+    "export": st.Page(pages.export, title="Export", icon=":material/picture_as_pdf:", url_path="export"),
+}
+pages.PAGES.update(PAGES)
+st.navigation(list(PAGES.values()), position="sidebar").run()

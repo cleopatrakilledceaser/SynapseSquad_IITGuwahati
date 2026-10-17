@@ -104,6 +104,53 @@ def name_of(meta: dict[str, Any]) -> str:
     return str(meta["label"]).replace("cgmacros_", "")
 
 
+PAGES: dict[str, Any] = {}  # filled by app/main.py: url_path -> st.Page (for switch_page)
+
+
+def header(title: str, sub: str = "", eyebrow: str = "") -> None:
+    """Page title block."""
+    eb = f'<div class="eyebrow">{esc(eyebrow)}</div>' if eyebrow else ""
+    sb = f'<div class="sub">{esc(sub)}</div>' if sub else ""
+    html_block(f'<div class="pagehead">{eb}<h1>{esc(title)}</h1>{sb}</div>')
+
+
+def stamp(ts: Any) -> str:
+    """'Mon 09:55'."""
+    return pd.Timestamp(ts).strftime("%a %H:%M")
+
+
+def risk_chip(word: str) -> str:
+    """Risk word as a chip (a dot colour plus the word, never colour alone)."""
+    cls = {"low": "low", "moderate": "moderate", "high": "high", "very high": "very"}.get(word, "na")
+    text = f"{word.capitalize()} risk" if word != T.NA else "Risk not available"
+    return f'<span class="chip {cls}"><span class="dot"></span>{esc(text)}</span>'
+
+
+def kpi_html(row: dict[str, Any], cfg: dict[str, Any]) -> str:
+    """Three tiles: glucose now, forecast at +60, chance of the headline event."""
+    d = T.decision(row, cfg)
+    now, p60 = row.get("cgm_now"), row.get("pred|60")
+    trend = T.trend_of(row)
+    ev = d["event"]
+    r = next(x for x in T.readouts(row, 60) if x["event"] == ev)
+    if r["p"] is not None:
+        third = f'{100 * r["p"]:.0f}<small>%</small>'
+        sub = risk_chip(d["risk_word"])
+    else:
+        third = '<span style="font-size:20px">' + esc("now" if r["note"] else T.NA) + "</span>"
+        sub = esc(r["note"] or T.NA)
+    interval = f'80% interval {T.mgdl(row.get("lo80|60"))} to {T.mgdl(row.get("hi80|60"))}'
+    return (
+        '<div class="kpis">'
+        f'<div class="kpi"><div class="k">Glucose now</div><div class="v">{esc(T.mgdl(now).replace(" mg/dL", ""))}<small>mg/dL</small></div>'
+        f'<div class="s">{esc(trend.capitalize() if trend != T.NA else "Trend not available")}</div></div>'
+        f'<div class="kpi"><div class="k">In 60 minutes</div><div class="v">{esc(T.mgdl(p60).replace(" mg/dL", ""))}<small>mg/dL</small></div>'
+        f'<div class="s">{esc(interval)}</div></div>'
+        f'<div class="kpi"><div class="k">Chance {esc(T.EVENT_TEXT[ev][2])}</div><div class="v">{third}</div>'
+        f'<div class="s">{sub}</div></div></div>'
+    )
+
+
 def footer() -> None:
     """Disclaimer on every page."""
     html_block(f'<p class="disclaimer">{esc(T.DISCLAIMER)}</p>')
@@ -180,9 +227,9 @@ def alert_ticks(b: Bundle) -> dict[str, float | None]:
 
 
 def conf_html(conf: dict[str, Any]) -> str:
-    """Confidence badge: the word plus a bar count on a plain ink outline."""
+    """Confidence chip: the word plus a bar count."""
     bars = "".join(f'<span class="{"on" if i < conf["bars"] else ""}"></span>' for i in range(3))
-    return f'<span class="badge">Confidence: {esc(conf["label"])}&nbsp;&nbsp;<span class="bars">{bars}</span></span>'
+    return f'<span class="chip">Confidence: {esc(conf["label"])}&nbsp;<span class="bars">{bars}</span></span>'
 
 
 def why_drawer(p: PatientData, row: pd.Series) -> None:
@@ -203,37 +250,50 @@ def decision_block(b: Bundle, p: PatientData, row: pd.Series) -> None:
 
 # --------------------------------------------------------------------------- overview
 
+def _select(pid: str) -> None:
+    st.session_state["sel_pid"] = pid
+
+
 def overview() -> None:
-    """Patient list, decision strip, profile and data-quality banner."""
+    """Patient cards on the left, the selected patient's decision, tiles and profile on the right."""
     b = bundle_or_stop()
     cfg = display_cfg(b)
-    st.markdown("# Patients")
+    header("Patients", "Replayed days of recorded data. Select a patient to see the latest forecast.", "Overview")
     ids = b.ids()
     cur = st.session_state.get("sel_pid", ids[0])
+    pid = cur if cur in ids else ids[0]
     left, right = st.columns([5, 7], gap="large")
-
-    def status(pid: str) -> str:
-        p = b.patient(pid)
-        row = p.replay.iloc[anchor_index(pid, len(p.replay))].to_dict()
-        tag = "SYNTHETIC  " if p.synthetic else ""
-        return f"{name_of(p.meta)}  {tag}{T.short_status(row, cfg)}"
-
     with left:
-        pid = st.radio("Select a patient", ids, index=ids.index(cur) if cur in ids else 0, key="pid_overview",
-                       format_func=status, label_visibility="collapsed")  # fmt: skip
-        st.session_state["sel_pid"] = pid
+        for q in ids:
+            qp = b.patient(q)
+            qrow = qp.replay.iloc[anchor_index(q, len(qp.replay))].to_dict()
+            tag = '<span class="synthetic-tag">SYNTHETIC</span>' if qp.synthetic else ""
+            sel = '<span class="selected-tag">Selected</span>' if q == pid else ""
+            with st.container(border=True):
+                html_block(
+                    f'<div class="pcard"><div><span class="name">{esc(name_of(qp.meta))}</span>{tag} {sel}</div>'
+                    f'<div class="big">{esc(T.mgdl(qrow.get("cgm_now")).replace(" mg/dL", ""))} <small>mg/dL</small></div>'
+                    f'<div class="st">{esc(T.short_status(qrow, cfg))}</div></div>'
+                )
+                st.button("Selected" if q == pid else "View", key=f"sel_{q}", on_click=_select, args=(q,),
+                          disabled=q == pid, type="secondary")  # fmt: skip
     p = b.patient(pid)
     row = p.replay.iloc[anchor_index(pid, len(p.replay))]
     with right:
-        if p.synthetic:
-            html_block('<p class="topline">Synthetic patient<span class="synthetic-tag">SYNTHETIC</span> A simulated record with an assumed profile.</p>')
-        html_block(f'<p class="topline">Forecast made at {esc(T.clock(row["t"]))}</p>')
-        decision_block(b, p, row)
-        st.markdown("## Profile")
-        for k, v in T.profile_lines(p.meta):
-            st.markdown(f"**{k}:** {v}")
-        st.markdown("## Data quality")
-        st.markdown(T.quality_banner(row.to_dict()))
+        with st.container(border=True):
+            tag = '<span class="synthetic-tag">SYNTHETIC</span>' if p.synthetic else ""
+            html_block(f'<p class="topline">{esc(name_of(p.meta))}{tag} &middot; forecast made at {esc(stamp(row["t"]))}'
+                       + (" &middot; a simulated record with an assumed profile" if p.synthetic else "") + "</p>")
+            decision_block_light(b, p, row)
+            why_drawer(p, row)
+            if "live" in PAGES and st.button("Open the live twin", type="primary", key="open_live"):
+                st.switch_page(PAGES["live"])
+        with st.container(border=True):
+            st.markdown("#### Profile")
+            chips = "".join(f'<span class="chip">{esc(k)}: {esc(v)}</span>' for k, v in T.profile_lines(p.meta))
+            html_block(f'<div class="chips">{chips}</div>')
+            st.markdown("#### Data quality")
+            st.markdown(T.quality_banner(row.to_dict()))
     footer()
 
 
@@ -243,17 +303,19 @@ def live_twin() -> None:
     """The hero forecast chart with replay, event readouts, alerts and confidence."""
     b = bundle_or_stop()
     cfg = display_cfg(b)
-    st.markdown("# Live twin")
-    pid = topline(b, "live")
+    header("Live twin", "Replay of recorded data: move through the day or press Play. Not a live feed.", "Forecast")
+    speeds = list(cfg["replay_speeds"])
+    with st.container(border=True):
+        c0, c1, c2, c3 = st.columns([4, 1.2, 1.2, 2.2], vertical_alignment="bottom")
+        with c0:
+            pid = topline(b, "live")
+        if c1.button("Play", key="play_btn", type="primary"):
+            st.session_state["playing"] = True
+        if c2.button("Pause", key="pause_btn"):
+            st.session_state["playing"] = False
+        speed = c3.selectbox("Speed", speeds, format_func=lambda s: f"{s}x", key="speed")
     p = b.patient(pid)
     n = len(p.replay)
-    speeds = list(cfg["replay_speeds"])
-    c1, c2, c3, _ = st.columns([1, 1, 2, 4])
-    if c1.button("Play", key="play_btn", type="primary"):
-        st.session_state["playing"] = True
-    if c2.button("Pause", key="pause_btn"):
-        st.session_state["playing"] = False
-    speed = c3.selectbox("Speed", speeds, format_func=lambda s: f"{s}x", key="speed")
     playing = bool(st.session_state.get("playing", False))
     run_every = (1.0 / float(speed) * float(cfg.get("replay_tick_s", 1.0))) if playing else None
     ticks, hist = alert_ticks(b), history(p)
@@ -268,25 +330,34 @@ def live_twin() -> None:
         elif i >= n - 1:
             st.session_state["playing"] = False
         st.session_state[key] = i
-        i = st.slider("Time of forecast", 0, n - 1, key=key, help="Each step is 15 minutes of the replayed day.")
+        i = st.select_slider("Time of forecast", options=list(range(n)), key=key,
+                             format_func=lambda k: stamp(p.replay.iloc[k]["t"]),
+                             help="Each step is 15 minutes of the replayed record.")  # fmt: skip
         row = p.replay.iloc[i]
         r = row.to_dict()
-        html_block(f'<p class="topline">Forecast made at {esc(T.clock(row["t"]))}. Replay of recorded data, not a live feed.</p>')
-        st.markdown("## Next 2 hours")
-        decision_block_light(b, p, row)
-        fig = charts.hero_figure(hist, pd.Timestamp(row["t"]), float(row["cgm_now"]), forecast_dict(row, cfg["clamp"]), p.meals, cfg)
-        plot(fig)
-        st.caption("Lines connect the three forecast horizons; the model does not forecast between them. Shaded band: 80% interval.")
-        rows = []
-        for h in HORIZONS:
-            rows.append({"Horizon": f"+{h} min", "Forecast (median)": T.mgdl(r.get(f"pred|{h}")),
-                         "80% interval": f"{T.mgdl(r.get(f'lo80|{h}'))} to {T.mgdl(r.get(f'hi80|{h}'))}",
-                         "Interval width": T.mgdl(r.get(f"hi80|{h}") - r.get(f"lo80|{h}"))})  # fmt: skip
-        table(pd.DataFrame(rows))
-        st.markdown("## Risk within 60 minutes")
-        html_block(prob_bars(r, ticks))
-        st.caption("Calibrated probabilities. The tick marks where the alert switches on.")
-        _alert_lines(r, ev_stats, rate)
+        with st.container(border=True):
+            html_block(f'<p class="topline">Forecast made at {esc(stamp(row["t"]))}</p>')
+            decision_block_light(b, p, row)
+            fig = charts.hero_figure(hist, pd.Timestamp(row["t"]), float(row["cgm_now"]), forecast_dict(row, cfg["clamp"]), p.meals, cfg)
+            plot(fig)
+            st.caption("Lines connect the three forecast horizons; the model does not forecast between them. Shaded band: 80% interval.")
+        a, c = st.columns([6, 6], gap="medium")
+        with a:
+            with st.container(border=True):
+                st.markdown("#### Forecast")
+                rows = []
+                for h in HORIZONS:
+                    rows.append({"Horizon": f"+{h} min", "Median": T.mgdl(r.get(f"pred|{h}")),
+                                 "80% interval": f"{T.mgdl(r.get(f'lo80|{h}'))} to {T.mgdl(r.get(f'hi80|{h}'))}",
+                                 "Width": T.mgdl(r.get(f"hi80|{h}") - r.get(f"lo80|{h}"))})  # fmt: skip
+                table(pd.DataFrame(rows))
+        with c:
+            with st.container(border=True):
+                st.markdown("#### Risk within 60 minutes")
+                html_block(prob_bars(r, ticks))
+                st.caption("Calibrated probabilities. The tick marks where the alert switches on.")
+        with st.container(border=True):
+            _alert_lines(r, ev_stats, rate)
         why_drawer(p, row)
 
     if hasattr(st, "fragment"):
@@ -296,30 +367,32 @@ def live_twin() -> None:
     footer()
 
 
-def decision_block_light(b: Bundle, p: PatientData, row: pd.Series) -> None:
-    """Decision sentence, confidence and banner (the 'why' drawer sits below the chart)."""
+def decision_block_light(b: Bundle, p: PatientData, row: pd.Series, kpis: bool = True) -> None:
+    """Decision sentence, chips, number tiles and the uncertain banner."""
     cfg, r = display_cfg(b), row.to_dict()
     d = T.decision(r, cfg)
     conf = T.confidence(r, cfg)
     html_block(f'<div class="decision">{esc(d["sentence"])}</div>')
-    html_block(conf_html(conf))
+    html_block(f'<div class="chips">{risk_chip(d["risk_word"])}{conf_html(conf)}</div>')
     banner = T.uncertain_banner(conf)
     if banner:
         html_block(f'<div class="banner">{esc(banner)}</div>')
+    if kpis:
+        html_block(kpi_html(r, cfg))
 
 
 def _alert_lines(r: dict[str, Any], stats: dict[str, Any], rate: int) -> None:
     on = T.alert_state(r)["on"]
-    st.markdown("## Alerts")
+    st.markdown("#### Alerts")
     for e, name in (("hyper180", "High-glucose alert"), ("hypo70", "Low-glucose alert")):
         ev = T.alert_evidence(stats, e, rate)
-        state = "ON" if e in on else "off"
-        line = f"**{name}: {state}.**"
+        chip = '<span class="chip on"><span class="dot"></span>ON</span>' if e in on else '<span class="chip"><span class="dot"></span>Off</span>'
+        det = ""
         if ev and ev["sensitivity"] is not None:
             lim = " Limited evidence: few episodes." if (ev["episodes"] or 0) < 20 else ""
-            line += (f" In testing at this setting the alert caught {100 * ev['sensitivity']:.0f} % of {ev['episodes']} episodes "
-                     f"with a median warning of {ev['lead_median_min']:.0f} min and about {rate} false alarms a day.{lim}")  # fmt: skip
-        st.markdown(line)
+            det = (f"In testing at this setting the alert caught {100 * ev['sensitivity']:.0f} % of {ev['episodes']} episodes "
+                   f"with a median warning of {ev['lead_median_min']:.0f} min and about {rate} false alarms a day.{lim}")  # fmt: skip
+        html_block(f'<div class="alertrow"><div class="t">{esc(name)}&nbsp;&nbsp;{chip}</div><div class="d">{esc(det)}</div></div>')
     st.caption("Alerts here use only readings up to the forecast time (a display rule that differs slightly from the Part 6 test).")
 
 
@@ -329,8 +402,7 @@ def what_if_lab() -> None:
     """Controls, the chart with a ghost trajectory, the comparison, the fixed note and the evidence."""
     b = bundle_or_stop()
     cfg = display_cfg(b)
-    st.markdown("# What-if lab")
-    st.markdown("Replace a logged meal with another one, optionally add a walk, and see how the forecast changes.")
+    header("What-if lab", "Replace a logged meal with another one, optionally add a walk, and see how the forecast changes.", "Scenarios")
     pid = topline(b, "whatif")
     p = b.patient(pid)
     if not p.windows:
@@ -339,8 +411,8 @@ def what_if_lab() -> None:
         html_block(f'<div class="note">{esc(T.WHATIF_NOTE)}</div>')
         footer()
         return
-    ctl, out = st.columns([4, 8], gap="large")
-    with ctl:
+    ctl_col, out = st.columns([5, 7], gap="large")
+    with ctl_col, st.container(border=True):
         wi = st.selectbox("Window", range(len(p.windows)), format_func=lambda i: W.window_label(p, p.windows[i]), key="wi_window")
         win = p.windows[wi]
         base = W.logged_scenario(p, win)
@@ -362,22 +434,29 @@ def what_if_lab() -> None:
         model = st.selectbox("Model", list(W.MODEL_LABELS), format_func=lambda k: W.MODEL_LABELS[k], key="wi_model")
         scen = W.Scenario(*chosen, walk=bool(walk))
         sig = (pid, wi, scen, model)
-        run = st.button("Run what-if", type="primary", key="wi_run")
+        try:
+            run = st.button("Run what-if", type="primary", key="wi_run", width="stretch")
+        except TypeError:  # older Streamlit
+            run = st.button("Run what-if", type="primary", key="wi_run", use_container_width=True)
     with out:
         if run:
             with st.spinner("Running"):
                 st.session_state["wi_res"] = (sig, _run_whatif(b, p, win, base, scen, model, cfg))
         got = st.session_state.get("wi_res")
         if not got or got[0] != sig:
-            st.info("Choose a meal and press Run what-if." if not got else "The inputs changed. Press Run what-if to update.")
+            with st.container(border=True):
+                st.markdown("#### Your scenario will appear here")
+                st.markdown("Choose a meal on the left and press **Run what-if**." if not got else "The inputs changed. Press **Run what-if** to update.")
         else:
             res = got[1]
-            _show_whatif(b, p, win, res, cfg, model)
+            with st.container(border=True):
+                _show_whatif(b, p, win, res, cfg, model)
     st.markdown("## Plausibility checks")
     st.markdown("Pass rates of physiological checks on patients the models never saw (Part 7). A check that a model passes by construction says nothing about the data.")
-    table(ref.plausibility_table(b.stats))
-    st.markdown("Median predicted peak rise per gram of carbohydrate, against the range reported in the literature:")
-    table(ref.dose_table(b.stats))
+    with st.expander("Show the checks", expanded=False):
+        table(ref.plausibility_table(b.stats))
+        st.markdown("Median predicted peak rise per gram of carbohydrate, against the range reported in the literature:")
+        table(ref.dose_table(b.stats))
     with st.expander("What this tool cannot tell you"):
         for s in LIMITS_TEXT:
             st.markdown(f"- {s}")
@@ -422,7 +501,7 @@ def _show_whatif(b: Bundle, p: PatientData, win: dict[str, Any], res: dict[str, 
 def twin_state() -> None:
     """Only the basal glucose of the twin is shown: it is the only identifiable parameter."""
     b = bundle_or_stop()
-    st.markdown("# Twin state")
+    header('Twin state', 'What the digital twin can and cannot tell you.', 'Model')
     pid = topline(b, "twin")
     p = b.patient(pid)
     st.markdown("The twin is a small physiological model fitted to a patient's first days of data. "
@@ -450,8 +529,7 @@ def twin_state() -> None:
 def personalization() -> None:
     """Cold-start curve and the honest paragraph."""
     b = bundle_or_stop()
-    st.markdown("# Personalization")
-    st.markdown("How much does the forecast improve when it learns from a patient's own first days of data?")
+    header("Personalization", "How much does the forecast improve when it learns from a patient's own first days of data?", "Evidence")
     hz = st.radio("Horizon", ["30", "60", "120"], index=1, horizontal=True, format_func=lambda h: f"+{h} min", key="pers_h")
     left, right = st.columns([7, 5], gap="large")
     cur = ref.personalization_curve(b.stats, hz)
@@ -479,8 +557,7 @@ def personalization() -> None:
 def input_tiers() -> None:
     """What happens to accuracy when inputs are missing."""
     b = bundle_or_stop()
-    st.markdown("# Input tiers")
-    st.markdown("Accuracy when some inputs are missing, from the Part 3 tests on 45 CGMacros patients (mean absolute error, mg/dL, with 95% intervals).")
+    header('Input tiers', 'Accuracy when some inputs are missing, from the Part 3 tests on 45 CGMacros patients (mean absolute error, mg/dL, with 95% intervals).', 'Evidence')
     table(ref.tier_table(b.stats))
     st.markdown("Fingerstick values in these tests are real sensor readings taken at fixed clock times (4 or 2 a day), "
                 "so the fingerstick tiers are optimistic. Without a CGM the models are worse than simply carrying the last CGM value "
@@ -493,7 +570,7 @@ def data_quality() -> None:
     b = bundle_or_stop()
     cfg = display_cfg(b)
     c = cfg["confidence"]
-    st.markdown("# Data quality")
+    header('Data quality', 'When a forecast is labelled uncertain, and what the quality score cannot see.', 'Safety')
     st.markdown("A forecast is labelled uncertain, and the alert is replaced by a warning, when any of these holds "
                 f"(a design rule, not a validated threshold): the interval is more than {c['wide_ratio']:g} times the usual width, "
                 f"the data-quality score is below {c['dq_uncertain_below']:.2f}, or the last sensor reading is older than {c['stale_min']} minutes.")
@@ -536,8 +613,7 @@ FIGURES = [
 def evidence() -> None:
     """Six figures with plain captions, the stored tables and the limitations."""
     b = bundle_or_stop()
-    st.markdown("# Evidence")
-    st.markdown("Results on patients the models never saw. Every interval is a 95% interval over patients, not over rows.")
+    header('Evidence', 'Results on patients the models never saw. Every interval is a 95% interval over patients, not over rows.', 'Evidence')
     cols = st.columns(2, gap="large")
     for i, (name, title, cap) in enumerate(FIGURES):
         with cols[i % 2]:
@@ -564,8 +640,7 @@ def export() -> None:
     """One-page visit summary as a PDF."""
     b = bundle_or_stop()
     cfg = display_cfg(b)
-    st.markdown("# Export")
-    st.markdown("A one-page summary of the forecast at the time currently selected on the Live twin page.")
+    header('Export', 'A one-page summary of the forecast at the time currently selected on the Live twin page.', 'Report')
     pid = topline(b, "export")
     p = b.patient(pid)
     i = anchor_index(pid, len(p.replay))

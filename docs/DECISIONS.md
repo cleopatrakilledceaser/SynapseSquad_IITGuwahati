@@ -1408,3 +1408,9 @@ Status: written before the first run of the builder; the guard values below are 
   detected, Part 6). Personalization text says the gain is about 1 mg/dL after 3 to 5 days of the
   patient's own CGM and that heart rate and activity add nothing measurable (Parts 4 and 5).
 - Colour is never the only carrier of meaning: each glucose state has a pattern and a label.
+
+## D-060: Dashboard visual redesign after first screenshots (Part 9)
+
+Context: first screenshots looked plain, the Material icon font printed as text ("_arrow_right"), a heading was duplicated, the overview URL was wrong in the screenshot script, and Atkinson's slashed zero looked odd in numbers.
+Decision: dark damson sidebar with icons, white rounded cards, three number tiles per patient (glucose now, +60 min, chance of the headline event), word-plus-dot chips for risk and alerts, softer zone patterns (pattern and label still on every zone), system UI font stack instead of Atkinson (offline, native look, no slashed zero), Source Serif 4 kept only for the decision sentence. Streamlit toolbar and Deploy button hidden.
+Unchanged: every wording rule, fixed what-if note, disclaimer on every page, decision-support language, display of only Gb, no invented numbers. This departs from the flat, text-only look in docs/DESIGN.md section 2 at the user's request.

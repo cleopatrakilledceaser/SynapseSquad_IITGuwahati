@@ -11,16 +11,16 @@ from typing import Any
 
 import pandas as pd
 
-INK, SLATE, RULE, DAMSON = "#1B2230", "#566174", "#D8DDE5", "#43285E"
-PAPER, SURFACE = "#F5F6F8", "#FFFFFF"
-FONT = "Atkinson Hyperlegible, 'Segoe UI', system-ui, sans-serif"
+INK, SLATE, RULE, DAMSON = "#1B2230", "#5A6478", "#E6E2EC", "#43285E"
+PAPER, SURFACE = "#F4F2F7", "#FFFFFF"
+FONT = "Segoe UI Variable Text, Segoe UI, system-ui, -apple-system, Roboto, Arial, sans-serif"
 SERIF = "'Source Serif 4', Georgia, serif"
-ZONES = [  # (low, high, label, colour, pattern shape or None)
-    ("very_low", "Very low, below 54", "#2B6CB0", "x"),
-    ("low", "Low, below 70", "#2B6CB0", "/"),
-    ("range", "In range, 70 to 180", "#9AD3B8", None),
-    ("high", "High, above 180", "#E09A12", "."),
-    ("very_high", "Very high, above 250", "#8C1D2B", "+"),
+ZONES = [  # (key, label, pattern colour, pattern shape or None, flat tint under the pattern)
+    ("very_low", "Very low, below 54", "#2B6CB0", "x", "rgba(43,108,176,0.10)"),
+    ("low", "Low, below 70", "#2B6CB0", "/", "rgba(43,108,176,0.06)"),
+    ("range", "In range, 70 to 180", "#9AD3B8", None, "rgba(154,211,184,0.22)"),
+    ("high", "High, above 180", "#E09A12", ".", "rgba(224,154,18,0.08)"),
+    ("very_high", "Very high, above 250", "#8C1D2B", "+", "rgba(140,29,43,0.07)"),
 ]
 
 
@@ -49,20 +49,16 @@ def hero_figure(
 
     x0, x1 = now - pd.Timedelta(hours=cfg["history_hours"]), now + pd.Timedelta(minutes=cfg["forecast_min"])
     fig = go.Figure()
-    for (ya, yb), (_, label, colour, shape) in zip(_bounds(cfg), ZONES, strict=True):
-        pat = (
-            dict(shape=shape, fgcolor=colour, bgcolor="rgba(255,255,255,0)", size=7, solidity=0.28)
-            if shape
-            else None
-        )
+    for (ya, yb), (_, label, colour, shape, tint) in zip(_bounds(cfg), ZONES, strict=True):
+        pat = dict(shape=shape, fgcolor=colour, bgcolor=tint, size=6, solidity=0.16) if shape else None
         fig.add_trace(go.Scatter(
             x=[x0, x1, x1, x0, x0], y=[ya, ya, yb, yb, ya], mode="lines", line=dict(width=0),
-            fill="toself", fillpattern=pat, fillcolor=None if pat else "rgba(154,211,184,0.30)",
+            fill="toself", fillpattern=pat, fillcolor=None if pat else tint,
             hoverinfo="skip", showlegend=False,
         ))  # fmt: skip
         fig.add_annotation(
-            x=1, xref="paper", xanchor="right", y=(ya + yb) / 2, yref="y", text=label, showarrow=False,
-            font=dict(size=12, color=INK, family=FONT), bgcolor="rgba(255,255,255,0.78)", borderpad=2,
+            x=0.008, xref="paper", xanchor="left", y=min(yb - 4, ya + 24), yref="y", yanchor="top", text=label, showarrow=False,
+            font=dict(size=11, color=SLATE, family=FONT), bgcolor="rgba(255,255,255,0.85)", borderpad=2,
         )  # fmt: skip
     # history: break the line where readings are more than 30 min apart
     h = hist[(hist["t"] >= x0) & (hist["t"] <= now)].sort_values("t")
@@ -109,8 +105,9 @@ def hero_figure(
             customdata=m["carbs_g"], hovertemplate="Meal %{x|%H:%M}, %{customdata:.0f} g carbohydrate<extra></extra>",
         ))  # fmt: skip
     fig.add_vline(x=now, line=dict(color=INK, width=1))
-    fig.add_annotation(x=now, y=cfg["y_range"][1], yref="y", yanchor="top", xanchor="right", showarrow=False,
-                       text=f"Now {now_value:.0f} mg/dL", font=dict(size=13, color=INK, family=FONT))  # fmt: skip
+    fig.add_annotation(x=now, y=cfg["y_range"][1] - 6, yref="y", yanchor="top", xanchor="right", showarrow=False,
+                       text=f"<b>Now {now_value:.0f} mg/dL</b>", font=dict(size=13, color=INK, family=FONT),
+                       bgcolor="rgba(255,255,255,0.92)", bordercolor=RULE, borderwidth=1, borderpad=4, xshift=-6)  # fmt: skip
     fig.update_layout(
         height=height, margin=dict(l=56, r=16, t=16, b=64), paper_bgcolor=SURFACE, plot_bgcolor=SURFACE,
         font=dict(family=FONT, color=INK, size=14), hovermode="closest", dragmode=False,
