@@ -71,6 +71,44 @@ LABEL_MARKERS = ("_any_",)  # outcome-column name markers forbidden in every out
 EVENTS_ALL = ("hyper180", "hyper140", "hypo70")  # event probabilities shown in the app
 
 
+# --------------------------------------------------------------------------- io helpers
+
+def sync_dir(dst: Path, src: Path) -> None:
+    """Copy a directory tree, deleting files in dst that are not in src (deterministic)."""
+    dst.mkdir(parents=True, exist_ok=True)
+    for p in sorted(dst.rglob("*")):
+        if p.is_file():
+            p.unlink()
+    for p in sorted(src.rglob("*")):
+        if p.is_file():
+            (dst / p.relative_to(src)).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(p, dst / p.relative_to(src))
+
+
+def gzip_json(obj: dict[str, Any], path: Path) -> None:
+    """Write a gzip-compressed JSON file."""
+    buf = gzip.compress(json.dumps(clean_pandas(obj), ensure_ascii=False).encode("utf-8"), 3)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(buf)
+
+
+def clean_pandas(obj: Any) -> Any:
+    """JSON-serialisable mirror of a small value (dict / list / numpy / pandas scalars)."""
+    if isinstance(obj, dict):
+        return {str(k): clean_pandas(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [clean_pandas(v) for v in obj]
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.floating):
+        return float(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if obj is None or isinstance(obj, (bool, int, float, str)):
+        return obj
+    return str(obj)
+
+
 # --------------------------------------------------------------------------- config
 
 def load_cfgs() -> dict[str, dict[str, Any]]:
