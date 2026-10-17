@@ -1,9 +1,9 @@
 """Pure-python LightGBM text-model runtime for the app's live what-if (Part 9, D-058).
 
 Predicts +30 / +60 / +120 min with the boosters exported by ``src.appdata.export`` and recomputes
-the split-conformal band from the shipped out-of-fold residuals, with NOTHING but numpy / pandas
-(and numpy-only conformal code): the app bundle must import and run with no LightGBM, no
-scikit-learn and no training data. The exported text is LightGBM's own ``model_to_string`` of the
+the CV+ band from the shipped out-of-fold residuals, with numpy / pandas and the repo's own
+conformal and what-if edit code: the app bundle must import and run with no LightGBM and no
+training data. The exported text is LightGBM's own ``model_to_string`` of the
 ``n_iter`` trees the model really uses, so the numbers equal the in-memory model bit for bit
 (checked by the builder's ``rtform_max_abs_diff`` guard).
 
@@ -17,11 +17,16 @@ import gzip
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from src.uncertainty.conformal import cvplus_interval, conformal_quantile
+from src.uncertainty.conformal import conformal_quantile, cvplus_interval
+from src.uncertainty.events import exceed_prob
+from src.whatif import edits as ed
+
+HORIZONS = (30, 60, 120)
 
 # keys of one tree block in LightGBM's text format (the ones we need to walk the tree)
 _TREE_KEYS = (
@@ -142,3 +147,79 @@ class RtForm:
         js = sorted(self.inner)
         m = np.column_stack([base + self._raw(X, h, j) for j in js])
         return cvplus_interval(m, [self.res[h][j] for j in js], a)
+
+
+def load_forms(root: Path) -> dict[str, RtForm]:
+    """Both forms (``unc``, ``mono``) from ``app/demo/models``."""
+    meta = json.loads((root / "models.json").read_text("utf-8"))
+    return {name: RtForm.load(root, name) for name in meta["forms"]}
+
+
+@dataclass
+class Calibration:
+    """Platt maps + OOF residuals of the fold's training patients (Part 6 event probabilities)."""
+
+    res: dict[int, np.ndarray]
+    platt: dict[str, dict[str, float] | None]
+    events: dict[str, tuple[float, bool]]
+
+    def prob(self, event: str, h: int, pred: np.ndarray) -> np.ndarray:
+        """Calibrated P(event within h min) from a forecast; NaN if no map exists."""
+        mp = self.platt.get(f"{event}|{h}")
+        if mp is None:
+            return np.full(np.shape(pred), np.nan)
+        thr, above = self.events[event]
+        s = np.clip(exceed_prob(np.asarray(pred, float), self.res[h], thr, above), 1e-4, 1 - 1e-4)
+        z = mp["coef"] * np.log(s / (1 - s)) + mp["intercept"]
+        return 1.0 / (1.0 + np.exp(-z))
+
+
+def load_calibration(root: Path) -> Calibration:
+    """Load ``calib.npz`` / ``calib.json`` written by the app-data builder."""
+    meta = json.loads((root / "calib.json").read_text("utf-8"))
+    r = np.load(root / "calib.npz")
+    return Calibration(
+        {h: r[f"res_{h}"] for h in HORIZONS},
+        meta["platt"],
+        {k: (float(v[0]), bool(v[1])) for k, v in meta["events"].items()},
+    )
+
+
+@dataclass
+class PatientState:
+    """What a live what-if needs for one demo patient (shipped under app/demo/patients)."""
+
+    pid: str
+    rows: pd.DataFrame  # stored anchor rows (model inputs, no outcomes)
+    grid: pd.DataFrame  # period grid prefix up to the last replay anchor
+    meals: pd.DataFrame  # meal log up to the last replay anchor
+    ectx: dict[str, Any]
+    kcal_per_g: dict[str, float]
+    walk: dict[str, Any]
+    cols: list[str]
+
+
+def edited_forecast(
+    form: RtForm,
+    st: PatientState,
+    t: pd.Timestamp,
+    edits: list[ed.Edit],
+    alpha: float = 0.2,
+    clamp: tuple[float, float] = (40.0, 400.0),
+) -> dict[str, Any]:
+    """Forecast, CV+ band and edited feature row at anchor ``t`` under ``edits`` (clamped)."""
+    row = st.rows[st.rows["t"] == t]
+    if len(row) != 1:
+        raise ValueError("t is not an anchor of this patient")
+    m = ed.apply_meals(st.meals, edits, st.kcal_per_g)
+    g = ed.apply_walks(st.grid, st.meals, edits, st.walk)
+    d = ed.recompute(row, g, m, st.cols, st.ectx)
+    out: dict[str, Any] = {"row": d, "mean": [], "lo": [], "hi": [], "raw_mean": []}
+    for h in HORIZONS:
+        p = float(form.predict(d, h)[0])
+        lo, hi = form.band(d, h, alpha)
+        out["raw_mean"].append(p)
+        out["mean"].append(float(np.clip(p, *clamp)))
+        out["lo"].append(float(np.clip(lo[0], *clamp)))
+        out["hi"].append(float(np.clip(hi[0], *clamp)))
+    return out

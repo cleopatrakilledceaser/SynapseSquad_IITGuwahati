@@ -1353,3 +1353,58 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
 - **Fonts (Part 9 design):** Atkinson Hyperlegible (Braille Institute) and Source Serif 4 (Adobe),
   both SIL Open Font License 1.1, bundled locally as woff2 in `app/static/fonts` (latin subsets
   fetched once from the fontsource packages at build time, never at run time).
+
+## D-058 Part 9 step 3: app data bundle (`make app-data`, `app/demo`, offline)
+Status: written before the first run of the builder; the guard values below are recorded in
+`app/demo/manifest.json` by each build, not claimed here.
+- **Owner decisions (checkpoint 1):** a display-only very-high band at 250 mg/dL and a very-low
+  band at 54 mg/dL (no risk is computed for them; models and alerts keep 70, 140, 180); damson
+  plum with Atkinson Hyperlegible and Source Serif 4; what-ifs run LIVE from saved models.
+- **What is shipped:** the fold-0 population models (unconstrained and monotone forms, full model
+  plus the three inner-fold models of the Part 6 CV+ arm, trimmed to the trees they use) as
+  LightGBM text, their out-of-fold residuals, Platt maps and alert thresholds from the fold's
+  TRAINING patients, stored cohort numbers copied from the Part 3/5/6/7 metric files, SHAP values
+  and template sentences, and six evidence figures. No raw or processed dataset is committed
+  (`app/demo/` is gitignored; CGMacros is CC BY-NC-SA).
+- **Which patients:** fold-0 test patients that have Part 6 test rows, chosen by a rule fixed in
+  `configs/app.yaml` before looking at any result (first patient per diabetes status by sorted id,
+  then the next T2D patient), plus one SYNTHETIC patient from the Part 4 simulator (the simulated
+  patient whose Gb is closest to the cohort median), labelled synthetic on every page.
+- **No outcome is ever used for a displayed patient:** the builder reads the test patients'
+  anchor rows only after dropping `y_*`, `*_any_*` and `cgm_slope_30`; every forecast is from a
+  fold model that never saw the patient; calibration and alert thresholds are fitted on training
+  patients only. A guard fails the build if an outcome column appears in any output frame.
+- **Live what-if:** meal and activity inputs are recomputed on the period prefix with the Part 2
+  code (Part 7 edit semantics); CGM, time and static inputs cannot change. The shipped runtime
+  (`src/appdata/rt.py`) needs no LightGBM and no training data; the build checks it reproduces the
+  in-memory forecasts and CV+ bands (`rtform_max_abs_diff`, limit 1e-6 mg/dL).
+- **Twin:** needs the fitted per-patient state, so its what-if trajectories are precomputed on a
+  (carbs, slowing-ratio) grid per window, once with the learned activity effect and once with the
+  assumed walk effect (D-052), both with the one-sided activity term (D-056). Values between grid
+  nodes are bilinear interpolations and are labelled as such; the build measures the interpolation
+  error against the engine at random off-grid points (`interp_max_abs_diff`, limit 5 mg/dL).
+  The synthetic patient has no fitted twin: "not available".
+- **Alerts in the replay are causal:** the at-risk flag uses only readings up to the anchor, which
+  differs slightly from Part 6 (its episode flags knew the confirmation 15 min later). This is a
+  display rule and is stated in the app.
+- **Confidence label** (uncertain / moderate / high) is a DESIGN CHOICE, not a validated rule:
+  interval wider than 1.5 x the fold's median CV+ width at +60, or data quality below 0.70, or a
+  sensor reading older than 60 min.
+- **Removed:** `src/dash/live.py` duplicated `src/appdata/rt.py` and imported LightGBM; the
+  calibration and patient-state code moved into `rt.py`.
+- **Not run yet:** the builder has not been executed at the time of writing.
+
+## D-059 Part 9 step 3: UI rules (apply to every page)
+- Language is decision support: never "diagnosis" or "prescribe". A footer on every page states
+  that GlucoTwin is a research prototype, not a medical device.
+- Only the baseline glucose Gb of the twin is shown (the only identifiable parameter, test-retest
+  r 0.62; the others 0.14 to 0.24); SG, SI, fc, kabs and beta are never displayed.
+- Every what-if result carries the fixed note: "Model-based estimate, not a causal guarantee. In
+  matched real breakfasts the models predicted about half the observed rise; treat sizes as lower
+  bounds." The monotone model is the default; the twin and the unconstrained model are alternatives.
+- Interpolated twin values, assumed inputs (synthetic patient profile, macro ratios) and display
+  thresholds are labelled as such.
+- Data-quality text says the score detects missing data, not wrong data (bias and drift are not
+  detected, Part 6). Personalization text says the gain is about 1 mg/dL after 3 to 5 days of the
+  patient's own CGM and that heart rate and activity add nothing measurable (Parts 4 and 5).
+- Colour is never the only carrier of meaning: each glucose state has a pattern and a label.
