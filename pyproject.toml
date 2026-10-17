@@ -26,6 +26,8 @@ convention = "google"
 # Part 9 dashboard: long CSS / HTML / table-row lines are kept on one line on purpose.
 "src/dash/*" = ["E501", "N812", "N818"]
 "src/appdata/build.py" = ["E501"]
+"src/india/cohort.py" = ["E501"]
+"src/transfer/*.py" = ["E501"]
 "src/appdata/rt.py" = ["E501", "N803", "N806"]
 "src/appdata/whatif_grid.py" = ["E501"]
 "tests/test_dash.py" = ["E501", "N812"]
