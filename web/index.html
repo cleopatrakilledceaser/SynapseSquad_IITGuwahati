@@ -494,7 +494,7 @@ function accessView() {
 
 /* ---------------------------------------------------------------- shared helpers */
 const WHATIF_NOTE = "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted about half the observed rise; treat sizes as lower bounds.";
-const noteOf = () => (S.data.forecast_note ? esc(S.data.forecast_note) : S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data");
+const noteOf = () => (S.data.forecast_note ? esc(S.data.forecast_note.trim().replace(/\.$/, "")) : S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data");
 const NA_EV = `<div class="locked">The evidence file (evidence.json) was not loaded, so this section is empty. It is produced by <span class="num">make web-evidence</span>.</div>`;
 function tbl(t, opts = {}) {
   if (!t || !t.rows || !t.rows.length) return `<div class="locked">Not available.</div>`;
@@ -608,7 +608,7 @@ function whatifResult(p) {
   return out;
 }
 function whatifChart(p, r, W) {
-  const w = r.w, t = w.m - 1440, i0 = Math.round((288 - 1) + t / 5), H = 270, m = { l: 48, r: 14, t: 14, b: 30 };
+  const w = r.w, t = w.m - 1440, i0 = Math.round((288 - 1) + t / 5), H = 270, m = { l: 48, r: 14, t: 30, b: 30 };
   const hist = []; for (let k = -36; k <= 0; k++) hist.push([k * 5, p.hist[i0 + k]]);
   const act = []; for (let k = 1; k <= 24; k++) if (i0 + k <= 287) act.push([k * 5, p.hist[i0 + k]]);
   const g0 = p.hist[i0], all = [...hist.map((q) => q[1]), ...act.map((q) => q[1]), ...Object.values(r.base), ...Object.values(r.now)];
@@ -623,7 +623,7 @@ function whatifChart(p, r, W) {
   const line = (o, col, dash) => `<path d="M${x(0)} ${y(g0)}${["30", "60", "120"].map((h) => "L" + x(+h).toFixed(1) + " " + y(o[h]).toFixed(1)).join("")}" fill="none" stroke="${col}" stroke-width="2.4" ${dash ? 'stroke-dasharray="6 5"' : ""}/>` +
     ["30", "60", "120"].map((h) => `<circle cx="${x(+h)}" cy="${y(o[h])}" r="4" fill="${col}"/>`).join("");
   s += line(r.base, "var(--faint)", false) + line(r.now, "var(--accent)", true);
-  s += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-opacity=".5"/><text x="${x(0) - 6}" y="${m.t + 12}" text-anchor="end" font-size="12" fill="var(--fg)" font-weight="600">Meal ${clock(p, t)}</text>`;
+  s += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-opacity=".5"/><text x="${x(0) - 6}" y="${m.t - 12}" text-anchor="end" font-size="12" fill="var(--fg)" font-weight="600">Meal ${clock(p, t)}</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Baseline and what-if forecast">${s}</svg>`;
 }
 function whatifView(p) {
