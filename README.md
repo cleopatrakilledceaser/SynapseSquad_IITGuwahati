@@ -187,6 +187,24 @@ accuracy survives only at ε above 23,000, which is no guarantee. The honest cla
 minimisation: records stay at the clinic. Patient-level DP-SGD and secure aggregation are
 future work.
 
+**(d) Forecasts shown in the web console (SIMULATED patients, D-069 and D-070).** The console's
+120 virtual patients are forecast by the models trained on the open cohorts. Error at every
+15-minute anchor from day 4 on (126,240 anchors at +60 min), mg/dL, 95 % patient-bootstrap CI:
+
+| Forecast | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| Repeat the last value | 11.5 [10.6, 12.5] | 17.8 [15.9, 20.0] | 26.6 [23.4, 30.2] |
+| Model, no calibration | 12.3 [11.8, 12.8] | 19.0 [17.8, 20.3] | 26.3 [24.4, 28.5] |
+| Model, 3-day calibration | 11.7 [11.1, 12.2] | 17.2 [16.1, 18.5] | 22.8 [20.9, 24.9] |
+
+Calibrated minus repeat-the-last-value: +0.18 [−0.50, +0.76] at +30 min, −0.60 [−1.89, +0.56] at
++60 min (not distinguishable from 0) and −3.84 [−5.82, −2.08] at +120 min (a clear gain). The
+pre-registered rule (better at +60 with an interval excluding 0) was **not** met, and the console
+says so. Without calibration the model is worse than repeating the last value at +30 and +60 min.
+80 % bands contain the reading 81 to 83 % of the time on average, but for one patient in ten
+coverage at +120 min is 64 % or lower. This is a simulation: it shows what happens when a model
+trained elsewhere meets a new population, not accuracy on Indian patients.
+
 ### 9.5 Sleep, HRV and step count (SIMULATED)
 
 The competition names these signals, but CGMacros contains no sleep, HRV or step data. We therefore
