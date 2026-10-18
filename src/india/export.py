@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-import pandas as pd
-
 import numpy as np
+import pandas as pd
 
 from src.india import cohort as ic
 from src.india import ehr
@@ -36,7 +35,17 @@ def tables(c: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         "heart_rate_bpm": g["hr"].round(1), "activity_intensity": g["activity_intensity"].round(3),
         "steps_5min": g["steps"].astype(int),
     })  # fmt: skip
-    cols = ["patient_id", "t", "meal_type", "preset", "carbs_g", "protein_g", "fat_g", "fiber_g", "kcal"]
+    cols = [
+        "patient_id",
+        "t",
+        "meal_type",
+        "preset",
+        "carbs_g",
+        "protein_g",
+        "fat_g",
+        "fiber_g",
+        "kcal",
+    ]
     meals = c["meals"][cols].rename(columns={"t": "timestamp"})
     s = c["sleep"]
     sleep = pd.DataFrame({
@@ -46,7 +55,12 @@ def tables(c: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         "deep_min": s["sleep_deep_min"].round(1), "rem_min": s["sleep_rem_min"].round(1),
         "hrv_rmssd_ms": s["hrv_rmssd"].round(1),
     })  # fmt: skip
-    return {"cgm_wearables": cgm, "meals": meals, "sleep_nightly": sleep, "static_ehr": c["static"].drop(columns=["synthetic"], errors="ignore")}
+    return {
+        "cgm_wearables": cgm,
+        "meals": meals,
+        "sleep_nightly": sleep,
+        "static_ehr": c["static"].drop(columns=["synthetic"], errors="ignore"),
+    }
 
 
 def datasheet(t: dict[str, pd.DataFrame], ecfg: dict[str, Any]) -> str:
@@ -94,6 +108,7 @@ training did not improve real-patient forecasts.
 
 
 def main() -> None:
+    """Generate the exported synthetic cohort and write its tables and datasheet."""
     icfg, mc = load_config("india"), load_config("mech")
     e = icfg["export"]
     c = ic.generate(icfg, mc, icfg["strengths"][e["strength"]], "exp", e["seed"], e["n_patients"],

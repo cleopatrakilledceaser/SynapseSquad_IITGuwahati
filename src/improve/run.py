@@ -31,7 +31,9 @@ OUT = PROC / "improve"
 METRICS = PROJECT_ROOT / "reports" / "metrics"
 
 
-def _predict(model: Any, ev: pd.DataFrame, hz: list[int], clip: tuple[float, float]) -> pd.DataFrame:
+def _predict(
+    model: Any, ev: pd.DataFrame, hz: list[int], clip: tuple[float, float]
+) -> pd.DataFrame:
     out = ev[KEYS].copy()
     for h, p in model.predict(ev, horizons=hz).items():
         out[f"pred_{h}"] = np.clip(p, *clip)
@@ -42,15 +44,18 @@ def fit_both(
     tab: pd.DataFrame, cols: list[str], tr_p: list[str], va_p: list[str], ev_p: list[str],
     c: dict[str, Any], icfg: dict[str, Any],
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:  # fmt: skip
-    """Fit the status-quo and the tuned model on ``tr_p`` (validate on ``va_p``); predict ``ev_p``."""
+    """Fit status quo and tuned model on ``tr_p`` (validate on ``va_p``); predict ``ev_p``."""
     hz, clip = icfg["horizons_min"], c["clip"]
     if tab["cgm_now"].isna().any():
         tab = tab.copy()
-        tab["cgm_now"] = tab["cgm_now"].fillna(float(tab.loc[tab.patient_id.isin(tr_p), "cgm_now"].mean()))
+        tab["cgm_now"] = tab["cgm_now"].fillna(
+            float(tab.loc[tab.patient_id.isin(tr_p), "cgm_now"].mean())
+        )
     tr, va, ev = (tab[tab.patient_id.isin(p)] for p in (tr_p, va_p, ev_p))
     bl = c["bc"]["lightgbm"]
     sq = LGBMForecaster(
-        cols, {**bl, "params": {**bl["params"], "n_jobs": icfg["lgbm_threads"]}, "classifier_events": []},
+        cols,
+        {**bl, "params": {**bl["params"], "n_jobs": icfg["lgbm_threads"]}, "classifier_events": []},
         seed=icfg["seed"], target="delta", base="cgm_now",
     )  # fmt: skip
     sq.fit(tr, val=va, horizons=hz, events=False)
@@ -95,6 +100,7 @@ def _named(df: pd.DataFrame, hz: list[int], boot: dict[str, Any]) -> list[dict[s
 
 
 def stage_cv() -> None:
+    """Design A: status quo vs tuned in outer CV repeat 0 per cohort and config (D-065)."""
     icfg, bc = load_config("improve"), load_config("baselines")
     metrics: dict[str, Any] = {"design": "A: outer CV repeat 0, paired with Part 3", "runs": {}}
     OUT.mkdir(parents=True, exist_ok=True)
@@ -120,6 +126,7 @@ def stage_cv() -> None:
 
 
 def stage_holdout() -> None:
+    """Design B: the single-shot holdout run (refuses to run twice, D-065)."""
     out = METRICS / "improve_holdout.json"
     if out.exists():
         sys.exit("improve_holdout.json exists: the single-shot holdout was already used (D-065).")
@@ -128,7 +135,10 @@ def stage_holdout() -> None:
     for cohort, names in icfg["configs"].items():
         c = ctx(cohort)
         hold = pd.read_csv(PROC / "splits" / f"{cohort}_holdout.csv")
-        tr_p, va_p, ev_p = (sorted(hold.loc[hold.split == s, "patient_id"]) for s in ("train", "calibration", "test"))
+        tr_p, va_p, ev_p = (
+            sorted(hold.loc[hold.split == s, "patient_id"])
+            for s in ("train", "calibration", "test")
+        )
         for name in names:
             cols = config_columns(c["fc"]["ablation"][cohort][name], c["groups"])
             sq, tu, chosen = fit_both(c["tab"], cols, tr_p, va_p, ev_p, c, icfg)
@@ -154,7 +164,8 @@ def _print(title: str, run: dict[str, Any], hz: list[int]) -> None:
         d = next(r for r in run["diff"] if r["horizon_min"] == h)
         ci = d["diff_mae_ci"]
         print(f"  +{h}: persistence {m['persistence']:.2f} status quo {m['status_quo']:.2f} "
-              f"tuned {m['tuned']:.2f} diff {d['diff_mae']:+.2f} [{ci[0]:+.2f}, {ci[1]:+.2f}]")  # fmt: skip
+              f"tuned {m['tuned']:.2f} diff {d['diff_mae']:+.2f} "
+              f"[{ci[0]:+.2f}, {ci[1]:+.2f}]")  # fmt: skip
 
 
 if __name__ == "__main__":

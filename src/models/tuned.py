@@ -32,7 +32,9 @@ def trial_params(tcfg: dict[str, Any]) -> list[dict[str, Any]]:
     return trials
 
 
-def lgb_params(trial: dict[str, Any], tcfg: dict[str, Any], seed: int, n_jobs: int) -> dict[str, Any]:
+def lgb_params(
+    trial: dict[str, Any], tcfg: dict[str, Any], seed: int, n_jobs: int
+) -> dict[str, Any]:
     """LightGBM keyword arguments for one trial. The early-stopping metric is always MAE."""
     rest = {k: v for k, v in trial.items() if k != "objective"}
     return {
@@ -50,6 +52,7 @@ class TunedLGBM(LGBMForecaster):
     members: dict = field(default_factory=dict)
 
     def fit(self, tab, grid=None, val=None, horizons=None, events=False, **_):  # type: ignore[no-untyped-def]
+        """Fit every candidate per horizon, keep the ``top_k`` by inner-validation MAE."""
         import lightgbm as lgb
 
         xt, xv = tab[self.features], val[self.features]
@@ -63,7 +66,9 @@ class TunedLGBM(LGBMForecaster):
                 m.fit(
                     xt[ok_t], yt[ok_t],
                     eval_X=(xv[ok_v],), eval_y=(yv[ok_v],),
-                    callbacks=[lgb.early_stopping(self.tcfg["early_stopping_rounds"], verbose=False)],
+                    callbacks=[
+                        lgb.early_stopping(self.tcfg["early_stopping_rounds"], verbose=False)
+                    ],
                 )  # fmt: skip
                 fitted.append((float(m.best_score_["valid_0"]["l1"]), i, m))
             fitted.sort(key=lambda r: (r[0], r[1]))
@@ -81,6 +86,7 @@ class TunedLGBM(LGBMForecaster):
         return self
 
     def predict(self, tab, grid=None, horizons=None):  # type: ignore[no-untyped-def]
+        """Mean of the kept members per horizon, decoded to absolute glucose."""
         x = tab[self.features]
         return {
             h: self.decode(tab, np.mean([m.predict(x) for m in self.members[h]], axis=0))
