@@ -109,7 +109,10 @@ def test_monotone_constraints_reach_every_member():
     b = bc()
     b = {**b, "lightgbm": {**b["lightgbm"], "params": {**b["lightgbm"]["params"]}}}
     b["lightgbm"]["params"]["monotone_constraints"] = [0, 1, 0]
-    out, _ = fit_pop_tuned(d.iloc[:1000], d.iloc[1000:], COLS, b, small_tcfg(), 1)
+    t = small_tcfg(n_trials=11)  # candidates 9 and 10 use the l1 loss
+    out, ch = fit_pop_tuned(d.iloc[:1000], d.iloc[1000:], COLS, b, t, 1)
+    picked = [s["objective"] for h in (30, 60, 120) for s in ch[f"reg_{h}"]["selected"]]
+    assert "l1" not in picked
     for m in out[60].members:
         assert m.est.get_params()["monotone_constraints"] == [0, 1, 0]
     x = frame(50, seed=6)

@@ -62,6 +62,8 @@ class TunedLGBM(LGBMForecaster):
             ok_t, ok_v = ~np.isnan(yt), ~np.isnan(yv)
             fitted = []
             for i, t in enumerate(trials):
+                if t["objective"] in self.tcfg.get("skip_objectives", ()):
+                    continue  # D-072: infeasible with monotone constraints (LightGBM)
                 m = lgb.LGBMRegressor(**lgb_params(t, self.tcfg, self.seed, self.n_jobs))
                 m.fit(
                     xt[ok_t], yt[ok_t],

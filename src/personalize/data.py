@@ -97,13 +97,19 @@ def fit_pop_tuned(
 ) -> tuple[dict[int, PopEns], dict[str, Any]]:
     """D-065 tuned search (inner-validation MAE, top-k average), served model of D-072.
 
-    Monotone constraints in ``bc`` (Part 7 ``mono`` form) are added to every candidate.
+    Monotone constraints in ``bc`` (Part 7 ``mono`` form) are added to every candidate;
+    LightGBM cannot combine them with the absolute-error loss, so those candidates are skipped
+    for that form (D-072 amendment). Candidate numbering is unchanged.
     """
     from src.models.tuned import TunedLGBM, lgb_params, trial_params
 
     mono = bc["lightgbm"]["params"].get("monotone_constraints")
     if mono is not None:
-        tcfg = {**tcfg, "fixed": {**tcfg["fixed"], "monotone_constraints": list(mono)}}
+        tcfg = {
+            **tcfg,
+            "fixed": {**tcfg["fixed"], "monotone_constraints": list(mono)},
+            "skip_objectives": ["l1"],
+        }
     m = TunedLGBM(cols, {}, seed=42, target="delta", base="cgm_now", tcfg=tcfg, n_jobs=n_jobs)
     m.fit(tr, val=va, horizons=list(HORIZONS), events=False)
     trials = trial_params(tcfg)
