@@ -175,7 +175,8 @@ for — and the fitted mechanistic twin. Both are scored against physiological p
 (carbohydrate monotonicity, activity direction, identity, causality, bounds, dose–response) and
 against **87 matched real breakfasts**.
 
-On those matched meals the models predict 18 mg/dL of the 39 mg/dL observed rise, so the interface
+On those 87 matched pairs the models predict 18.6 to 19.2 mg/dL of the 35.3 mg/dL observed rise at
++60 min, so the interface
 presents every magnitude as a **lower bound**, printed beside the result rather than buried
 (details in [docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md)).
 
