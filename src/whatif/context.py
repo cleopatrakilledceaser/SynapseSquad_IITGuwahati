@@ -20,6 +20,7 @@ from src.mech.inputs import build_records
 from src.mech.run_mech import by_patient
 from src.models.fusion_lgbm import folds
 from src.personalize.data import first_period
+from src.uncertainty import models as um
 from src.utils.config import load_config
 from src.whatif import twin as tw
 from src.whatif.engine import PROC, FoldCtx, Period, part4_choices, twin_specs
@@ -90,6 +91,7 @@ def fold_ctx(data: dict[str, Any], wc: dict[str, Any], fold: int, dev: bool) -> 
         "wc": wc,
         "inner_folds": data["pc"]["inner_folds"],
         "seed": 42 + fold,
+        "tcfg": um.tuning_config(),  # D-072: same population model as Part 6
     }
     forms = {n: fit_form(n, data["tab"], trf, train, ctx) for n in FORMS}
     p6 = pd.read_parquet(PROC / "uncertainty" / f"unc_A_{COHORT}_fold{fold}_oof.parquet")

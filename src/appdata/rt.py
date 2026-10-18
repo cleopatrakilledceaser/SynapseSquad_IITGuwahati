@@ -22,6 +22,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.personalize.data import MEMBER_SEP
 from src.uncertainty.conformal import conformal_quantile, cvplus_interval
 from src.uncertainty.events import exceed_prob
 from src.whatif import edits as ed
@@ -104,7 +105,24 @@ class Forest:
 
 
 def parse_model_text(text: str) -> Forest:
-    """Every tree of a LightGBM ``model_to_string`` dump, in order."""
+    """Every tree of a LightGBM ``model_to_string`` dump, in order.
+
+    A tuned ensemble (D-072) is exported as member dumps joined by ``MEMBER_SEP``; its forest is
+    all members' trees with leaf values divided by the member count, so the sum is their mean.
+    """
+    parts = text.split(MEMBER_SEP)
+    if len(parts) == 1:
+        return Forest(_parse_trees(text))
+    trees = []
+    for part in parts:
+        for t in _parse_trees(part):
+            t["leaf_value"] = [repr(float(v) / len(parts)) for v in t["leaf_value"]]
+            trees.append(t)
+    return Forest(trees)
+
+
+def _parse_trees(text: str) -> list[dict[str, list[str]]]:
+    """Parsed tree blocks of one LightGBM dump."""
     trees: list[dict[str, list[str]]] = []
     cur: dict[str, list[str]] = {}
     for line in text.splitlines():
@@ -123,7 +141,7 @@ def parse_model_text(text: str) -> Forest:
         trees.append(cur)
     if not trees:
         raise ValueError("no trees parsed from the model string")
-    return Forest(trees)
+    return trees
 
 
 def read_model(path: Path) -> Forest:

@@ -84,11 +84,14 @@ def fit_form(
     train: list[str],
     ctx: dict[str, Any],
 ) -> Form:
-    """Fit one form on the fold-training patients (ctx: cols, strata, bc, wc, inner_folds, seed)."""
+    """Fit one form on the fold-training patients (ctx: cols, strata, bc, wc, inner_folds, seed).
+
+    ``ctx["tcfg"]`` (D-072) selects the tuned population model, as in Part 6.
+    """
     wc = ctx["wc"]
     bc = form_bc(ctx["bc"], form, ctx["cols"], wc["monotone"])
     thr = wc["threads"]
-    pop, _, _ = um.fit_population(tab, train, ctx["cols"], ctx["strata"], bc, thr)
+    pop, _, _ = um.fit_population(tab, train, ctx["cols"], ctx["strata"], bc, thr, ctx.get("tcfg"))
     fmap, mods = um.inner_models(tab, train, pop, ctx["inner_folds"], ctx["seed"], bc, thr)
     f = Form(form, pop, fmap, mods)
     reg = trf["days_since_start"].to_numpy(float) >= wc["band_region_from_day"]
