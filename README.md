@@ -12,12 +12,12 @@ Happiest Health Digital Twin Challenge 2026.
 | | |
 |---|---|
 | Team leader | Jahnavi Harsha |
-| Team name | **[TEAM NAME: fill in]** |
+| Team name | Synapse Squad |
 | Team members | Solo submission |
 
 ## 2. College / incubator
 
-Indian Institute of Technology Guwahati. Incubator: **[name, or "none"]**.
+Indian Institute of Technology Guwahati. Incubator: none.
 
 ## 3. Project title
 
@@ -236,10 +236,23 @@ keeps sleep, HRV and steps as context. This is a simulation result about detecta
 
 ## 10. Dashboard
 
-`make app` starts a Streamlit dashboard in Happiest Health purple, with ten pages: Overview,
-Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state, Personalization,
-Input tiers, Data quality, Evidence and a PDF export. A units switch shows mg/dL or mmol/L. Every
-page carries the decision-support disclaimer.
+Two interfaces, both reading the same bundle so they never disagree on a number.
+
+**Web console** (`web/`) — a single-page clinician console. A patient list ordered by who needs
+attention, then per patient: the forecast with its 80 % band, the what-if lab, the glucose report
+(AGP, time in range, GMI), the health record, sleep and activity context, a visit summary, and an
+evidence section carrying every cohort-level result. Access is role-gated — a clinician and a care
+coordinator see different fields — with a session access log. Dark and light themes, a mg/dL ⇄
+mmol/L switch, readable at tablet width. The demo runs on 120 **simulated** patients with the
+models applied zero-shot.
+
+**Streamlit application** (`make app`) — the full working app in Happiest Health purple, with ten
+pages: Overview, Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state,
+Personalization, Input tiers, Data quality, Evidence, and a PDF export for the patient file. Runs
+locally; no data leaves the machine.
+
+Every page of both carries the decision-support disclaimer: the clinician remains the decision
+maker and the system never recommends a dose or a drug.
 
 ## 11. Demo video
 
@@ -251,7 +264,9 @@ Code: MIT ([LICENSE](LICENSE)). Datasets keep their own licences (section 8).
 
 ## 13. Architecture diagram
 
-**[LINK: docs/architecture.pdf]**
+[docs/architecture.pdf](docs/architecture.pdf) — one page: the four data streams, harmonisation,
+the model layer, calibration, the clinical outputs and both interfaces, with the method,
+evaluation protocol, AI/ML models, measured results, privacy design and scope.
 
 ## 14. Presentation
 
