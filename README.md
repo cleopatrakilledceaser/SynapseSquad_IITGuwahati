@@ -155,9 +155,9 @@ Every simulated number is labelled SIMULATED.
 - **Alarms at about one false alarm per day:** for hyperglycaemia the model beats both a
   "current value" alert and a trend alert (Shanghai above 180: 71 % sensitivity against 59 % and
   67 %). Alert-burden curves let a clinic choose its own sensitivity / false-alarm trade-off.
-- **Intervals hold their promise:** 80 % bands cover 80.8 % (CGMacros) and 79.5 % (Shanghai) at
-  +60 min, against an 80 % target. Coverage is reported per subgroup as well as pooled, and both
-  dashboards show it.
+- **Intervals hold their promise:** the served model's 80 % bands cover 80.5 % in both cohorts at
+  +60 min, against an 80 % target, and stay at 80.3 % or above at every horizon (D-072a). Coverage
+  is reported per subgroup as well as pooled, and both dashboards show it.
 - **Robustness is tested, not assumed:** sensor faults are injected into the test data and the
   causal features recomputed, and a data-quality score (completeness, recency, plausibility, rate
   of change) travels with every forecast. Section 15 records where this is weakest.
@@ -232,7 +232,8 @@ first days — the recipe (a) recommends. Error at every 15-minute anchor from d
 | Forecast | +30 min | +60 min | +120 min |
 |---|---|---|---|
 | Repeat the last value | 11.5 [10.6, 12.5] | 17.8 [15.9, 20.0] | 26.6 [23.4, 30.2] |
-| Served model, 3-day calibration | **10.7** | **16.0** | **20.5** |
+| Served model, no calibration | 10.9 [10.4, 11.4] | 16.5 [15.4, 17.8] | 21.6 [19.4, 24.0] |
+| Served model, 3-day calibration | **10.7** [10.2, 11.2] | **16.0** [14.9, 17.4] | **20.5** [18.3, 23.1] |
 
 The calibrated forecast is now better than repeating the last value at **all three horizons**; at
 +60 min the difference is −1.78 mg/dL [−2.91, −0.78], and the gain grows with the horizon, where
