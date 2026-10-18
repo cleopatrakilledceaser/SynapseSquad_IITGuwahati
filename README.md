@@ -211,6 +211,20 @@ context for the clinician, not as drivers of the forecast. This is a result from
 says the effect is small relative to meal-driven variation over 10 days, not that sleep does not
 matter. The pipeline accepts these channels as soon as a real cohort provides them.
 
+**Larger run (D-066): 300 simulated patients, 30 days, 777,000 scored windows per condition.**
+Same design, about 9 times more patient-days. C minus B, mg/dL, 95 % CI (\* = interval excludes 0):
+
+| m | +30 min | +60 min | +120 min |
+|---|---|---|---|
+| 0 (control) | +0.064 [+0.040, +0.100]\* | +0.067 [+0.047, +0.087]\* | +0.058 [+0.016, +0.113]\* |
+| 1 | −0.061 [−0.097, −0.035]\* | −0.031 [−0.073, +0.011] | +0.005 [−0.045, +0.051] |
+
+No leak: with no sleep effect (m = 0) the extra features make forecasts slightly worse, which is
+mild overfitting on noise. At literature scale (m = 1) the effect is detectable only at +30
+minutes, and it is tiny (0.06 mg/dL, about 0.5 % of a forecast error of roughly 13 mg/dL); at +60
+and +120 minutes it is still not detectable. The dashboard therefore keeps sleep, HRV and steps as
+context only. This is a simulation result and says nothing about real patients.
+
 ## 10. Dashboard
 
 `make app` starts a Streamlit dashboard in Happiest Health purple, with ten pages: Overview,

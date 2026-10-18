@@ -8,7 +8,7 @@ README = (Path(__file__).resolve().parents[1] / "README.md").read_text("utf-8")
 
 
 def test_copied_rows_appear_in_readme():
-    for t in [*ev.INDIA.values(), ev.SLEEP]:
+    for t in [*ev.INDIA.values(), ev.SLEEP, ev.SLEEP["scale"]]:
         for row in t["rows"]:
             assert all(cell in README for cell in row[1:] if cell), row
 

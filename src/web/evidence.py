@@ -116,6 +116,18 @@ SLEEP = {
             "activity add nothing either. So the console shows sleep, heart rate variability and steps as context for the "
             "clinician, not as drivers of the forecast. This says the effect is small relative to meal-driven variation "
             "over 10 days, not that sleep does not matter.",
+    "scale": {
+        "title": "Larger run: 300 simulated patients, 30 days (about 9 times more patient-days)",
+        "sub": "777,000 scored windows per condition. Same design; change in error from adding the sleep channel, mg/dL, 95 % interval.",
+        "cols": ["m", "+30 min", "+60 min", "+120 min"],
+        "rows": [
+            ["0 (control)", "+0.064 [+0.040, +0.100]", "+0.067 [+0.047, +0.087]", "+0.058 [+0.016, +0.113]"],
+            ["1", "−0.061 [−0.097, −0.035]", "−0.031 [−0.073, +0.011]", "+0.005 [−0.045, +0.051]"],
+        ],
+        "note": "No leak: with no sleep effect the extra features make forecasts slightly worse. At literature scale the effect is "
+                "detectable only at +30 minutes and is tiny (0.06 mg/dL, about 0.5 % of the forecast error); at +60 and +120 minutes "
+                "it is still not detectable. A simulation result that says nothing about real patients.",
+    },
 }
 
 
