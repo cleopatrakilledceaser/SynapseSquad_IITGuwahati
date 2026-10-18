@@ -1505,3 +1505,11 @@ What: `src/india/ehr.py` adds diabetes duration, hypertension, dyslipidaemia, CK
 
 Limits (stated in the datasheet and the dashboard): the history has NO effect on the simulated glucose, so no result may claim that diagnoses or genetic markers help the forecast. It uses its own random stream per patient, so no earlier simulated number changes (tested). It exists so the pipeline and the doctor dashboard handle and display a full EHR, which is what the organizers ask the prototype to demonstrate.
 
+### D-065a: outcome of the Part 10 tuned forecaster (recorded after both stages ran)
+
+Design A (CV, repeat 0, paired with Part 3): the tuned model is better than the status quo at all three horizons in every cohort and config. +60 min difference (MAE, mg/dL, negative = tuned better): CGMacros D_cgm_wear_meal -0.38 [-0.58, -0.17], CGMacros E_full -0.63 [-1.01, -0.33], Shanghai T2DM E_full -0.33 [-0.53, -0.15]. The tuning mostly selected absolute-error and Huber losses (the old model trained on squared error but is scored on absolute error).
+
+Design B (single-shot holdout, 9 CGMacros and 19 Shanghai patients): +60 min differences -0.22, -0.02 and -0.22. The sign agrees in every config, so the pre-registered rule is met. Every holdout CI includes 0 (small samples), CGMacros E_full is a tie (-0.02 at +60, +0.04 at +30). The holdout was used once.
+
+Decision on adoption: the rule is met, so the tuned forecaster is reported as a validated modest improvement (about 2 to 4 % of MAE). The dashboard keeps serving the status-quo forecaster, because its interval bands, event probabilities and what-if results were calibrated and, for Part 7, locked for that model (D-065 says they are not recomputed here). Serving the tuned model would need a new documented step that re-runs Parts 6 and 7; it is listed as future work, not done.
+

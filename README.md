@@ -100,6 +100,13 @@ Where a result is negative or neutral, it is reported as found.
   steps would be detectable (on simulated data, they are not).
 - **Static EHR helps only when the patient has no history.** With 3 days of the patient's own
   data its effect is 0.3 mg/dL or less.
+- **Tuning the forecaster gives a small, consistent gain (Part 10).** Training with an
+  absolute-error-type loss (the metric we are scored on) and a wider hyperparameter search, chosen
+  only on inner validation patients, lowers MAE at +60 min by 0.38 [0.17, 0.58] (CGMacros, meals +
+  wearable), 0.63 [0.33, 1.01] (CGMacros, full) and 0.33 [0.15, 0.53] (Shanghai T2DM), about 2 to 4 %.
+  On the single-shot holdout (9 and 19 patients) the direction agrees in every case (−0.22, −0.02,
+  −0.22) but no interval excludes 0. The dashboard still serves the earlier model, whose
+  uncertainty bands and what-if results were calibrated for it ([D-065a](docs/DECISIONS.md)).
 
 ### 9.2 Adverse events and alarms
 
