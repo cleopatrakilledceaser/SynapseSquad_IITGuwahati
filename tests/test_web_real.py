@@ -73,8 +73,13 @@ def shipped() -> rf.Shipped:
 
 
 def run(sh: rf.Shipped) -> dict:
-    grid, meals, now = sim_patient()
-    return rf.patient(sh, "sim", grid, meals, 6.9, 128.0, now, rf.preset_list()[:2])
+    """Calibrated outputs of the 5-day simulated patient (band from its own calibration days)."""
+    grid, meals, now = sim_patient(days=5)
+    r = rf.patient(sh, "sim", grid, meals, 6.9, 128.0, now, rf.preset_list()[:2])
+    q = rf.band_quantiles([r["residuals"]])
+    r["fc"], r["ev"] = rf.now_outputs(sh, r, q)
+    r["q"] = q
+    return r
 
 
 @pytest.fixture(scope="module")
@@ -82,11 +87,12 @@ def out(shipped: rf.Shipped) -> dict:
     return run(shipped)
 
 
-def test_bands_ordered_and_clamped(out, shipped):
+def test_calibrated_bands_ordered_and_clamped(out, shipped):
     lo_c, hi_c = shipped.clamp
     for h in ("30", "60", "120"):
         f = out["fc"][h]
         assert lo_c <= f["lo"] <= f["p"] <= f["hi"] <= hi_c, (h, f)
+    assert all(lo <= 0 <= hi for lo, hi in out["q"].values())
 
 
 def test_event_probabilities_in_unit_interval_and_none_invented(out, shipped):
@@ -105,6 +111,38 @@ def test_monotone_model_non_decreasing_in_carbs(out):
             assert np.all(np.diff(no_walk) >= 0) and np.all(np.diff(walk) >= 0), (h, w["label"])
 
 
+def test_offset_uses_days_1_to_3_only(out):
+    tab = out["table"]
+    base = rf.offsets(tab)
+    assert any(abs(v) > 0 for o in base.values() for v in o.values())
+    later = tab.copy()
+    days = later["days_since_start"].to_numpy(float)
+    for h in rf.HZ:
+        outside = days + h / 1440 >= rf.K_DAYS  # reading after day 3: not a calibration pair
+        later.loc[outside, f"y_{h}"] += 100.0
+        for name in rf.FORMS:
+            later.loc[days >= rf.K_DAYS, f"pred_{name}_{h}"] -= 50.0
+    assert rf.offsets(later) == base
+    early = tab.copy()
+    early.loc[days < 1.0, "y_60"] += 100.0  # a calibration-day reading does move the offset
+    assert all(rf.offsets(early)[n][60] != base[n][60] for n in rf.FORMS)
+
+
+def test_forecast_eval_table(out, shipped):
+    q, off = out["q"], {"sim": out["offsets"]}
+    res = rf.evaluate(rf.scored([out["table"]], off, q, shipped.clamp))
+    t = rf.eval_table(res)
+    assert [r[0] for r in t["rows"]] == list(rf.METHODS.values())
+    assert all(len(r) == len(t["cols"]) == 4 for r in t["rows"])
+    assert "Simulated" in t["note"] and "simulated" in t["title"]
+
+
 def test_deterministic(out, shipped):
     again = run(shipped)
-    assert json.dumps(again, sort_keys=True) == json.dumps(out, sort_keys=True)
+
+    def key(r: dict) -> str:
+        r = {k: v for k, v in r.items() if k not in ("table", "residuals")}
+        return json.dumps(r, sort_keys=True, default=str)
+
+    assert key(again) == key(out)
+    assert again["table"].equals(out["table"])
