@@ -3,6 +3,9 @@
 **A clinician-facing digital twin for glucose management in Type 2 Diabetes.**
 Happiest Health Digital Twin Challenge 2026.
 
+**▶ Live clinician console: https://cleopatrakilledceaser.github.io/glucotwin/** — opens in a browser,
+no install, no sign-in. 120 simulated patients.
+
 > **Research prototype, not a medical device.** Outputs are decision support for a clinician.
 > They are not a diagnosis and do not prescribe treatment. Open data and clearly labelled
 > synthetic data only; no patient data is stored in this repository.
@@ -238,7 +241,8 @@ keeps sleep, HRV and steps as context. This is a simulation result about detecta
 
 Two interfaces, both reading the same bundle so they never disagree on a number.
 
-**Web console** (`web/`) — a single-page clinician console. A patient list ordered by who needs
+**Web console** — live at **https://cleopatrakilledceaser.github.io/glucotwin/** (source in `web/`).
+A single-page clinician console. A patient list ordered by who needs
 attention, then per patient: the forecast with its 80 % band, the what-if lab, the glucose report
 (AGP, time in range, GMI), the health record, sleep and activity context, a visit summary, and an
 evidence section carrying every cohort-level result. Access is role-gated — a clinician and a care
