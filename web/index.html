@@ -194,7 +194,10 @@ const sc = (d0, d1, r0, r1) => (v) => r0 + ((v - d0) * (r1 - r0)) / (d1 - d0);
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 /* ---------------------------------------------------------------- derived values */
-function attention(p) { return Math.max(p.ev.hi250_120, Math.min(1, p.ev.lo70_60 * 2.5)) + 0.01 * p.ev.hi180_60; }
+/* Very-high signal: the calibrated chance of >250 at +120 when the model has one; otherwise a plain rule on the forecast
+   (point or whole 80% range at or above 250), so the ordering never depends on an uncalibrated number. */
+function veryHigh(p) { const v = p.ev.hi250_120; return v != null && isFinite(v) ? v : p.fc["120"].lo >= 250 ? 1 : p.fc["120"].p >= 250 ? 0.5 : 0; }
+function attention(p) { return Math.max(veryHigh(p), Math.min(1, p.ev.lo70_60 * 2.5)) + 0.01 * p.ev.hi180_60; }
 function level(p) { const a = attention(p); return a >= 0.2 ? "crit" : a >= 0.08 || p.ev.hi180_60 >= 0.7 ? "warn" : "ok"; }
 const LEVEL_TEXT = { crit: "Needs attention", warn: "Watch", ok: "Stable" };
 function trendWord(p) {
@@ -422,7 +425,7 @@ function nowView(p) {
     `(80% range ${gv(f60.lo)} to ${gv(f60.hi)}). Chance of being above ${gv(180)} ${unitLabel()} in 60 minutes: <em class="num">${pct(p.ev.hi180_60)}</em>.`;
   const fcs = ["30", "60", "120"].map((h) => `<div class="fc"><div class="h">+${h} min<br><span class="num">${clock(p, +h)}</span></div><div class="v">${gv(p.fc[h].p)}</div><div class="r">range<br>${gv(p.fc[h].lo)} to ${gv(p.fc[h].hi)}</div></div>`).join("");
   const risk = [["Above " + gv(180) + " at +60 min", p.ev.hi180_60, "var(--z-high)"], ["Above " + gv(180) + " at +120 min", p.ev.hi180_120, "var(--z-high)"], ["Above " + gv(250) + " at +120 min", p.ev.hi250_120, "var(--z-vhigh)"],
-                ["Below " + gv(70) + " at +60 min", p.ev.lo70_60, "var(--z-low)"]]
+                ["Below " + gv(70) + " at +60 min", p.ev.lo70_60, "var(--z-low)"]].filter((q) => q[1] != null && isFinite(q[1]))
     .map(([t, v, c]) => `<div><div class="l"><span>${t}</span><b>${pct(v)}</b></div><div class="bar"><i style="width:${Math.max(2, v * 100)}%;background:${c}"></i></div></div>`).join("");
   let replay = "";
   if (S.replay) {
@@ -491,6 +494,7 @@ function accessView() {
 
 /* ---------------------------------------------------------------- shared helpers */
 const WHATIF_NOTE = "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted about half the observed rise; treat sizes as lower bounds.";
+const noteOf = () => (S.data.forecast_note ? esc(S.data.forecast_note) : S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data");
 const NA_EV = `<div class="locked">The evidence file (evidence.json) was not loaded, so this section is empty. It is produced by <span class="num">make web-evidence</span>.</div>`;
 function tbl(t, opts = {}) {
   if (!t || !t.rows || !t.rows.length) return `<div class="locked">Not available.</div>`;
@@ -642,6 +646,7 @@ function whatifView(p) {
   return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Replace a logged meal with another one, optionally add a walk, and see how the forecast changes. The patient and the meal are simulated; the numbers are model estimates.</span></div>` +
     `<div class="grid2" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start"><div class="card"><h3>Scenario</h3>${ctl}</div><div class="card"><h3>Forecast from the meal</h3>${res}</div></div>` +
     `<div class="callout">${esc(WHATIF_NOTE)}</div>` +
+    ([].concat(meta.notes || []).length ? `<div class="card"><h3>About these results</h3><ul class="bullets">${[].concat(meta.notes).map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>` : "") +
     `<div class="card"><h3>What this tool cannot tell you</h3><ul class="bullets">${(S.ev ? S.ev.limits_whatif : []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul><p class="sub" style="margin:10px 0 0">Twin variants of the what-if lab are in the Streamlit app. Plausibility checks are under Evidence.</p></div>`;
 }
 
@@ -666,11 +671,11 @@ function summaryView(p) {
     `<div>${coord ? '<span class="chip mute">Diagnoses hidden for this role</span>' : (dx.length ? "Recorded: " + dx.join(", ") + "." : "No further diagnoses recorded.")}</div>` +
     `<div class="kpi"><div class="h">Glucose now</div><div class="v">${gv(now)} <small>${unitLabel()}</small></div><div class="t">${trendWord(p)} · <span class="chip ${l}">${LEVEL_TEXT[l]}</span></div></div></div>` +
     `<div class="stack"><table class="t"><thead><tr><th>Forecast</th><th>Estimate</th><th>80% range</th></tr></thead><tbody>${fc}</tbody></table>` +
-    `<div>Chance above ${gv(180)} ${unitLabel()} in 60 min: <b class="num">${pct(p.ev.hi180_60)}</b>. Above ${gv(250)} in 120 min: <b class="num">${pct(p.ev.hi250_120)}</b>. Below ${gv(70)} in 60 min: <b class="num">${pct(p.ev.lo70_60)}</b>.</div></div></div>` +
+    `<div>Chance above ${gv(180)} ${unitLabel()} in 60 min: <b class="num">${pct(p.ev.hi180_60)}</b>. ${p.ev.hi250_120 != null && isFinite(p.ev.hi250_120) ? `Above ${gv(250)} in 120 min: <b class="num">${pct(p.ev.hi250_120)}</b>. ` : ""}Below ${gv(70)} in 60 min: <b class="num">${pct(p.ev.lo70_60)}</b>.</div></div></div>` +
     `<hr style="border:0;border-top:1px solid var(--line-soft);margin:14px 0">` +
     `<div class="grid4"><div class="kpi"><div class="h">Mean glucose</div><div class="v">${gv(p.mean)}</div><div class="t">${unitLabel()}, ${p.days} days</div></div><div class="kpi"><div class="h">Time in range 70 to 180</div><div class="v">${T.b70_180.toFixed(0)}%</div><div class="t">target above 70%</div></div>` +
     `<div class="kpi"><div class="h">Time above 250</div><div class="v">${T.gt250.toFixed(0)}%</div><div class="t">target below 5%</div></div><div class="kpi"><div class="h">Variability (CV)</div><div class="v">${p.cv.toFixed(0)}%</div><div class="t">target 36% or less</div></div></div></div>` +
-    `<div class="callout">Decision support for a clinician. Not a diagnosis and not a treatment recommendation. ${S.data.forecast_source === "dev" ? "Forecasts on this page come from a development placeholder model." : ""}</div>`;
+    `<div class="callout">Decision support for a clinician. Not a diagnosis and not a treatment recommendation. Forecasts: ${noteOf()}.</div>`;
 }
 
 const TABS = [["now", "Now and next"], ["whatif", "What-if lab"], ["report", "Glucose report"], ["record", "Health record"], ["sleep", "Sleep and wearables"], ["summary", "Visit summary"], ["access", "Access"]];
@@ -678,7 +683,7 @@ function footHtml() {
   if (S.view === "evidence") return `<div class="foot">Research prototype, not a medical device. This is decision support for a clinician: it is not a diagnosis and it does not prescribe treatment. ` +
     `Results on this page come from two small open datasets of real, de-identified adults and from simulated cohorts where labelled; no prospective or clinical validation was done.</div>`;
   return `<div class="foot">Research prototype, not a medical device. This is decision support for a clinician: it is not a diagnosis and it does not prescribe treatment. ` +
-    `Every patient on this page is simulated. Forecasts come from ${S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data"}; the dashboard does not recompute them for new patients.</div>`;
+    `Every patient on this page is simulated. Forecasts: ${noteOf()}. The dashboard does not recompute them for new patients.</div>`;
 }
 function mainView() {
   const p = cur();
@@ -708,7 +713,7 @@ function shell() {
   $("#app").innerHTML =
     `<div class="top"><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M5 20c3 0 3-9 6-9s3 11 6 11 3-8 5-8 2 4 5 4" fill="none" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>GlucoTwin<small>Clinic console</small></div><div class="seg nav" role="group" aria-label="Section"><button data-view="patients" aria-pressed="${S.view === "patients"}">Patients</button><button data-view="evidence" aria-pressed="${S.view === "evidence"}">Evidence</button></div><div class="grow"></div>` +
     `<div class="seg" role="group" aria-label="Glucose units"><button data-unit="mgdl" aria-pressed="true">mg/dL</button><button data-unit="mmol" aria-pressed="false">mmol/L</button></div></div>` +
-    `<div class="notice"><span class="tag">Simulated patients</span>${dev ? '<span class="tag warn">Development forecast</span>' : ""}<span>${S.data.patients.length} virtual adults with type 2 diabetes, ${S.data.cohort.days} days of data each. No real person is shown.</span></div>` +
+    `<div class="notice"><span class="tag">Simulated patients</span>${dev ? '<span class="tag warn">Development forecast</span>' : `<span class="tag warn">${esc(S.data.forecast_tag || "Model forecast")}</span>`}<span>${S.data.patients.length} virtual adults with type 2 diabetes, ${S.data.cohort.days} days of data each. No real person is shown.</span></div>` +
     `<div class="shell" id="shell"><aside class="rail"><div class="rail-head"><h2>Patients <span id="count"></span></h2>` +
     `<input class="search" id="q" type="search" placeholder="Find by ID, age or sex" aria-label="Find a patient"><div class="sorts" role="group" aria-label="Sort patients">` +
     [["attention", "Attention first"], ["glucose", "Glucose now"], ["hba1c", "HbA1c"], ["id", "ID"]].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${S.sort === k}">${l}</button>`).join("") +
