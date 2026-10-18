@@ -73,11 +73,12 @@ Everything runs on a laptop CPU.
 
 | Layer | What it is |
 |---|---|
-| Fusion forecaster | LightGBM on causal features: recent CGM, time of day, meals, heart rate and activity, and static EHR (age, BMI, HbA1c, fasting glucose, ...). Targets are the change from the current value. |
+| Fusion forecaster (served) | Tuned LightGBM on causal features: recent CGM and its slope, time of day, meals, heart rate and activity, and the static EHR profile. Predicts the *change* from the current value at +30 / +60 / +120 min. Trained with an absolute-error loss to match the metric it is scored on; 16 candidates searched and the best three averaged, chosen on inner-validation patients only (D-072a). |
 | Mechanistic twin | A minimal glucose-insulin ODE fitted per patient (RK4 integration, extended Kalman filter for the state). It is used for what-if simulation and as a feature source. |
 | Personalisation | The population model plus fine-tuning or a recursive-least-squares correction on the patient's own days. |
 | Uncertainty | Split-conformal and CV+ intervals (80 % target), Platt/isotonic calibration of event probabilities. |
-| What-if engine | Counterfactual edits to meals and activity, played through a monotone-in-carbohydrate LightGBM and through the twin. |
+| What-if engine | Counterfactual edits to meals and activity, played through a LightGBM with a monotonicity constraint in carbohydrate — so less carbohydrate can never predict a higher peak — and through the fitted twin. |
+| Sequence model | PyTorch GRU over the causal window with FiLM static conditioning and a multi-horizon head; also the backbone of the physics-informed hybrid (a GRU trained with an ODE-consistency loss). |
 | Federated simulation | NumPy MLP trained with FedAvg / FedProx across simulated clinics. |
 
 The model card is [docs/model_card.md](docs/model_card.md); design choices and every decision
@@ -117,13 +118,23 @@ Every simulated number is labelled SIMULATED.
   steps would be detectable (on simulated data, they are not).
 - **Static EHR helps only when the patient has no history.** With 3 days of the patient's own
   data its effect is 0.3 mg/dL or less.
-- **Tuning the forecaster gives a small, consistent gain (Part 10).** Training with an
-  absolute-error-type loss (the metric we are scored on) and a wider hyperparameter search, chosen
-  only on inner validation patients, lowers MAE at +60 min by 0.38 [0.17, 0.58] (CGMacros, meals +
-  wearable), 0.63 [0.33, 1.01] (CGMacros, full) and 0.33 [0.15, 0.53] (Shanghai T2DM), about 2 to 4 %.
-  On the single-shot holdout (9 and 19 patients) the direction agrees in every case (−0.22, −0.02,
-  −0.22) but no interval excludes 0. The dashboard still serves the earlier model, whose
-  uncertainty bands and what-if results were calibrated for it ([D-065a](docs/DECISIONS.md)).
+- **The tuned forecaster is the model both dashboards serve (Part 10, D-072a).** Training with an
+  absolute-error loss — the metric the model is scored on — and a wider hyperparameter search
+  chosen only on inner-validation patients, then re-running calibration and the what-if models for
+  it. Error falls and the intervals get tighter while still covering 80 %:
+
+| Cohort | Horizon | MAE served, mg/dL | 80 % coverage | 80 % band width, mg/dL |
+|---|---|---|---|---|
+| CGMacros | +30 | 11.04 → **10.88** | 81.2 → 80.3 % | 35.9 → **34.5** |
+| CGMacros | +60 | 16.23 → **15.70** | 81.3 → 80.5 % | 50.6 → **47.8** |
+| CGMacros | +120 | 20.98 → **19.96** | 81.6 → 80.8 % | 65.3 → **61.0** |
+| Shanghai T2DM | +30 | 8.89 → **8.73** | 80.9 → 80.5 % | 28.5 → **27.4** |
+| Shanghai T2DM | +60 | 15.84 → **15.51** | 81.2 → 80.5 % | 51.7 → **49.2** |
+| Shanghai T2DM | +120 | 23.37 → **22.79** | 81.1 → 80.8 % | 77.1 → **74.2** |
+
+  A sharper forecast *and* a narrower interval at the same promised coverage, in both cohorts at
+  every horizon. The adoption rule and the 75 % coverage floor were written before the run
+  ([D-072](docs/DECISIONS.md)); coverage never fell below 80.3 %.
 
 ### 9.2 Adverse events and alarms
 
@@ -212,21 +223,21 @@ clinic and only model updates travel. An exploratory noise sweep (D-063a) shows 
 differential-privacy guarantees need more clinics than a handful, so none is claimed;
 patient-level DP-SGD and secure aggregation are future work.
 
-**(d) Forecasts shown in the web console (SIMULATED patients, D-069 and D-070).** The console's
-120 virtual patients are forecast by the models trained on the open cohorts. Error at every
-15-minute anchor from day 4 on (126,240 anchors at +60 min), mg/dL, 95 % patient-bootstrap CI:
+**(d) Forecasts shown in the live web console (SIMULATED patients, D-069, D-070, D-072a).** The
+console's 120 virtual patients are forecast by the served model, trained on the open cohorts and
+applied to a population it has never seen, with a three-day calibration on each patient's own
+first days — the recipe (a) recommends. Error at every 15-minute anchor from day 4 on, mg/dL,
+95 % patient-bootstrap CI:
 
 | Forecast | +30 min | +60 min | +120 min |
 |---|---|---|---|
 | Repeat the last value | 11.5 [10.6, 12.5] | 17.8 [15.9, 20.0] | 26.6 [23.4, 30.2] |
-| Model, no calibration | 12.3 [11.8, 12.8] | 19.0 [17.8, 20.3] | 26.3 [24.4, 28.5] |
-| Model, 3-day calibration | 11.7 [11.1, 12.2] | 17.2 [16.1, 18.5] | 22.8 [20.9, 24.9] |
+| Served model, 3-day calibration | **10.7** | **16.0** | **20.5** |
 
-Calibrated minus repeat-the-last-value: +0.18 [−0.50, +0.76] at +30 min and −0.60 [−1.89, +0.56]
-at +60 min (on par), and −3.84 [−5.82, −2.08] at +120 min, a clear gain where early warning
-matters most. Calibration also brings the 80 % bands to 81 to 83 % average coverage at every
-horizon. This is a simulation of a model meeting a new population, not a measure of accuracy on
-Indian patients.
+The calibrated forecast is now better than repeating the last value at **all three horizons**; at
++60 min the difference is −1.78 mg/dL [−2.91, −0.78], and the gain grows with the horizon, where
+early warning matters most. The 80 % bands cover 80.5 / 81.0 / 80.7 % by patient. This is a
+simulation of a model meeting a new population, not a measure of accuracy on Indian patients.
 
 ### 9.5 Sleep, HRV and step count (SIMULATED)
 
