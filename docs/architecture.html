@@ -4,247 +4,272 @@
 <meta charset="utf-8">
 <title>GlucoTwin architecture</title>
 <style>
-  @page { size: A3 landscape; margin: 12mm; }
+  @page { size: A3 landscape; margin: 11mm; }
   :root{
-    --damson:#43285E; --ink:#1B2230; --slate:#566174; --rule:#D8DDE5;
-    --paper:#FFFFFF; --tint:#F5F6F8; --mint:#9AD3B8; --amber:#E09A12; --blue:#2B6CB0;
+    --purple:#6A3FD0; --deep:#43285E; --ink:#1D1430; --muted:#5B4F77;
+    --rule:#E3DCF2; --tint:#F7F4FC; --paper:#FFFFFF;
+    --real:#0F9A78; --sim:#B7791F;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Inter","DejaVu Sans",sans-serif;color:var(--ink);background:var(--paper);
-       font-size:9.2pt;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  header{display:flex;align-items:baseline;justify-content:space-between;
-         border-bottom:2.5px solid var(--damson);padding-bottom:6px;margin-bottom:12px;}
-  h1{font-size:18pt;margin:0;font-weight:700;letter-spacing:-0.015em;color:var(--damson);}
-  .sub{font-size:8.6pt;color:var(--slate);max-width:150mm;}
-  .meta{font-size:7.8pt;color:var(--slate);text-align:right;line-height:1.5;}
+       line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 
-  .grid{display:grid;grid-template-columns:1fr 62mm;gap:9px;align-items:start;}
-  .flow{display:flex;flex-direction:column;gap:7px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:28px;
+         border-bottom:2.5px solid var(--purple);padding-bottom:10px;margin-bottom:18px;}
+  header img{height:46px;width:auto;object-fit:contain;}
+  header img.dtc{height:52px;}
+  .htext{flex:1;}
+  h1{font-size:27px;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--deep);}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:760px;}
 
-  .band{border:1.1px solid var(--rule);border-radius:5px;overflow:hidden;background:var(--paper);}
-  .band > .lab{background:var(--tint);border-bottom:1px solid var(--rule);
-       padding:3.5px 8px;font-size:7.4pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--damson);}
-  .band > .body{padding:7px 8px;}
-  .row{display:grid;gap:7px;}
-  .c4{grid-template-columns:repeat(4,1fr);} .c3{grid-template-columns:repeat(3,1fr);}
-  .c2{grid-template-columns:repeat(2,1fr);}
+  /* ---------- flow ---------- */
+  .canvas{position:relative;width:1120px;height:630px;}
+  .canvas svg.links{position:absolute;inset:0;width:1120px;height:630px;}
+  .colhead{position:absolute;top:0;font-size:12px;font-weight:800;letter-spacing:.11em;
+           text-transform:uppercase;color:var(--purple);}
+  .bx{position:absolute;border:1.3px solid var(--rule);border-radius:8px;background:var(--paper);
+      padding:11px 13px;overflow:hidden;}
+  .bx h4{margin:0 0 4px;font-size:14px;font-weight:700;line-height:1.2;}
+  .bx p{margin:0;font-size:11.8px;color:var(--muted);line-height:1.35;}
+  .bx.key{border-color:var(--purple);border-width:1.9px;background:var(--tint);}
+  .bx.fill{background:var(--deep);border-color:var(--deep);}
+  .bx.fill h4{color:#fff;} .bx.fill p{color:#DCD2F0;}
+  .tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+       padding:1.5px 5px;border-radius:3px;margin-bottom:4px;}
+  .t-real{background:#E7F3EC;color:var(--real);} .t-sim{background:#FBF0DA;color:var(--sim);}
+  .mono{font-family:"DejaVu Sans Mono",monospace;font-size:10.5px;color:var(--purple);}
+  .bx p b{color:var(--ink);}
 
-  .box{border:1px solid var(--rule);border-radius:4px;padding:6px 7px;background:var(--paper);}
-  .box.key{border-color:var(--damson);border-width:1.4px;background:#FBFAFD;}
-  .box h4{margin:0 0 2.5px;font-size:8.4pt;font-weight:700;}
-  .box p{margin:0;font-size:7.6pt;color:var(--slate);}
-  .tag{display:inline-block;font-size:6.6pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-       padding:1px 4px;border-radius:3px;margin-bottom:3px;}
-  .real{background:#E7F3EC;color:#1F5C3D;} .sim{background:#FBF0DA;color:#7A5206;}
+  .fence{position:absolute;border:1.7px dashed var(--purple);border-radius:12px;opacity:.7;}
+  .fence-lab{position:absolute;font-size:11.5px;font-weight:700;color:var(--purple);
+             background:var(--paper);padding:0 7px;}
 
-  .arrow{text-align:center;color:var(--damson);font-size:11pt;line-height:.7;margin:-1px 0;}
-
-  aside{display:flex;flex-direction:column;gap:9px;}
-  .panel{border:1.1px solid var(--rule);border-radius:5px;padding:8px 9px;background:var(--tint);}
-  .panel.hi{border-color:var(--damson);border-width:1.4px;background:#FBFAFD;}
-  .panel h3{margin:0 0 5px;font-size:8.4pt;font-weight:700;color:var(--damson);
-            text-transform:uppercase;letter-spacing:.07em;}
-  .panel ul{margin:0;padding-left:13px;} .panel li{font-size:7.6pt;margin-bottom:3px;color:var(--slate);}
-  .panel li b{color:var(--ink);font-weight:700;}
-
-  .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;}
-  .m{border:1px solid var(--rule);border-radius:4px;padding:5px 6px;background:var(--paper);text-align:center;}
-  .m .v{font-size:12pt;font-weight:700;color:var(--damson);line-height:1.1;}
-  .m .k{font-size:6.6pt;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
-
-  footer{margin-top:10px;border-top:1px solid var(--rule);padding-top:5px;
-         font-size:7pt;color:var(--slate);display:flex;justify-content:space-between;}
-  code{font-family:"DejaVu Sans Mono",monospace;font-size:7pt;color:var(--damson);}
+  /* ---------- bottom ---------- */
+  .panels{display:grid;grid-template-columns:1.3fr 0.95fr 1.2fr 0.95fr;gap:12px;margin-top:18px;}
+  .pn{border:1.3px solid var(--rule);border-radius:8px;padding:12px 14px;}
+  .pn.hi{border-color:var(--purple);background:var(--tint);}
+  .pn h3{margin:0 0 7px;font-size:13px;font-weight:800;color:var(--deep);
+         text-transform:uppercase;letter-spacing:.06em;}
+  .pn ul{margin:0;padding-left:15px;} .pn li{font-size:11.6px;margin-bottom:4px;color:var(--muted);}
+  .pn li b{color:var(--ink);}
+  table{border-collapse:collapse;width:100%;font-size:11.6px;}
+  th,td{text-align:left;padding:3.5px 6px;border-bottom:1px solid var(--rule);}
+  th{color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+  td.n{font-family:"DejaVu Sans Mono",monospace;text-align:right;color:var(--deep);font-weight:700;}
+  footer{margin-top:12px;border-top:1px solid var(--rule);padding-top:6px;
+         font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between;}
+  code{font-family:"DejaVu Sans Mono",monospace;color:var(--purple);}
 </style>
 </head>
 <body>
 
 <header>
-  <div>
+  <img src="assets/happiest-health.png" alt="Happiest Health">
+  <div class="htext">
     <h1>GlucoTwin — system architecture</h1>
-    <div class="sub">A patient-specific type 2 diabetes digital twin: a static electronic health record fused with
-      continuous glucose, wearable and meal streams, producing calibrated forecasts, adverse-event
-      probabilities and counterfactual &ldquo;what if&rdquo; answers for a clinician.</div>
+    <div class="sub">A patient-specific type&nbsp;2 diabetes digital twin. Four input streams are harmonised onto one
+      causal timeline, fused by the model layer, calibrated into intervals and event probabilities, and served to
+      two clinician interfaces. Raw records never leave the clinic.</div>
   </div>
-  <div class="meta">
-    Digital Twin Challenge 2026<br>
-    Indian Institute of Technology Guwahati<br>
-    Python 3.11 · LightGBM · PyTorch · Streamlit<br>
-    Runs on a laptop CPU · MIT licence
-  </div>
+  <img class="dtc" src="assets/digital-twin-challenge.png" alt="Digital Twin Challenge 2026">
 </header>
 
-<div class="grid">
-<div class="flow">
+<div class="canvas">
 
-  <!-- 1. SOURCES -->
-  <div class="band">
-    <div class="lab">1 · Data sources — anonymised, open or synthetic</div>
-    <div class="body">
-      <div class="row c4">
-        <div class="box">
-          <span class="tag real">Real · open</span>
-          <h4>CGMacros (PhysioNet)</h4>
-          <p>45 adults. CGM, Fitbit heart rate and activity, meal macros, labs. Main development cohort.</p>
-        </div>
-        <div class="box">
-          <span class="tag real">Real · open</span>
-          <h4>Shanghai T1DM / T2DM</h4>
-          <p>100 T2DM patients. CGM, meals, labs. Second cohort for cross-population transfer.</p>
-        </div>
-        <div class="box">
-          <span class="tag sim">Simulated</span>
-          <h4>Synthetic Indian cohort</h4>
-          <p>CGM, heart rate, steps, sleep stages, HRV, IFCT-2017 Indian meals, lowered insulin sensitivity.</p>
-        </div>
-        <div class="box">
-          <span class="tag sim">Simulated</span>
-          <h4>Static EHR</h4>
-          <p>Demographics, diagnoses, medications, eGFR, HbA1c, genetic-marker dosages. Synthea-compatible schema.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="arrow">▼</div>
+<svg class="links" viewBox="0 0 1120 630" aria-hidden="true">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 1 L9 5 L0 9 z" fill="#6A3FD0"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#6A3FD0" stroke-width="1.7" marker-end="url(#ah)" opacity=".85">
+    <path d="M168 112 C184 112 182 328 196 328"/>
+    <path d="M168 256 C184 256 182 328 196 328"/>
+    <path d="M168 400 C184 400 182 328 196 328"/>
+    <path d="M168 544 C184 544 182 328 196 328"/>
 
-  <!-- 2. HARMONISATION -->
-  <div class="band">
-    <div class="lab">2 · Harmonisation and feature fusion &nbsp;<code>src/data · src/features</code></div>
-    <div class="body">
-      <div class="row c4">
-        <div class="box"><h4>Common grid</h4><p>Every cohort resampled to one 5-minute timeline with a shared schema and verified checksums.</p></div>
-        <div class="box"><h4>Causal features only</h4><p>No feature may use information from after the prediction instant. Enforced in code and tested.</p></div>
-        <div class="box"><h4>Patient-grouped splits</h4><p>Train, inner-validation, calibration and holdout patients never overlap.</p></div>
-        <div class="box key"><h4>Four streams fused</h4><p>Recent CGM · time of day · meal macros · heart rate and activity · static EHR profile.</p></div>
-      </div>
-    </div>
-  </div>
-  <div class="arrow">▼</div>
+    <path d="M348 328 C364 328 362 112 376 112"/>
+    <path d="M348 328 C364 328 362 256 376 256"/>
+    <path d="M348 328 C364 328 362 400 376 400"/>
+    <path d="M348 328 C364 328 362 544 376 544"/>
 
-  <!-- 3. MODELS -->
-  <div class="band">
-    <div class="lab">3 · Model layer</div>
-    <div class="body">
-      <div class="row c4">
-        <div class="box key"><h4>Fusion forecaster</h4><p>Tuned LightGBM on the change from the current value, at +30, +60 and +120 min. The served model.</p></div>
-        <div class="box"><h4>Mechanistic twin</h4><p>Minimal glucose–insulin ODE fitted per patient. RK4 integration, extended Kalman filter state.</p></div>
-        <div class="box"><h4>Personalisation</h4><p>Population model plus fine-tuning or recursive least squares on the patient's own first days.</p></div>
-        <div class="box"><h4>Federated simulation</h4><p>FedAvg / FedProx across simulated clinics. Model updates are shared; records never are.</p></div>
-      </div>
-    </div>
-  </div>
-  <div class="arrow">▼</div>
+    <path d="M530 112 C544 112 544 136 558 136"/>
+    <path d="M530 256 C544 256 544 328 558 328"/>
+    <path d="M530 400 C544 400 544 328 558 328"/>
+    <path d="M530 544 C544 544 544 520 558 520"/>
 
-  <!-- 4. CALIBRATION -->
-  <div class="band">
-    <div class="lab">4 · Uncertainty and calibration &nbsp;<code>src/uncertainty</code></div>
-    <div class="body">
-      <div class="row c3">
-        <div class="box key"><h4>80 % prediction intervals</h4><p>Split-conformal and CV+. Measured coverage 80.8 % (CGMacros) and 79.5 % (Shanghai) at +60 min.</p></div>
-        <div class="box key"><h4>Adverse-event probabilities</h4><p>Platt / isotonic calibration for crossing 180, 140 and 70 mg/dL. Reported as probabilities, not labels.</p></div>
-        <div class="box"><h4>Alert policy</h4><p>Alert burden curves: episodes caught per false alarm per day, so a clinic can choose its threshold.</p></div>
-      </div>
-    </div>
-  </div>
-  <div class="arrow">▼</div>
+    <path d="M696 136 C710 136 710 112 724 112"/>
+    <path d="M696 136 C710 136 710 256 724 256"/>
+    <path d="M696 328 C710 328 710 400 724 400"/>
+    <path d="M696 520 C710 520 710 544 724 544"/>
 
-  <!-- 5. OUTPUTS -->
-  <div class="band">
-    <div class="lab">5 · Clinical outputs</div>
-    <div class="body">
-      <div class="row c4">
-        <div class="box"><h4>Forecast + band</h4><p>30 / 60 / 120-minute trajectory with an honest 80 % interval and one plain-language sentence.</p></div>
-        <div class="box"><h4>Adverse-event risk</h4><p>Calibrated chance of hyperglycaemia or hypoglycaemia in the window.</p></div>
-        <div class="box"><h4>What-if engine</h4><p>Counterfactual meal, carbohydrate, timing and post-meal walk, through a monotone model and the twin.</p></div>
-        <div class="box"><h4>Trust surface</h4><p>Data quality, personalisation depth, SHAP attribution, and the limits of each answer beside it.</p></div>
-      </div>
-    </div>
-  </div>
-  <div class="arrow">▼</div>
+    <path d="M862 112 C876 112 876 184 890 184"/>
+    <path d="M862 256 C876 256 876 184 890 184"/>
+    <path d="M862 400 C876 400 876 472 890 472"/>
+    <path d="M862 544 C876 544 876 472 890 472"/>
+  </g>
+</svg>
 
-  <!-- 6. INTERFACES -->
-  <div class="band">
-    <div class="lab">6 · Clinician interfaces</div>
-    <div class="body">
-      <div class="row c2">
-        <div class="box key"><h4>Streamlit dashboard &nbsp;<code>make app</code></h4>
-          <p>Ten pages: Overview, Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state,
-             Personalization, Input tiers, Data quality, Evidence, PDF export. mg/dL ⇄ mmol/L switch.</p></div>
-        <div class="box key"><h4>Web console &nbsp;<code>web/</code></h4>
-          <p>Single-page clinician console: patient list with triage, forecast, what-if lab, glucose report,
-             health record, sleep and activity context, visit summary, and a role-gated access log.</p></div>
-      </div>
-    </div>
-  </div>
+<div class="fence" style="left:-9px;top:34px;width:548px;height:584px"></div>
+<div class="fence-lab" style="left:18px;top:26px">Inside the clinic — raw records never leave</div>
 
-  <!-- 7. REPRODUCIBILITY -->
-  <div class="band">
-    <div class="lab">7 · Reproducibility and engineering</div>
-    <div class="body">
-      <div class="row c4">
-        <div class="box"><h4>One command per stage</h4><p><code>make data · train · calibrate · app-data · web-real</code>. Every figure and table regenerates from source.</p></div>
-        <div class="box"><h4>Continuous integration</h4><p>GitHub Actions on Python 3.11: ruff, black, pytest and an end-to-end smoke run on every push.</p></div>
-        <div class="box"><h4>Pinned and containerised</h4><p>Pinned dependencies and a Docker image, verified on a clean machine.</p></div>
-        <div class="box"><h4>Documented data</h4><p>Datasheet and model card, checksum-verified loaders, and a written limitation for every claim.</p></div>
-      </div>
-    </div>
-  </div>
+<div class="colhead" style="left:0">1 · Sources</div>
+<div class="colhead" style="left:198px">2 · Harmonise</div>
+<div class="colhead" style="left:378px">3 · Models</div>
+<div class="colhead" style="left:560px">4 · Calibrate</div>
+<div class="colhead" style="left:726px">5 · Outputs</div>
+<div class="colhead" style="left:892px">6 · Interfaces</div>
+
+<!-- C1 sources -->
+<div class="bx" style="left:0;top:48px;width:168px;height:128px">
+  <span class="tag t-sim">Static EHR</span>
+  <h4>Health record</h4>
+  <p>Demographics, diagnoses, medications, labs and genetic markers. Synthea-ready.</p>
+</div>
+<div class="bx key" style="left:0;top:192px;width:168px;height:128px">
+  <span class="tag t-real">Real · open</span>
+  <h4>CGM · 145 patients</h4>
+  <p>CGMacros (45 adults) and Shanghai T2DM (100 patients). Glucose every 5 min.</p>
+</div>
+<div class="bx" style="left:0;top:336px;width:168px;height:128px">
+  <span class="tag t-real">Real + simulated</span>
+  <h4>Wearable</h4>
+  <p>Fitbit heart rate and activity. Sleep stages, HRV and steps from the simulator.</p>
+</div>
+<div class="bx" style="left:0;top:480px;width:168px;height:128px">
+  <span class="tag t-real">Real + presets</span>
+  <h4>Meals</h4>
+  <p>Logged macronutrients, plus 16 Indian presets with carbohydrate from IFCT-2017.</p>
+</div>
+
+<!-- C2 harmonise -->
+<div class="bx key" style="left:198px;top:48px;width:150px;height:560px">
+  <h4>One causal timeline</h4>
+  <p style="margin-top:9px"><b>Common grid.</b> Every cohort resampled to a single 5-minute schema, with checksums verified.</p>
+  <p style="margin-top:11px"><b>Causal only.</b> No feature may use information from after the prediction instant — enforced in code and covered by tests.</p>
+  <p style="margin-top:11px"><b>Grouped splits.</b> Training, validation, calibration and holdout patients never overlap.</p>
+  <p style="margin-top:11px"><b>Fused features.</b> Recent CGM, time of day, meals, heart rate and activity, and the static profile.</p>
+  <p class="mono" style="margin-top:11px">src/data<br>src/features</p>
+</div>
+
+<!-- C3 models -->
+<div class="bx key" style="left:378px;top:48px;width:152px;height:128px">
+  <h4>Fusion forecaster</h4>
+  <p>Tuned LightGBM predicting the change from the current value at +30, +60 and +120 min. The served model.</p>
+</div>
+<div class="bx" style="left:378px;top:192px;width:152px;height:128px">
+  <h4>Mechanistic twin</h4>
+  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter for the state.</p>
+</div>
+<div class="bx" style="left:378px;top:336px;width:152px;height:128px">
+  <h4>Personalisation</h4>
+  <p>The population model plus fine-tuning, or recursive least squares on the patient's own days.</p>
+</div>
+<div class="bx" style="left:378px;top:480px;width:152px;height:128px">
+  <h4>Federated training</h4>
+  <p>FedAvg and FedProx across clinics. Only model updates cross the boundary.</p>
+</div>
+
+<!-- C4 calibrate -->
+<div class="bx key" style="left:560px;top:48px;width:136px;height:176px">
+  <h4>80% intervals</h4>
+  <p>Split-conformal and CV+. Measured coverage 80.8% on CGMacros and 79.5% on Shanghai at +60 min.</p>
+</div>
+<div class="bx key" style="left:560px;top:240px;width:136px;height:176px">
+  <h4>Event probabilities</h4>
+  <p>Platt and isotonic calibration for crossing 180, 140 and 70 mg/dL. Probabilities, never bare labels.</p>
+</div>
+<div class="bx" style="left:560px;top:432px;width:136px;height:176px">
+  <h4>Alert policy</h4>
+  <p>Burden curves: episodes caught per false alarm per day, so a clinic chooses its own threshold.</p>
+</div>
+
+<!-- C5 outputs -->
+<div class="bx" style="left:724px;top:48px;width:138px;height:128px">
+  <h4>Forecast + band</h4>
+  <p>Trajectory to +120 min with its 80% interval and one plain sentence.</p>
+</div>
+<div class="bx" style="left:724px;top:192px;width:138px;height:128px">
+  <h4>Adverse-event risk</h4>
+  <p>Calibrated chance of hyper- or hypoglycaemia inside the window.</p>
+</div>
+<div class="bx" style="left:724px;top:336px;width:138px;height:128px">
+  <h4>What-if answers</h4>
+  <p>Counterfactual meal size, carbohydrate, timing and a post-meal walk.</p>
+</div>
+<div class="bx" style="left:724px;top:480px;width:138px;height:128px">
+  <h4>Trust surface</h4>
+  <p>Data quality, personalisation depth, SHAP attribution, and the limits beside each answer.</p>
+</div>
+
+<!-- C6 interfaces -->
+<div class="bx fill" style="left:890px;top:48px;width:230px;height:272px">
+  <h4>Web console &nbsp;<span class="mono" style="color:#C9B6F5">web/</span></h4>
+  <p style="margin-top:7px">A single-page clinician console: patient list with triage, forecast, what-if lab,
+     glucose report (AGP, time in range, GMI), health record, sleep and activity context, visit summary,
+     and a role-gated access log with a session audit trail.</p>
+  <p style="margin-top:9px">Dark and light themes · mg/dL ⇄ mmol/L · readable at tablet width.</p>
+</div>
+<div class="bx fill" style="left:890px;top:336px;width:230px;height:272px">
+  <h4>Streamlit application &nbsp;<span class="mono" style="color:#C9B6F5">make app</span></h4>
+  <p style="margin-top:7px">Ten pages: Overview, Live twin, Glucose report, What-if lab, Twin state,
+     Personalization, Input tiers, Data quality, Evidence, and a PDF export for the patient file.</p>
+  <p style="margin-top:9px">Every page carries the decision-support disclaimer. The clinician remains the
+     decision maker: the system never recommends a dose or a drug.</p>
+</div>
 
 </div>
 
-<!-- RIGHT COLUMN -->
-<aside>
+<div class="panels">
 
-  <div class="panel hi">
-    <h3>Governance — the method</h3>
+  <div class="pn hi">
+    <h3>Method — how every number was obtained</h3>
     <ul>
-      <li><b>Pre-registered decisions.</b> Every protocol and decision rule is written to <code>docs/DECISIONS.md</code> before the run that tests it. 70+ entries.</li>
-      <li><b>Paired patient bootstrap.</b> Every comparison carries a confidence interval over patients, not windows.</li>
-      <li><b>Untouched holdout.</b> Final claims are confirmed on patients never used for any choice.</li>
-      <li><b>Null results reported.</b> Where a signal does not help, the number is published rather than dropped.</li>
+      <li><b>Pre-registered.</b> Each protocol and decision rule written to <code>docs/DECISIONS.md</code> before the run that tested it. Over 70 entries.</li>
+      <li><b>Paired patient bootstrap.</b> Confidence intervals computed over patients, never over time windows — readings from one patient are not independent.</li>
+      <li><b>Untouched holdout.</b> Final claims confirmed on patients never used for any choice anywhere in the project.</li>
+      <li><b>Null results published.</b> Where a signal does not help, the number is reported at full size rather than dropped.</li>
     </ul>
   </div>
 
-  <div class="panel">
+  <div class="pn">
+    <h3>Measured results</h3>
+    <table>
+      <tr><th>Metric</th><th style="text-align:right">Value</th></tr>
+      <tr><td>MAE at +30 min</td><td class="n">11.6</td></tr>
+      <tr><td>MAE at +60 min</td><td class="n">16.8</td></tr>
+      <tr><td>MAE at +120 min</td><td class="n">21.2</td></tr>
+      <tr><td>AUROC, above 180</td><td class="n">0.82</td></tr>
+      <tr><td>AUROC, below 70</td><td class="n">0.81</td></tr>
+      <tr><td>Interval coverage</td><td class="n">80.8%</td></tr>
+    </table>
+  </div>
+
+  <div class="pn">
     <h3>Privacy by design</h3>
     <ul>
-      <li>Only anonymised open or synthetic data. No real patient record enters the repository.</li>
-      <li><b>Federated path:</b> raw records stay inside the clinic; only model updates are exchanged.</li>
+      <li>Anonymised open or synthetic data only. No real patient record enters the repository.</li>
+      <li><b>Federated:</b> FedAvg matches pooled central training (difference 0.09 to 0.12 mg/dL, intervals include zero) and beats a single small clinic alone by about 2 mg/dL.</li>
       <li>Role-gated clinician access with a session access log.</li>
-      <li>Handling mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
+      <li>Data handling mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
     </ul>
   </div>
 
-  <div class="panel">
-    <h3>Headline results</h3>
-    <div class="metrics">
-      <div class="m"><div class="v">11.6</div><div class="k">MAE mg/dL · +30 min</div></div>
-      <div class="m"><div class="v">16.8</div><div class="k">MAE mg/dL · +60 min</div></div>
-      <div class="m"><div class="v">0.82</div><div class="k">AUROC · &gt;180 mg/dL</div></div>
-      <div class="m"><div class="v">80.8 %</div><div class="k">interval coverage</div></div>
-    </div>
-    <ul style="margin-top:6px">
-      <li><b>Transfer:</b> a model moved to a new population is 3.4 mg/dL behind a locally trained one; three days of the new patient's data close much of the gap.</li>
-      <li><b>Federated:</b> FedAvg matches pooled training (difference 0.09–0.12, intervals include 0) and beats a single small clinic by ≈2 mg/dL.</li>
-    </ul>
-  </div>
-
-  <div class="panel">
+  <div class="pn">
     <h3>Scope and limits</h3>
     <ul>
       <li>One condition: <b>type 2 diabetes</b>.</li>
-      <li>Decision support only. Never recommends a dose or a drug. Not a medical device.</li>
-      <li>India, sleep and federated results are <b>simulations</b>: they test design, not clinical performance.</li>
+      <li>Decision support only — never a dose or a drug. Not a medical device.</li>
+      <li>The India, sleep and federated results are <b>simulations</b>: they test design, not clinical performance.</li>
       <li>Not prospectively validated.</li>
     </ul>
   </div>
 
-</aside>
 </div>
 
 <footer>
-  <span>GlucoTwin · architecture diagram · <code>docs/architecture.pdf</code></span>
-  <span>Code MIT. Datasets keep their own licences. Simulated streams labelled SIMULATED throughout.</span>
+  <span>GlucoTwin · <code>docs/architecture.pdf</code> · Python 3.11 · LightGBM · PyTorch · Streamlit · runs on a laptop CPU</span>
+  <span>Code MIT. Datasets keep their own licences. Simulated streams are labelled SIMULATED throughout.</span>
 </footer>
 
 </body>
