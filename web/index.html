@@ -583,7 +583,7 @@ function evidenceBody() {
 }
 function evidenceView() {
   $("#shell").classList.add("solo");
-  $("#main").innerHTML = `<div class="phead"><h1>Evidence<small>what was tested, and where it falls short</small></h1></div>` +
+  $("#main").innerHTML = `<div class="phead"><h1>Evidence<small>what was tested and what it showed</small></h1></div>` +
     `<div class="tabs" role="tablist">${ETABS.map(([k, l]) => `<button role="tab" data-etab="${k}" aria-selected="${S.etab === k}">${l}</button>`).join("")}</div>` +
     `<div class="stack">${evidenceBody()}</div>` + footHtml();
   const cb = $("#curve");

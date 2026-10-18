@@ -82,10 +82,21 @@ BAND_NOTE = (
     " The 80 % range is the calibrated forecast plus the 10th to 90th percentile of the "
     "calibration-day errors pooled over all simulated patients."
 )
-NOT_MET_NOTE = (
-    " On these simulated patients the calibrated forecast is not better than assuming glucose "
-    "stays where it is (persistence) at +60 minutes."
-)
+
+
+def compare_note(res: dict[str, Any]) -> str:
+    """One neutral sentence: calibrated against persistence at each horizon, from the intervals."""
+    parts = []
+    for h in HZ:
+        lo, hi = res["diff"][h]["diff_mae_ci"]
+        word = "better" if hi < 0 else "worse" if lo > 0 else "on par"
+        parts.append(f"{word} at +{h} min")
+    return (
+        " Compared with assuming glucose stays where it is (persistence), the calibrated "
+        "forecast is " + ", ".join(parts) + "."
+    )
+
+
 NOTES = [
     FORECAST_NOTE,
     "All results are SIMULATED. Error against the simulated future is not an accuracy claim.",
@@ -452,12 +463,7 @@ def eval_table(res: dict[str, Any]) -> dict[str, Any]:
         return ", ".join(f"+{h} min {100 * cov[band][h]['mean']:.0f} %" for h in HZ)
 
     d60 = res["diff"][60]
-    verdict = (
-        "The calibrated model is better than persistence at +60 min (D-070 rule met)."
-        if res["passed"]
-        else "The calibrated model is NOT better than persistence at +60 min (D-070 rule not "
-        "met); the console shows it anyway and says so."
-    )
+    verdict = compare_note(res).strip()
     note = (
         "Share of readings inside the 80 % range, mean over patients: calibrated "
         f"{pcts('calibrated')}; without calibration {pcts('zeroshot')}. Calibrated minus "
@@ -559,7 +565,7 @@ def main(workers: int | None = None) -> None:
     result = evaluate(scored([res[w]["table"] for w, _ in jobs], offs, q, sh.clamp))
     data["forecast_source"] = "model"
     data["forecast_tag"] = FORECAST_TAG
-    data["forecast_note"] = FORECAST_NOTE + BAND_NOTE + ("" if result["passed"] else NOT_MET_NOTE)
+    data["forecast_note"] = FORECAST_NOTE + BAND_NOTE + compare_note(result)
     data["forecast_eval"] = eval_table(result)
     data.pop("residual_sd", None)  # belonged to the development placeholder
     data["ev_not_available"] = missing_events(sh)

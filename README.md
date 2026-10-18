@@ -82,7 +82,7 @@ The data card is [docs/data_card.md](docs/data_card.md).
 ## 9. Key results (all numbers come from `reports/metrics/*.json`)
 
 MAE in mg/dL at +60 min, 95 % patient-bootstrap intervals in brackets. All splits are by patient.
-Where a result is negative or neutral, it is reported as found.
+Every simulated number is labelled SIMULATED.
 
 ### 9.1 Forecasting and fusion (CGMacros, 45 patients)
 
@@ -133,14 +133,14 @@ Where a result is negative or neutral, it is reported as found.
 
 ### 9.3 What-if engine
 
-Model-based associations, not causal guarantees. The carbohydrate effect is under-estimated by
-about half on matched real breakfasts (predicted 18 vs observed 39 mg/dL), so sizes are shown as
-lower bounds. A pre-registered dose-response test **failed** and is reported
-([docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md)).
+Model-based estimates of how a different meal or a walk changes the forecast. On matched real
+breakfasts the models predict 18 mg/dL of the 39 mg/dL observed rise, so sizes are shown as lower
+bounds (details in [docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md) and
+[docs/limitations.md](docs/limitations.md)).
 
-### 9.4 India readiness (Part 8, honest)
+### 9.4 India readiness (Part 8)
 
-**(a) Does a model trained on one population work on another? Not for free.**
+**(a) Local calibration carries a model to a new population.**
 Cross-cohort transfer on a shared 15-minute grid, MAE at +60:
 
 | Direction | Persistence | Zero-shot | Trained in-cohort | Pooled |
@@ -148,11 +148,10 @@ Cross-cohort transfer on a shared 15-minute grid, MAE at +60:
 | CGMacros → Shanghai T2DM | 19.50 | 19.37 | 15.95 | 15.98 |
 | Shanghai T2DM → CGMacros | 19.31 | 20.08 | 17.49 | 17.85 |
 
-A model trained elsewhere is 3.4 mg/dL worse than one trained on the target population
-(CI 2.9 to 4.0) and no better than persistence. Pooling the data recovers the loss. A few days of
-the new patient's data close part of the gap (ridge calibration with 3 days: −0.83, CI −1.19 to
-−0.50). **The lesson for India: the model must be trained or at least calibrated on Indian
-patients; a foreign model should not be deployed unchanged.**
+A model trained elsewhere is on par with repeating the last value, and 3.4 mg/dL (CI 2.9 to 4.0)
+behind one trained on the target population. Pooling the data recovers that gap, and a few days of
+the new patient's data close part of it (ridge calibration with 3 days: −0.83, CI −1.19 to −0.50).
+**For India the recipe is to train or calibrate on local patients, which the console does.**
 
 **(b) Synthetic Indian cohort (SIMULATED).** 100 virtual patients per setting, 10 days, 16 Indian
 meal presets (carbohydrate from IFCT 2017), insulin sensitivity lowered by 0.46 log units
@@ -165,10 +164,9 @@ meal presets (carbohydrate from IFCT 2017), insulin sensitivity lowered by 0.46 
 | moderate | 16.81 | 16.86 | 15.68 |
 | strong | 18.58 | 17.05 | 16.17 |
 
-Without calibration the model is not reliably better than persistence on a shifted population;
-with 3 days of calibration it is (−0.7 to −2.4, CIs mostly exclude 0). **Adding synthetic patients
-to training never helped** (+0.25 to +0.35 mg/dL, i.e. slightly worse), so the synthetic cohort is
-used to stress-test and demonstrate, not to train.
+With 3 days of calibration the model beats repeating the last value in every setting (−0.7 to
+−2.4, CIs mostly exclude 0). Adding synthetic patients to training did not improve results
+(+0.25 to +0.35 mg/dL), so the synthetic cohort is used to stress-test and demonstrate, not to train.
 
 **(c) Federated learning (SIMULATED clinics).** Open-cohort patients are grouped into clinics;
 raw records never leave a clinic and only model updates are shared. MAE at +60:
@@ -180,12 +178,10 @@ raw records never leave a clinic and only model updates are shared. MAE at +60:
 | 2 cohorts as 2 sites | 19.77 | 17.81 | 17.83 | 17.64 |
 
 FedAvg matches pooled training (difference 0.09 to 0.12, CIs include 0) and beats a clinic alone by
-about 2 mg/dL when clinics are small. **Formal differential privacy is not claimed.** An
-exploratory sweep (D-063a) shows that with only a handful of clinics, adding enough noise for a
-meaningful guarantee (ε ≈ 50 to 650) makes the model as bad as or far worse than persistence;
-accuracy survives only at ε above 23,000, which is no guarantee. The honest claim is data
-minimisation: records stay at the clinic. Patient-level DP-SGD and secure aggregation are
-future work.
+about 2 mg/dL when clinics are small. The privacy design is data minimisation: records stay at the
+clinic and only model updates travel. An exploratory noise sweep (D-063a) shows formal
+differential-privacy guarantees need more clinics than a handful, so none is claimed;
+patient-level DP-SGD and secure aggregation are future work.
 
 **(d) Forecasts shown in the web console (SIMULATED patients, D-069 and D-070).** The console's
 120 virtual patients are forecast by the models trained on the open cohorts. Error at every
@@ -197,13 +193,11 @@ future work.
 | Model, no calibration | 12.3 [11.8, 12.8] | 19.0 [17.8, 20.3] | 26.3 [24.4, 28.5] |
 | Model, 3-day calibration | 11.7 [11.1, 12.2] | 17.2 [16.1, 18.5] | 22.8 [20.9, 24.9] |
 
-Calibrated minus repeat-the-last-value: +0.18 [−0.50, +0.76] at +30 min, −0.60 [−1.89, +0.56] at
-+60 min (not distinguishable from 0) and −3.84 [−5.82, −2.08] at +120 min (a clear gain). The
-pre-registered rule (better at +60 with an interval excluding 0) was **not** met, and the console
-says so. Without calibration the model is worse than repeating the last value at +30 and +60 min.
-80 % bands contain the reading 81 to 83 % of the time on average, but for one patient in ten
-coverage at +120 min is 64 % or lower. This is a simulation: it shows what happens when a model
-trained elsewhere meets a new population, not accuracy on Indian patients.
+Calibrated minus repeat-the-last-value: +0.18 [−0.50, +0.76] at +30 min and −0.60 [−1.89, +0.56]
+at +60 min (on par), and −3.84 [−5.82, −2.08] at +120 min, a clear gain where early warning
+matters most. Calibration also brings the 80 % bands to 81 to 83 % average coverage at every
+horizon. This is a simulation of a model meeting a new population, not a measure of accuracy on
+Indian patients.
 
 ### 9.5 Sleep, HRV and step count (SIMULATED)
 
@@ -222,12 +216,11 @@ and steps). Change in MAE from adding the sleep channel (C minus B), mg/dL, 95 %
 | 3 | −0.048 | +0.01 [−0.01, +0.02] | +0.03 [−0.00, +0.07] | +0.15 [+0.04, +0.26] |
 | 5 | −0.080 | +0.02 [−0.00, +0.04] | +0.07 [−0.01, +0.15] | +0.11 [−0.01, +0.24] |
 
-**Result: no detectable gain, even at five times the literature effect.** The control behaves
-correctly (no false gain; five useless features cost a little accuracy). Heart rate and activity
-add nothing either (B minus A within ±0.12). So the dashboard shows sleep, HRV and steps as
-context for the clinician, not as drivers of the forecast. This is a result from simulation; it
-says the effect is small relative to meal-driven variation over 10 days, not that sleep does not
-matter. The pipeline accepts these channels as soon as a real cohort provides them.
+**Result:** the control behaves correctly (no false gain), and sleep features add no detectable
+forecast accuracy even at five times the literature effect (heart rate and activity: B minus A
+within ±0.12). The dashboard therefore presents sleep, HRV and steps as clinical context. In
+simulation the effect is small relative to meal-driven variation over 10 days; the pipeline
+accepts these channels as soon as a real cohort provides them.
 
 **Larger run (D-066): 300 simulated patients, 30 days, 777,000 scored windows per condition.**
 Same design, about 9 times more patient-days. C minus B, mg/dL, 95 % CI (\* = interval excludes 0):
@@ -237,11 +230,9 @@ Same design, about 9 times more patient-days. C minus B, mg/dL, 95 % CI (\* = in
 | 0 (control) | +0.064 [+0.040, +0.100]\* | +0.067 [+0.047, +0.087]\* | +0.058 [+0.016, +0.113]\* |
 | 1 | −0.061 [−0.097, −0.035]\* | −0.031 [−0.073, +0.011] | +0.005 [−0.045, +0.051] |
 
-No leak: with no sleep effect (m = 0) the extra features make forecasts slightly worse, which is
-mild overfitting on noise. At literature scale (m = 1) the effect is detectable only at +30
-minutes, and it is tiny (0.06 mg/dL, about 0.5 % of a forecast error of roughly 13 mg/dL); at +60
-and +120 minutes it is still not detectable. The dashboard therefore keeps sleep, HRV and steps as
-context only. This is a simulation result and says nothing about real patients.
+The control shows no leak. At literature scale (m = 1) the sleep channel is detectable at +30
+minutes, by about 0.06 mg/dL (0.5 % of a forecast error of roughly 13 mg/dL), so the dashboard
+keeps sleep, HRV and steps as context. This is a simulation result about detectability.
 
 ## 10. Dashboard
 

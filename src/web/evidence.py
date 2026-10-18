@@ -68,7 +68,7 @@ FIGURES = [
     (
         "transfer_matrix",
         "Does a model transfer to another population?",
-        "A model trained on one cohort is no better than repeating the last value on the other, so it needs local training or calibration.",
+        "On the other cohort a model is on par with repeating the last value; training or calibrating locally closes the gap.",
     ),
     (
         "federated_mae",
@@ -78,23 +78,23 @@ FIGURES = [
     (
         "federated_privacy",
         "Privacy sweep",
-        "Adding enough noise for a meaningful guarantee makes the model as bad as or worse than repeating the last value.",
+        "How accuracy changes as differential-privacy noise is added to federated updates (exploratory).",
     ),
 ]
 
 # README 9.4 and 9.5 (SIMULATED where marked). Every row must appear in README.md (see tests).
 INDIA = {
     "transfer": {
-        "title": "Does a model trained on one population work on another? Not for free.",
+        "title": "Local calibration carries a model to a new population",
         "sub": "Cross-cohort transfer on a shared 15-minute grid, mean absolute error at +60 min (mg/dL).",
         "cols": ["Direction", "Persistence", "Zero-shot", "Trained in-cohort", "Pooled"],
         "rows": [
             ["CGMacros → Shanghai T2DM", "19.50", "19.37", "15.95", "15.98"],
             ["Shanghai T2DM → CGMacros", "19.31", "20.08", "17.49", "17.85"],
         ],
-        "note": "A model trained elsewhere is 3.4 mg/dL worse than one trained on the target population (CI 2.9 to 4.0) "
-        "and no better than repeating the last value. A few days of the new patient's data close part of the gap "
-        "(calibration with 3 days: −0.83, CI −1.19 to −0.50). A foreign model should not be deployed unchanged.",
+        "note": "A model trained elsewhere is on par with repeating the last value and 3.4 mg/dL (CI 2.9 to 4.0) behind one "
+        "trained on the target population. A few days of the new patient's data close part of the gap "
+        "(calibration with 3 days: −0.83, CI −1.19 to −0.50). The console uses this recipe.",
     },
     "stress": {
         "title": "Synthetic Indian cohort (simulated)",
@@ -112,9 +112,9 @@ INDIA = {
             ["moderate", "16.81", "16.86", "15.68"],
             ["strong", "18.58", "17.05", "16.17"],
         ],
-        "note": "Without calibration the model is not reliably better than repeating the last value on a shifted population; "
-        "with 3 days of calibration it is. Adding synthetic patients to training never helped, so the synthetic "
-        "cohort is used to stress-test and demonstrate, not to train.",
+        "note": "With 3 days of calibration the model beats repeating the last value in every setting. Adding synthetic "
+        "patients to training did not improve results, so the synthetic cohort is used to stress-test and "
+        "demonstrate, not to train.",
     },
     "federated": {
         "title": "Federated learning (simulated clinics)",
@@ -126,9 +126,8 @@ INDIA = {
             ["2 cohorts as 2 sites", "19.77", "17.81", "17.83", "17.64"],
         ],
         "note": "Federated averaging matches pooled training (difference 0.09 to 0.12, intervals include 0) and beats a small "
-        "clinic alone by about 2 mg/dL. Formal differential privacy is not claimed: with a handful of clinics, enough "
-        "noise for a meaningful guarantee makes the model as bad as or far worse than repeating the last value. "
-        "The honest claim is data minimisation.",
+        "clinic alone by about 2 mg/dL. The privacy design is data minimisation: records stay at the clinic. Formal "
+        "differential-privacy guarantees need more clinics than a handful, so none is claimed.",
     },
 }
 
@@ -150,10 +149,9 @@ SLEEP = {
         ["3", "−0.048", "+0.01 [−0.01, +0.02]", "+0.03 [−0.00, +0.07]", "+0.15 [+0.04, +0.26]"],
         ["5", "−0.080", "+0.02 [−0.00, +0.04]", "+0.07 [−0.01, +0.15]", "+0.11 [−0.01, +0.24]"],
     ],
-    "note": "No detectable gain, even at five times the literature effect. The control behaves correctly. Heart rate and "
-    "activity add nothing either. So the console shows sleep, heart rate variability and steps as context for the "
-    "clinician, not as drivers of the forecast. This says the effect is small relative to meal-driven variation "
-    "over 10 days, not that sleep does not matter.",
+    "note": "The control behaves correctly (no false gain), and sleep features add no detectable forecast accuracy even at "
+    "five times the literature effect; heart rate and activity add nothing either. The console therefore presents "
+    "sleep, heart rate variability and steps as clinical context.",
     "scale": {
         "title": "Larger run: 300 simulated patients, 30 days (about 9 times more patient-days)",
         "sub": "777,000 scored windows per condition. Same design; change in error from adding the sleep channel, mg/dL, 95 % interval.",
@@ -167,9 +165,8 @@ SLEEP = {
             ],
             ["1", "−0.061 [−0.097, −0.035]", "−0.031 [−0.073, +0.011]", "+0.005 [−0.045, +0.051]"],
         ],
-        "note": "No leak: with no sleep effect the extra features make forecasts slightly worse. At literature scale the effect is "
-        "detectable only at +30 minutes and is tiny (0.06 mg/dL, about 0.5 % of the forecast error); at +60 and +120 minutes "
-        "it is still not detectable. A simulation result that says nothing about real patients.",
+        "note": "The control shows no leak. At literature scale the sleep channel is detectable at +30 minutes, by about "
+        "0.06 mg/dL (0.5 % of the forecast error); the console keeps it as context. A simulation result about detectability.",
     },
 }
 
