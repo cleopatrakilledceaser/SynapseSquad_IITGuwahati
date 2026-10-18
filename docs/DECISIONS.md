@@ -1582,3 +1582,30 @@ Stop rule (fixed now): the served band is the design A CV+ arm population 80 % i
 Amendment (before the Part 7 run; Part 6 already ran and is unaffected): LightGBM refuses monotone constraints with the absolute-error loss ("Cannot use monotone_constraints in regression_l1 objective"), and candidates 9 and 10 of the D-065 list use it. The `mono` form therefore searches the other 14 candidates (same numbering, same selection rule and top-3 average); squared-error and both Huber losses accept the constraints. `unc`, Part 6 and Part 10 are unchanged. Found when the Part 7 dev stage stopped at its first fit; nothing was written and the lock was not touched.
 
 Reported in D-072a, old and new side by side: design A test MAE of the served point forecast (CV+ arm M_pop) at +30 / +60 / +120 per cohort; 80 % coverage (CV+ M_pop; also split conformal M_pop); onset AUROC of the calibrated event probabilities at +60 (hyper 180, hyper 140, hypo 70); Part 7 plausibility pass rates (carb monotonicity, activity direction, identity, causality, bounds, dose-response, cross-model) for `unc` and `mono`, and the matched-meal slope; whether coverage is still near 80 %.
+
+### D-072a: outcome (recorded after the runs)
+
+Runs: Part 6 (12 jobs, 6488 s; report 415 s; clean-rebuild guard 0.0 in every design A fold), Part 7 dev (742 s) and final (1736 s, forced re-run 2, lock `runs: 3, forced_reruns: 2` with the D-056 entry kept; `unc` OOF guard 0.0 in all 5 folds), app-data (532 s; `rtform_max_abs_diff` 0.0, zero-edit recompute 0.0, twin interpolation unchanged), web-data, web-real (1529 s), web-evidence. Code: b9608bc (Part 6), e537dac (Part 7 and later, after the `mono` amendment).
+
+Stop rule: not triggered. Design A CV+ M_pop 80 % coverage is 80.3 % or more at every horizon in both cohorts. Coverage stays near 80 %.
+
+Design A test patients, old (status quo) -> new (tuned). MAE = mean over patients of per-patient MAE (mg/dL); coverage = overall test coverage of the 80 % interval; width = median CV+ 80 % width (mg/dL).
+
+| Cohort | Horizon | MAE served (CV+ M_pop) | CV+ 80 % coverage | CV+ 80 % width | Split 80 % coverage |
+|---|---|---|---|---|---|
+| CGMacros | +30 | 11.04 -> 10.88 | 81.2 -> 80.3 | 35.9 -> 34.5 | 78.1 -> 77.7 |
+| CGMacros | +60 | 16.23 -> 15.70 | 81.3 -> 80.5 | 50.6 -> 47.8 | 80.8 -> 79.8 |
+| CGMacros | +120 | 20.98 -> 19.96 | 81.6 -> 80.8 | 65.3 -> 61.0 | 82.2 -> 81.7 |
+| Shanghai T2DM | +30 | 8.89 -> 8.73 | 80.9 -> 80.5 | 28.5 -> 27.4 | 80.9 -> 81.1 |
+| Shanghai T2DM | +60 | 15.84 -> 15.51 | 81.2 -> 80.5 | 51.7 -> 49.2 | 79.5 -> 79.7 |
+| Shanghai T2DM | +120 | 23.37 -> 22.79 | 81.1 -> 80.8 | 77.1 -> 74.2 | 78.1 -> 78.1 |
+
+Design B (holdout, confirmatory) CV+ 80 % coverage: CGMacros 80.9/78.9/78.0 -> 79.7/78.3/77.6; Shanghai 80.6/81.0/80.7 -> 80.8/80.9/80.5.
+
+Onset AUROC of the calibrated event probability at +60 min, old -> new: CGMacros hyper 180 0.832 -> 0.826, hyper 140 0.782 -> 0.775, hypo 70 0.877 -> 0.880 (limited evidence); Shanghai hyper 180 0.897 -> 0.892, hyper 140 0.854 -> 0.847, hypo 70 0.903 -> 0.910. No 250 calibrator (none in Part 6; see D-072).
+
+Part 7, final test patients (pass rate old -> new; `unc` / `mono`): identity, causality and bounds 1.000 -> 1.000 for both; carb monotonicity `unc` 0.247 -> 0.275 (within 2 mg/dL 0.752 -> 0.949), `mono` 1.000 -> 1.000; activity direction `unc` 0.687 -> 0.679, `mono` 1.000 -> 0.999 (one of 857 checks: patient 033, peak +0.11 mg/dL; the monotone constraint is only on `act_post_meal`, while a walk also changes other, unconstrained activity features, so "true by construction" was never strictly guaranteed); dose window `unc` 0.958 -> 0.983, `mono` 1.000 -> 1.000; cross-model `unc` 0.627 -> 0.599, `mono` 0.617 -> 0.613. Median dose response (pre-registered range 0.3 to 1.3 mg/dL per g, still FAILED): `unc` 0.218 -> 0.200, `mono` 0.201 -> 0.190. Matched breakfasts, within-patient +60 min: slope `unc` 1.04 -> 0.93, `mono` 0.58 -> 0.85; mean predicted vs observed difference `unc` 24.8 -> 19.2, `mono` 22.8 -> 18.6, observed 35.3 (the models predict about half to two-thirds of the observed carb effect; the fixed what-if note still applies). Part 7 test MAE +30/+60/+120: `unc` 11.09/16.20/20.80 -> 10.96/15.75/19.95, `mono` 11.13/16.36/20.64 -> 10.95/15.84/20.15.
+
+Console (web-real, 120 SIMULATED patients, D-070 protocol unchanged): calibrated MAE 11.7/17.2/22.8 -> 10.7/16.0/20.5, calibrated minus persistence at +60 min -0.60 [-1.89, +0.56] -> -1.78 [-2.91, -0.78], so the D-070 decision rule is now met and the generated `forecast_note` says the calibrated forecast is better than persistence at all three horizons. Calibrated band coverage by patient (mean) 80.5/81.0/80.7 %. The >250 bar stays dropped.
+
+Departures from the request: no 250 mg/dL calibrator (Part 6 has none); the `mono` search excludes the two absolute-error candidates (LightGBM limit, amendment above); the tuned search had been validated on other feature sets (D-065), the served A0 result is the one above. Sizes: app/demo grew to 24.8 MB (design target < 25 MB), because each horizon now ships three boosters. Text that quotes the old console numbers (D-070a, README 9.4d) is not edited here.
