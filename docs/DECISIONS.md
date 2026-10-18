@@ -1497,3 +1497,11 @@ What it is: `make synth-data` writes CSVs (5-minute glucose, heart rate, activit
 
 What it is not: evidence. Sleep, HRV and stage distributions and the sleep-to-insulin link are assumed. It is not used to train or validate any reported model (Part 8b showed synthetic augmentation did not help real patients). Nothing is committed to git; the dataset is regenerated from the seed.
 
+## D-068: simulated EHR history for the synthetic cohort (diagnoses, medications, genetic markers)
+
+Why: the organizers' page lists "demographics, past diagnoses, lab results, genetic markers" as the static stream. The open cohorts have demographics and labs only (Shanghai also medications and kidney function), and no genetic data.
+
+What: `src/india/ehr.py` adds diabetes duration, hypertension, dyslipidaemia, CKD stage 3+, retinopathy, neuropathy, coronary disease, diabetes and statin / ACEi-ARB medications, eGFR, family history and risk-allele dosages for three well-known T2D variants (TCF7L2 rs7903146, FTO rs9939609, SLC30A8 rs13266634) to every synthetic patient. All probabilities and allele frequencies in `configs/india.yaml` (`ehr:`) are ASSUMPTIONS chosen to look plausible; none is an estimate.
+
+Limits (stated in the datasheet and the dashboard): the history has NO effect on the simulated glucose, so no result may claim that diagnoses or genetic markers help the forecast. It uses its own random stream per patient, so no earlier simulated number changes (tested). It exists so the pipeline and the doctor dashboard handle and display a full EHR, which is what the organizers ask the prototype to demonstrate.
+

@@ -75,7 +75,7 @@ the open datasets, and checksums are verified.
 |---|---|---|
 | CGMacros (PhysioNet): 45 adults, CGM, Fitbit heart rate and activity, meal macros, labs | Main development cohort | CC BY-NC-SA 4.0 |
 | Shanghai T1DM/T2DM (figshare): 100 T2DM patients, CGM, meals, labs | Second cohort, transfer | CC BY 4.0 |
-| Synthetic Indian cohort (this repo's simulator): CGM, heart rate, steps, sleep stages (awake / light / deep / REM), HRV, Indian meals, static EHR | Stress test, wearable detectability, demo. `make synth-data` writes it with a datasheet | Generated; labelled **SIMULATED** everywhere |
+| Synthetic Indian cohort (this repo's simulator): CGM, heart rate, steps, sleep stages (awake / light / deep / REM), HRV, Indian meals, simulated EHR history (diagnoses, medications, eGFR, genetic-marker dosages) | Stress test, wearable detectability, demo. `make synth-data` writes it with a datasheet | Generated; labelled **SIMULATED** everywhere |
 
 The data card is [docs/data_card.md](docs/data_card.md).
 

@@ -127,3 +127,34 @@ def test_stages_do_not_change_glucose_and_export_has_no_internals():
     assert set(t) == {"cgm_wearables", "meals", "sleep_nightly", "static_ehr"}
     assert "glucose_true" not in t["cgm_wearables"].columns
     assert "SYNTHETIC" in ex.datasheet(t, load_config("india")["export"])
+
+
+def test_ehr_history_is_deterministic_display_only_and_consistent():
+    from src.india import ehr
+
+    ecfg = load_config("india")["ehr"]
+    row = {"age_years": 58.0, "bmi": 28.0, "hba1c_pct": 8.6, "diabetes_status": "t2d"}
+    a = ehr.history(np.random.default_rng([1, 0, 9]), row, ecfg)
+    b = ehr.history(np.random.default_rng([1, 0, 9]), row, ecfg)
+    assert a == b
+    assert 0.0 < a["diabetes_duration_years"] <= 33.0
+    assert 0 <= a["genetic_risk_alleles"] <= 6
+    assert a["genetic_risk_alleles"] == sum(a[k] for k in a if k.startswith("gt_"))
+    healthy = {**row, "hba1c_pct": 5.2, "diabetes_status": "healthy"}
+    h = ehr.history(np.random.default_rng(3), healthy, ecfg)
+    assert h["diabetes_duration_years"] == 0.0
+    assert not any(h[k] for k in h if k.startswith("med_"))  # no diabetes medication
+    egfr = [ehr.history(np.random.default_rng(i), row, ecfg) for i in range(200)]
+    ck = [r["egfr_ml_min"] for r in egfr if r["ckd_stage3plus"]]
+    assert ck and max(ck) < 60.0  # the CKD flag and eGFR agree
+
+
+def test_ehr_history_does_not_change_the_simulated_cohort():
+    _need_inputs()
+    from src.india import export as ex
+
+    a = gen(1.0)
+    before = a["grid"]["glucose"].to_numpy().copy()
+    s = ex.with_history(a["static"], 5, load_config("india")["ehr"])
+    assert np.array_equal(before, a["grid"]["glucose"].to_numpy())
+    assert len(s) == len(a["static"]) and "gt_tcf7l2_rs7903146_T" in s.columns

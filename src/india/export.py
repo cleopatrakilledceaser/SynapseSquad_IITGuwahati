@@ -11,10 +11,21 @@ from typing import Any
 
 import pandas as pd
 
+import numpy as np
+
 from src.india import cohort as ic
+from src.india import ehr
 from src.utils.config import PROJECT_ROOT, load_config
 
 OUT = PROJECT_ROOT / "data" / "processed" / "india" / "synthetic_dataset"
+
+
+def with_history(static: pd.DataFrame, seed: int, ecfg: dict[str, Any]) -> pd.DataFrame:
+    """Static profile plus the simulated EHR history (own random stream per patient)."""
+    rows = []
+    for i, r in enumerate(static.to_dict("records")):
+        rows.append(ehr.history(np.random.default_rng([seed, i, 9]), r, ecfg))
+    return pd.concat([static.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
 
 
 def tables(c: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
@@ -58,7 +69,7 @@ def datasheet(t: dict[str, pd.DataFrame], ecfg: dict[str, Any]) -> str:
 - `cgm_wearables.csv`: 5-minute glucose (with sensor noise), heart rate, activity intensity, steps.
 - `meals.csv`: Indian meal presets (idli, dosa, poha, dal, rice, roti, ...) with carbohydrate, protein, fat, fibre, kcal.
 - `sleep_nightly.csv`: one row per night: total sleep, efficiency, minutes awake / light / deep / REM, HRV (RMSSD).
-- `static_ehr.csv`: age, sex, BMI, HbA1c, fasting glucose, diabetes status (derived from the simulated CGM).
+- `static_ehr.csv`: age, sex, BMI, HbA1c, fasting glucose, diabetes status (derived from the simulated CGM), plus a simulated history: diabetes duration, diagnoses (hypertension, dyslipidaemia, CKD stage 3+, retinopathy, neuropathy, coronary disease), medications, eGFR, family history and genetic-marker dosages (TCF7L2, FTO, SLC30A8). The history is assumed and has NO effect on the simulated glucose.
 
 ## How it was made
 A mechanistic glucose-insulin simulator (the Part 4 twin) with patient parameters drawn from the
@@ -87,6 +98,7 @@ def main() -> None:
     e = icfg["export"]
     c = ic.generate(icfg, mc, icfg["strengths"][e["strength"]], "exp", e["seed"], e["n_patients"],
                     e["days"], sleep_mult=e["sleep_mult"])  # fmt: skip
+    c["static"] = with_history(c["static"], e["seed"], icfg["ehr"])
     t = tables(c)
     OUT.mkdir(parents=True, exist_ok=True)
     for name, df in t.items():

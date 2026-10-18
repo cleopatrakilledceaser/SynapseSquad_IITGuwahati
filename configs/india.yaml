@@ -97,3 +97,24 @@ export:                              # D-067: the published synthetic dataset (S
   seed: 301
   strength: moderate                 # insulin-resistance shift of D-062
   sleep_mult: 1.0                    # literature-scale sleep effect on insulin sensitivity
+ehr:                                 # D-068: simulated EHR history. ALL ASSUMED; display only.
+  duration_years: {mean: 7.0, sd: 4.0, lo: 0.5, hi: 25.0}   # T2D only; none for non-diabetic
+  hypertension: {base: 0.25, per_year_age_over_40: 0.015, per_bmi_over_25: 0.012, t2d_add: 0.15}
+  dyslipidaemia: {base: 0.30, t2d_add: 0.25}
+  ckd_stage3plus: {base: 0.03, per_year_duration: 0.008, per_hba1c_over_7: 0.01}
+  retinopathy: {per_year_duration: 0.018, per_hba1c_over_7: 0.015}
+  neuropathy: {per_year_duration: 0.020, per_hba1c_over_7: 0.010}
+  coronary_disease: {base: 0.02, per_year_age_over_50: 0.006, t2d_add: 0.04}
+  family_history_t2d: 0.45
+  meds:                              # probability given T2D; insulin rises with duration and HbA1c
+    metformin: 0.85
+    sulfonylurea: 0.35
+    dpp4: 0.25
+    sglt2: 0.15
+    insulin: {base: 0.05, per_year_duration: 0.015, per_hba1c_over_8: 0.06}
+    statin: 0.55
+    acei_arb: 0.40
+  genetics:                          # risk-allele frequencies are ASSUMED round numbers
+    tcf7l2_rs7903146_T: 0.30
+    fto_rs9939609_A: 0.30
+    slc30a8_rs13266634_C: 0.60
