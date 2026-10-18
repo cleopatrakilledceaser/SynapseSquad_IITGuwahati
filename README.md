@@ -151,9 +151,9 @@ Every simulated number is labelled SIMULATED.
 | Glucose below 70 | Shanghai T2DM | 0.97 | 0.91 | 0.81 [0.77, 0.86] |
 
   Probabilities are calibrated: after recalibration the calibration error at +60 min is at most
-  0.014, so a stated 40 % chance means the event happens about 40 % of the time.
+  0.018, so a stated 40 % chance means the event happens about 40 % of the time.
 - **Alarms at about one false alarm per day:** for hyperglycaemia the model beats both a
-  "current value" alert and a trend alert (Shanghai above 180: 71 % sensitivity against 59 % and
+  "current value" alert and a trend alert (Shanghai above 180: 83 % sensitivity against 59 % and
   67 %). Alert-burden curves let a clinic choose its own sensitivity / false-alarm trade-off.
 - **Intervals hold their promise:** the served model's 80 % bands cover 80.5 % in both cohorts at
   +60 min, against an 80 % target, and stay at 80.3 % or above at every horizon (D-072a). Coverage
