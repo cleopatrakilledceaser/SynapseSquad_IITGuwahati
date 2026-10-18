@@ -119,3 +119,6 @@ download:
 
 smoke:
 	$(PY) -m src.smoke
+
+web-data:
+	python -m src.web.build_data

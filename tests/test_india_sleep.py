@@ -158,3 +158,23 @@ def test_ehr_history_does_not_change_the_simulated_cohort():
     s = ex.with_history(a["static"], 5, load_config("india")["ehr"])
     assert np.array_equal(before, a["grid"]["glucose"].to_numpy())
     assert len(s) == len(a["static"]) and "gt_tcf7l2_rs7903146_T" in s.columns
+
+
+def test_plausible_clips_sensor_range_and_drops_extreme_patients():
+    import pandas as pd
+
+    from src.india import export as ex
+
+    icfg = load_config("india")
+    t = pd.date_range("2026-01-05", periods=4, freq="5min")
+    grid = pd.concat([
+        pd.DataFrame({"patient_id": "a", "t": t, "glucose": [120.0, 130.0, 20.0, 450.0]}),
+        pd.DataFrame({"patient_id": "b", "t": t, "glucose": [600.0] * 4}),
+    ])  # fmt: skip
+    st = pd.DataFrame({"patient_id": ["a", "b"], "hba1c_pct": [6.0, 6.0], "diabetes_status": ["t2d"] * 2})
+    c = {"grid": grid, "static": st, "meals": pd.DataFrame({"patient_id": ["a", "b"]}),
+         "sleep": pd.DataFrame({"patient_id": ["a", "b"]}), "params": pd.DataFrame({"patient_id": ["a", "b"]})}  # fmt: skip
+    out = ex.plausible(c, 10, icfg)
+    assert list(out["static"]["patient_id"]) == ["a"]  # b: mean 400 > 300 is dropped
+    assert out["grid"]["glucose"].between(40.0, 400.0).all()
+    assert abs(out["grid"]["glucose"].mean() - 172.5) < 1e-9 and "hba1c_pct" in out["static"]

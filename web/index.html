@@ -1,0 +1,532 @@
+<title>GlucoTwin Console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a clinic console. Left rail = risk-ordered patient list, right = one patient at a time.
+   Dark ink-violet first; glucose zones keep their clinical colours, separate from the brand violet. */
+:root {
+  --bg: #120e1c; --panel: #1a1427; --panel-2: #231b35; --line: #35294f; --line-soft: #271f3b;
+  --fg: #ece8f6; --muted: #a196bf; --faint: #6f6590;
+  --accent: #a77bff; --accent-ink: #1b0f33; --accent-soft: rgba(167, 123, 255, .16);
+  --z-vlow: #c2334f; --z-low: #f0647e; --z-in: #35d0a8; --z-high: #f2b544; --z-vhigh: #f0833e;
+  --band: rgba(53, 208, 168, .08); --grid: rgba(161, 150, 191, .16);
+  --ok: #35d0a8; --warn: #f2b544; --crit: #f0647e;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f5f2fb; --panel: #ffffff; --panel-2: #efeaf9; --line: #d9cfee; --line-soft: #e8e1f5;
+    --fg: #1d1430; --muted: #62557f; --faint: #8f84aa;
+    --accent: #6a3fd0; --accent-ink: #ffffff; --accent-soft: rgba(106, 63, 208, .10);
+    --z-vlow: #a3203a; --z-low: #d1425f; --z-in: #0f9a78; --z-high: #b7791f; --z-vhigh: #c2571a;
+    --band: rgba(15, 154, 120, .08); --grid: rgba(98, 85, 127, .18);
+    --ok: #0f9a78; --warn: #b7791f; --crit: #c2334f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f5f2fb; --panel: #ffffff; --panel-2: #efeaf9; --line: #d9cfee; --line-soft: #e8e1f5;
+  --fg: #1d1430; --muted: #62557f; --faint: #8f84aa;
+  --accent: #6a3fd0; --accent-ink: #ffffff; --accent-soft: rgba(106, 63, 208, .10);
+  --z-vlow: #a3203a; --z-low: #d1425f; --z-in: #0f9a78; --z-high: #b7791f; --z-vhigh: #c2571a;
+  --band: rgba(15, 154, 120, .08); --grid: rgba(98, 85, 127, .18);
+  --ok: #0f9a78; --warn: #b7791f; --crit: #c2334f;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 14px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 24px; min-height: 100vh;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 16px; padding: 14px 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 20px/1 var(--f-display); letter-spacing: -.01em; }
+.brand svg { width: 26px; height: 26px; }
+.brand small { font: 500 12px var(--f-body); color: var(--muted); letter-spacing: .02em; margin-left: 4px; }
+.top .grow { flex: 1; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 5px 11px; border-radius: 7px; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.notice { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 12px; color: var(--muted); font-size: 12.5px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.tag { font: 500 11px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+.tag.warn { color: var(--warn); background: rgba(242, 181, 68, .14); }
+
+/* shell */
+.shell { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 16px; margin-top: 14px; align-items: start; }
+.rail { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; position: sticky; top: 8px; }
+.rail-head { padding: 14px 14px 10px; display: grid; gap: 10px; border-bottom: 1px solid var(--line-soft); }
+.rail-head h2 { margin: 0; font: 700 15px var(--f-display); display: flex; justify-content: space-between; align-items: baseline; }
+.rail-head h2 span { font: 400 12px var(--f-body); color: var(--muted); }
+.search { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; color: var(--fg); font: inherit; }
+.search::placeholder { color: var(--faint); }
+.sorts { display: flex; gap: 6px; flex-wrap: wrap; }
+.sorts button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+.sorts button[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); background: var(--accent-soft); }
+.list { max-height: calc(100vh - 230px); min-height: 280px; overflow: auto; }
+.row { width: 100%; text-align: left; display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 4px 10px; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; }
+.row:hover { background: var(--panel-2); }
+.row[aria-current="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.row .id { font: 600 14px var(--f-display); display: flex; gap: 8px; align-items: baseline; }
+.row .id small { font: 400 12px var(--f-body); color: var(--muted); }
+.row .meta { color: var(--muted); font-size: 12px; grid-column: 1; }
+.row svg { grid-row: 1 / span 2; grid-column: 2; align-self: center; width: 84px; height: 30px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.chip.crit { color: var(--crit); } .chip.warn { color: var(--warn); } .chip.ok { color: var(--ok); } .chip.mute { color: var(--muted); }
+
+/* patient */
+.main { display: grid; gap: 14px; min-width: 0; }
+.phead { display: flex; gap: 14px 20px; align-items: flex-end; flex-wrap: wrap; justify-content: space-between; }
+.phead h1 { margin: 0; font: 700 30px/1.05 var(--f-display); letter-spacing: -.02em; }
+.phead h1 small { font: 500 15px var(--f-body); color: var(--muted); letter-spacing: 0; margin-left: 8px; }
+.facts { display: flex; gap: 8px; flex-wrap: wrap; }
+.fact { border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; background: var(--panel); font-size: 12.5px; color: var(--muted); }
+.fact b { color: var(--fg); font-weight: 600; margin-left: 4px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { border: 0; background: transparent; padding: 9px 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.card h3 { margin: 0 0 4px; font: 700 15px var(--f-display); }
+.card .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.summary { font: 500 18px/1.45 var(--f-display); margin: 0 0 12px; text-wrap: balance; }
+.summary em { font-style: normal; color: var(--accent); }
+.chart-tools { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.chartbox { position: relative; }
+.chartbox svg { width: 100%; height: auto; display: block; overflow: visible; }
+.tip { position: absolute; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -110%); z-index: 3; }
+.btn { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); border-radius: 9px; padding: 7px 13px; font-weight: 600; font-size: 13px; }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.fcs { display: grid; gap: 8px; }
+.fc { border: 1px solid var(--line); border-radius: 11px; padding: 9px 13px; background: var(--bg); display: grid; grid-template-columns: 78px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.fc .h { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.fc .v { font: 500 26px/1.1 var(--f-mono); }
+.fc .r { font: 400 12px/1.35 var(--f-mono); color: var(--muted); text-align: right; white-space: nowrap; }
+.risk { display: grid; gap: 11px; margin-top: 4px; }
+.risk .l { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; gap: 8px; }
+.risk .l b { color: var(--fg); font-family: var(--f-mono); font-weight: 500; }
+.bar { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 99px; }
+.replay { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 13px; }
+.kpi { border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; background: var(--bg); }
+.kpi .h { color: var(--muted); font-size: 12px; }
+.kpi .v { font: 500 26px/1.1 var(--f-mono); margin: 3px 0; }
+.kpi .t { font-size: 11.5px; color: var(--faint); }
+.tirbar { display: flex; height: 38px; border-radius: 9px; overflow: hidden; border: 1px solid var(--line); }
+.tirbar span { display: grid; place-items: center; font: 500 12px var(--f-mono); color: #11081f; min-width: 0; overflow: hidden; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+table.t td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
+.replay table.t td, .replay table.t th { white-space: nowrap; }
+.scroll { overflow-x: auto; }
+.dx { display: flex; flex-wrap: wrap; gap: 8px; }
+.dx span { border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; font-size: 13px; color: var(--faint); display: inline-flex; gap: 7px; align-items: center; }
+.dx span.on { color: var(--fg); border-color: var(--accent); background: var(--accent-soft); }
+.dx span i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: block; }
+.dx span.on i { background: var(--accent); }
+.locked { border: 1px dashed var(--line); border-radius: 10px; padding: 14px; color: var(--muted); font-size: 13px; }
+.dots { display: inline-flex; gap: 4px; vertical-align: middle; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--accent); display: block; }
+.dots i.on { background: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.log { max-height: 260px; overflow: auto; font: 400 12.5px var(--f-mono); }
+.log div { padding: 5px 0; border-bottom: 1px solid var(--line-soft); display: grid; grid-template-columns: 92px 110px minmax(0, 1fr); gap: 10px; }
+.log span:first-child { white-space: nowrap; }
+.foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12.5px; max-width: 980px; }
+.loading { padding: 60px 0; text-align: center; color: var(--muted); }
+@media (max-width: 980px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; } .list { max-height: 300px; min-height: 0; }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) { .grid3 { grid-template-columns: minmax(0, 1fr); } .phead h1 { font-size: 25px; } .log div { grid-template-columns: 64px minmax(0, 1fr); } .log div b { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div id="app" class="loading">Loading the patient panel…</div>
+
+<script>
+(() => {
+"use strict";
+const MG = 18.016;
+const S = { data: null, pid: null, tab: "now", sort: "attention", q: "", unit: "mgdl", role: "clinician",
+            win: 360, replay: false, log: [] };
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const unitLabel = () => (S.unit === "mgdl" ? "mg/dL" : "mmol/L");
+const gv = (mg) => (S.unit === "mgdl" ? Math.round(mg) : (mg / MG).toFixed(1));
+const gnum = (mg) => (S.unit === "mgdl" ? mg : mg / MG);
+const pct = (x) => (x >= 0.995 ? ">99%" : x < 0.005 ? "<1%" : Math.round(x * 100) + "%");
+const pretty = (s) => s.replace(/_/g, " ");
+const sc = (d0, d1, r0, r1) => (v) => r0 + ((v - d0) * (r1 - r0)) / (d1 - d0);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------------------------------------------------------------- derived values */
+function attention(p) { return Math.max(p.ev.hi250_120, Math.min(1, p.ev.lo70_60 * 2.5)) + 0.01 * p.ev.hi180_60; }
+function level(p) { const a = attention(p); return a >= 0.2 ? "crit" : a >= 0.08 || p.ev.hi180_60 >= 0.7 ? "warn" : "ok"; }
+const LEVEL_TEXT = { crit: "Needs attention", warn: "Watch", ok: "Stable" };
+function trendWord(p) {
+  const d = p.hist[287] - p.hist[281];
+  if (d >= 20) return "rising fast"; if (d >= 8) return "rising";
+  if (d <= -20) return "falling fast"; if (d <= -8) return "falling"; return "steady";
+}
+function clock(p, minFromNow) {
+  const base = parseInt(p.now.slice(11, 13), 10) * 60 + parseInt(p.now.slice(14, 16), 10);
+  const m = (((base + minFromNow) % 1440) + 1440) % 1440;
+  return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+}
+const cur = () => S.data.patients.find((p) => p.id === S.pid);
+function logAction(what) {
+  const d = new Date();
+  S.log.unshift({ t: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+                  who: S.role === "clinician" ? "Clinician" : "Care coordinator", what });
+  S.log = S.log.slice(0, 60);
+}
+
+/* ---------------------------------------------------------------- small charts */
+function spark(p) {
+  const v = p.hist.slice(-72), w = 84, h = 30;
+  const lo = Math.min(...v, 60), hi = Math.max(...v, 200);
+  const x = sc(0, v.length - 1, 1, w - 1), y = sc(lo, hi, h - 2, 2);
+  const d = v.map((g, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(g).toFixed(1)).join("");
+  const band = `<rect x="0" y="${y(180)}" width="${w}" height="${y(70) - y(180)}" fill="var(--band)"/>`;
+  return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true">${band}<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+}
+
+function pickTicks(vals, y, ymin, ymax) {
+  const out = []; let last = -99;
+  for (const v of vals.slice().sort((a, b) => a - b)) {
+    if (v <= ymin || v >= ymax) continue;
+    const py = y(v); if (Math.abs(py - last) < 17) continue; out.push(v); last = py;
+  }
+  return out;
+}
+const TICKS = () => (S.unit === "mgdl" ? [54, 70, 100, 150, 180, 250, 300, 350, 400] : [3, 4, 6, 8, 10, 12, 14, 16, 20].map((v) => v * MG));
+
+/* forecast value at t minutes (0..120) by linear interpolation through now, +30, +60, +120 */
+function fcAt(p, t) {
+  const now = p.hist[287];
+  const pts = [[0, now, now, now], [30, p.fc["30"].p, p.fc["30"].lo, p.fc["30"].hi],
+               [60, p.fc["60"].p, p.fc["60"].lo, p.fc["60"].hi], [120, p.fc["120"].p, p.fc["120"].lo, p.fc["120"].hi]];
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) {
+    const a = pts[i - 1], b = pts[i], f = (t - a[0]) / (b[0] - a[0]);
+    return [1, 2, 3].map((k) => a[k] + f * (b[k] - a[k]));
+  }
+  return pts[3].slice(1);
+}
+
+function heroChart(p, W) {
+  const H = Math.round(Math.min(400, Math.max(270, W * 0.4))), m = { l: 48, r: 14, t: 30, b: 30 };
+  const t0 = -S.win, t1 = 120, nh = S.win / 5;
+  const hist = p.hist.slice(288 - nh - 1);
+  const fut = S.replay ? p.future : [];
+  const all = [...hist, ...fut, p.fc["120"].hi, p.fc["120"].lo, p.fc["30"].lo, p.fc["60"].lo];
+  const ymin = Math.max(30, Math.floor((Math.min(54, ...all) - 8) / 10) * 10);
+  const ymax = Math.min(420, Math.ceil((Math.max(250, ...all) + 8) / 10) * 10);
+  const x = sc(t0, t1, m.l, W - m.r), y = sc(ymin, ymax, H - m.b, m.t);
+  let s = `<rect x="${m.l}" y="${y(180)}" width="${W - m.l - m.r}" height="${y(70) - y(180)}" fill="var(--band)"/>`;
+  const ticks = pickTicks(TICKS(), y, ymin, ymax);
+  for (const tk of ticks) {
+    const strong = Math.abs(tk - 70) < 1 || Math.abs(tk - 180) < 1;
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(tk)}" y2="${y(tk)}" stroke="var(--grid)" stroke-width="1" ${strong ? "" : 'stroke-dasharray="2 5"'}/>` +
+         `<text x="${m.l - 8}" y="${y(tk) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${gv(tk)}</text>`;
+  }
+  const step = W < 520 ? (S.win <= 360 ? 120 : S.win <= 720 ? 240 : 360) : S.win <= 360 ? 60 : S.win <= 720 ? 120 : 240;
+  for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step)
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--grid)" stroke-width="1" stroke-dasharray="2 5"/>` +
+         `<text x="${x(t)}" y="${H - 9}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${clock(p, t)}</text>`;
+  // forecast fan (dense interpolation)
+  const up = [], dn = [];
+  for (let t = 0; t <= 120; t += 5) { const [, lo, hi] = fcAt(p, t); up.push([x(t), y(hi)]); dn.push([x(t), y(lo)]); }
+  const poly = [...up, ...dn.reverse()].map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join("") + "Z";
+  s += `<path d="${poly}" fill="var(--accent)" fill-opacity=".20" stroke="var(--accent)" stroke-opacity=".35"/>`;
+  const mid = []; for (let t = 0; t <= 120; t += 5) mid.push((t ? "L" : "M") + x(t).toFixed(1) + " " + y(fcAt(p, t)[0]).toFixed(1));
+  s += `<path d="${mid.join("")}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  // history
+  const hp = hist.map((g, i) => (i ? "L" : "M") + x(-S.win + i * 5).toFixed(1) + " " + y(g).toFixed(1)).join("");
+  s += `<path d="${hp}" fill="none" stroke="var(--fg)" stroke-width="2" stroke-linejoin="round"/>`;
+  if (S.replay) {
+    const fp = fut.map((g, i) => "L" + x((i + 1) * 5).toFixed(1) + " " + y(g).toFixed(1)).join("");
+    s += `<path d="M${x(0)} ${y(hist[hist.length - 1])}${fp}" fill="none" stroke="var(--z-high)" stroke-width="2.4"/>`;
+  }
+  // meals
+  for (const ml of p.meals) {
+    const t = ml.m - 1440; if (t < t0 || t > 0) continue;
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - m.b - 14}" y2="${H - m.b}" stroke="var(--accent)" stroke-width="2"/>` +
+         `<text x="${x(t)}" y="${H - m.b - 18}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${ml.carbs} g</text>`;
+  }
+  // now marker
+  const gnow = hist[hist.length - 1];
+  s += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-opacity=".5"/>` +
+       `<circle cx="${x(0)}" cy="${y(gnow)}" r="5" fill="var(--fg)" stroke="var(--bg)" stroke-width="2"/>` +
+       `<text x="${x(0) - 6}" y="${m.t - 12}" text-anchor="end" font-size="12" fill="var(--fg)" font-weight="600">Now ${clock(p, 0)}</text>`;
+  s += `<line id="guide" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-opacity=".35" visibility="hidden"/>` +
+       `<rect id="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/>`;
+  return { svg: `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Glucose for the last ${S.win / 60} hours with a 2 hour forecast">${s}</svg>`, W, H, m, x, t0, t1 };
+}
+
+function attachHover(box, ctx, p) {
+  const hit = $("#hit", box), guide = $("#guide", box), tip = $(".tip", box), svg = $("svg", box);
+  if (!hit) return;
+  hit.addEventListener("pointermove", (e) => {
+    const r = svg.getBoundingClientRect(), vx = ((e.clientX - r.left) / r.width) * ctx.W;
+    const t = Math.round((ctx.t0 + ((vx - ctx.m.l) / (ctx.W - ctx.m.l - ctx.m.r)) * (ctx.t1 - ctx.t0)) / 5) * 5;
+    let txt;
+    if (t <= 0) txt = `${clock(p, t)} · <b class="num">${gv(p.hist[287 + t / 5])}</b> ${unitLabel()}`;
+    else {
+      const [mid, lo, hi] = fcAt(p, t);
+      txt = `${clock(p, t)} · forecast <b class="num">${gv(mid)}</b> (${gv(lo)} to ${gv(hi)})`;
+      if (S.replay) txt += `<br>simulated reading <b class="num">${gv(p.future[t / 5 - 1])}</b>`;
+    }
+    const gx = ctx.x(t);
+    guide.setAttribute("x1", gx); guide.setAttribute("x2", gx); guide.setAttribute("visibility", "visible");
+    tip.innerHTML = txt; tip.style.display = "block";
+    tip.style.left = (gx / ctx.W) * r.width + "px"; tip.style.top = "30px";
+  });
+  hit.addEventListener("pointerleave", () => { guide.setAttribute("visibility", "hidden"); tip.style.display = "none"; });
+}
+
+function agpChart(p, W) {
+  const H = Math.round(Math.min(340, Math.max(240, W * 0.32))), m = { l: 48, r: 14, t: 12, b: 28 };
+  const x = sc(0, 95, m.l, W - m.r);
+  const ymax = Math.min(420, Math.ceil((Math.max(250, ...p.agp.p95) + 10) / 10) * 10), ymin = 40;
+  const y = sc(ymin, ymax, H - m.b, m.t);
+  let s = `<rect x="${m.l}" y="${y(180)}" width="${W - m.l - m.r}" height="${y(70) - y(180)}" fill="var(--band)"/>`;
+  for (const tk of pickTicks(TICKS(), y, ymin, ymax))
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(tk)}" y2="${y(tk)}" stroke="var(--grid)" stroke-dasharray="2 5"/>` +
+         `<text x="${m.l - 8}" y="${y(tk) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${gv(tk)}</text>`;
+  for (let h = 0; h <= 24; h += W < 520 ? 6 : 3)
+    s += `<text x="${x(Math.min(h * 4, 95))}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${String(h % 24).padStart(2, "0")}:00</text>`;
+  const band = (a, b) => a.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join("") +
+    b.map((v, i) => "L" + x(95 - i).toFixed(1) + " " + y(b[95 - i]).toFixed(1)).join("") + "Z";
+  s += `<path d="${band(p.agp.p95, p.agp.p5)}" fill="var(--accent)" fill-opacity=".16"/>`;
+  s += `<path d="${band(p.agp.p75, p.agp.p25)}" fill="var(--accent)" fill-opacity=".34"/>`;
+  s += `<path d="${p.agp.p50.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join("")}" fill="none" stroke="var(--fg)" stroke-width="2.2"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Ambulatory glucose profile">${s}</svg>`;
+}
+
+const ZONES = [["gt250", "Above 250", "--z-vhigh"], ["b180_250", "181 to 250", "--z-high"], ["b70_180", "70 to 180", "--z-in"],
+               ["b54_70", "54 to 69", "--z-low"], ["lt54", "Below 54", "--z-vlow"]];
+function zoneLabel(k, v) {
+  const f = { gt250: [250, null], b180_250: [180, 250], b70_180: [70, 180], b54_70: [54, 70], lt54: [null, 54] }[k];
+  if (S.unit === "mgdl") return v;
+  return f[0] === null ? `Below ${(f[1] / MG).toFixed(1)}` : f[1] === null ? `Above ${(f[0] / MG).toFixed(1)}` : `${(f[0] / MG).toFixed(1)} to ${(f[1] / MG).toFixed(1)}`;
+}
+function tirBar(p) {
+  const segs = ZONES.map(([k, , c]) => `<span style="width:${p.tir[k]}%;background:var(${c})" title="${p.tir[k]}%">${p.tir[k] >= 5 ? Math.round(p.tir[k]) + "%" : ""}</span>`).join("");
+  const lg = ZONES.map(([k, l, c]) => `<span><i style="background:var(${c})"></i>${zoneLabel(k, l)} ${unitLabel()}</span>`).join("");
+  return `<div class="tirbar" role="img" aria-label="Time in range">${segs}</div><div class="legend">${lg}</div>`;
+}
+function targetRows(p) {
+  const T = p.tir, rows = [
+    ["Time in range 70 to 180", T.b70_180, ">70%", T.b70_180 > 70, true],
+    ["Time below 70", T.b54_70 + T.lt54, "<4%", T.b54_70 + T.lt54 < 4, false],
+    ["Time below 54", T.lt54, "<1%", T.lt54 < 1, false],
+    ["Time above 180", T.b180_250 + T.gt250, "<25%", T.b180_250 + T.gt250 < 25, false],
+    ["Time above 250", T.gt250, "<5%", T.gt250 < 5, false]];
+  return `<div class="scroll"><table class="t"><thead><tr><th>Measure</th><th>This patient</th><th>Consensus target</th><th></th></tr></thead><tbody>` +
+    rows.map((r) => `<tr><td>${r[0].replace(/\d+/g, (n) => gv(+n))}</td><td class="num">${r[1].toFixed(1)}%</td><td class="num">${r[2]}</td>` +
+      `<td><span class="chip ${r[3] ? "ok" : "warn"}">${r[3] ? "Meets target" : "Outside target"}</span></td></tr>`).join("") + `</tbody></table></div>`;
+}
+
+function sleepCharts(p, W) {
+  const n = p.sleep.length, H = 210, m = { l: 40, r: 10, t: 10, b: 24 };
+  const x = (i) => m.l + ((i + 0.5) * (W - m.l - m.r)) / n, bw = ((W - m.l - m.r) / n) * 0.62;
+  const ymax = 600, y = sc(0, ymax, H - m.b, m.t);
+  let s = "";
+  for (const hh of [0, 2, 4, 6, 8, 10])
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(hh * 60)}" y2="${y(hh * 60)}" stroke="var(--grid)" stroke-dasharray="2 5"/><text x="${m.l - 6}" y="${y(hh * 60) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" class="num">${hh}h</text>`;
+  const cols = [["deep", "#7b52e0"], ["rem", "#a77bff"], ["light", "#cdb8ff"], ["awake", "#f2b544"]];
+  p.sleep.forEach((nt, i) => {
+    let acc = 0;
+    for (const [k, c] of cols) {
+      const v = nt[k]; s += `<rect x="${x(i) - bw / 2}" y="${y(acc + v)}" width="${bw}" height="${y(acc) - y(acc + v)}" fill="${c}" opacity=".92"><title>Night ${i + 1}: ${k} ${v} min</title></rect>`;
+      acc += v;
+    }
+    s += `<text x="${x(i)}" y="${H - 7}" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="num">${i + 1}</text>`;
+  });
+  const stages = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sleep stages per night">${s}</svg>`;
+  const line = (vals, color, lo, hi, unit, H2 = 120) => {
+    const yy = sc(lo, hi, H2 - 22, 10), mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const d = vals.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + yy(v).toFixed(1)).join("");
+    return `<svg viewBox="0 0 ${W} ${H2}" role="img"><line x1="${m.l}" x2="${W - m.r}" y1="${yy(mean)}" y2="${yy(mean)}" stroke="var(--grid)" stroke-dasharray="4 4"/>` +
+      `<text x="${m.l - 6}" y="${yy(mean) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" class="num">${mean.toFixed(0)}</text>` +
+      `<path d="${d}" fill="none" stroke="${color}" stroke-width="2"/>` + vals.map((v, i) => `<circle cx="${x(i)}" cy="${yy(v)}" r="3" fill="${color}"><title>Day ${i + 1}: ${v} ${unit}</title></circle>`).join("") + `</svg>`;
+  };
+  const hrv = p.sleep.map((q) => q.hrv), rhr = p.rest_hr;
+  const stepsMax = Math.max(...p.steps_daily) * 1.1, ys = sc(0, stepsMax, 100, 8);
+  const bars = `<svg viewBox="0 0 ${W} 120" role="img" aria-label="Steps per day">${p.steps_daily.map((v, i) => `<rect x="${x(i) - bw / 2}" y="${ys(v)}" width="${bw}" height="${100 - ys(v)}" rx="2" fill="var(--accent)" opacity=".85"><title>Day ${i + 1}: ${v.toLocaleString()} steps</title></rect>`).join("")}` +
+    `<text x="${m.l - 6}" y="14" text-anchor="end" font-size="11" fill="var(--muted)" class="num">${Math.round(stepsMax / 1000)}k</text></svg>`;
+  return { stages, hrv: line(hrv, "var(--accent)", Math.min(...hrv) - 4, Math.max(...hrv) + 4, "ms"), rhr: line(rhr, "var(--z-high)", Math.min(...rhr) - 2, Math.max(...rhr) + 2, "bpm"), bars };
+}
+
+/* ---------------------------------------------------------------- views */
+function listView() {
+  const q = S.q.trim().toLowerCase();
+  let rows = S.data.patients.filter((p) => !q || p.id.toLowerCase().includes(q) || (p.record.sex + p.record.age_years.toFixed(0)).toLowerCase().includes(q));
+  const by = { attention: (a, b) => attention(b) - attention(a), glucose: (a, b) => b.hist[287] - a.hist[287],
+               hba1c: (a, b) => b.record.hba1c_pct - a.record.hba1c_pct, id: (a, b) => a.id.localeCompare(b.id) }[S.sort];
+  rows = rows.slice().sort(by);
+  $("#count").textContent = rows.length + " patients";
+  $("#list").innerHTML = rows.map((p) => {
+    const l = level(p), r = p.record;
+    return `<button class="row" data-id="${p.id}" aria-current="${p.id === S.pid}">` +
+      `<div class="id">${p.id}<small>${r.age_years.toFixed(0)} ${r.sex}</small></div>${spark(p)}` +
+      `<div class="meta"><span class="chip ${l}">${LEVEL_TEXT[l]}</span> <span class="num">${gv(p.hist[287])}</span> ${trendWord(p)}</div></button>`;
+  }).join("") || `<div class="locked" style="margin:14px">No patient matches “${esc(S.q)}”.</div>`;
+}
+
+function headView(p) {
+  const r = p.record;
+  return `<div class="phead"><h1>${p.id}<small>${r.age_years.toFixed(0)} years · ${r.sex === "F" ? "female" : "male"}</small></h1>` +
+    `<div class="facts"><span class="fact">Type 2 diabetes<b class="num">${r.diabetes_duration_years} y</b></span>` +
+    `<span class="fact">HbA1c<b class="num">${r.hba1c_pct.toFixed(1)}%</b></span><span class="fact">BMI<b class="num">${r.bmi.toFixed(1)}</b></span>` +
+    `<span class="fact"><span class="tag">Simulated</span></span></div></div>`;
+}
+
+function nowView(p) {
+  const now = p.hist[287], f60 = p.fc["60"], l = level(p);
+  const sentence = `Glucose is <em class="num">${gv(now)} ${unitLabel()}</em> and ${trendWord(p)}. The model expects <em class="num">${gv(f60.p)}</em> in an hour ` +
+    `(80% range ${gv(f60.lo)} to ${gv(f60.hi)}). Chance of being above ${gv(180)} ${unitLabel()} in 60 minutes: <em class="num">${pct(p.ev.hi180_60)}</em>.`;
+  const fcs = ["30", "60", "120"].map((h) => `<div class="fc"><div class="h">+${h} min<br><span class="num">${clock(p, +h)}</span></div><div class="v">${gv(p.fc[h].p)}</div><div class="r">range<br>${gv(p.fc[h].lo)} to ${gv(p.fc[h].hi)}</div></div>`).join("");
+  const risk = [["Above " + gv(180) + " at +60 min", p.ev.hi180_60, "var(--z-high)"], ["Above " + gv(180) + " at +120 min", p.ev.hi180_120, "var(--z-high)"], ["Above " + gv(250) + " at +120 min", p.ev.hi250_120, "var(--z-vhigh)"],
+                ["Below " + gv(70) + " at +60 min", p.ev.lo70_60, "var(--z-low)"]]
+    .map(([t, v, c]) => `<div><div class="l"><span>${t}</span><b>${pct(v)}</b></div><div class="bar"><i style="width:${Math.max(2, v * 100)}%;background:${c}"></i></div></div>`).join("");
+  let replay = "";
+  if (S.replay) {
+    const rows = [[6, "30"], [12, "60"], [24, "120"]].map(([k, h]) => {
+      const a = p.future[k - 1], f = p.fc[h], ok = a >= f.lo && a <= f.hi;
+      return `<tr><td>+${h} min</td><td class="num">${gv(f.p)}</td><td class="num">${gv(a)}</td><td><span class="chip ${ok ? "ok" : "warn"}">${ok ? "Inside" : "Outside"}</span></td></tr>`;
+    }).join("");
+    replay = `<div class="replay"><b>What happened next (simulated)</b><div class="scroll"><table class="t"><thead><tr><th>Horizon</th><th>Forecast</th><th>Reading</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }
+  return `<div class="grid2"><div class="card"><p class="summary">${sentence}</p>` +
+    `<div class="chart-tools"><div class="seg" role="group" aria-label="Time window">${[[360, "6 h"], [720, "12 h"], [1440, "24 h"]].map(([v, t]) => `<button data-win="${v}" aria-pressed="${S.win === v}">${t}</button>`).join("")}</div>` +
+    `<button class="btn ${S.replay ? "ghost" : ""}" id="replay">${S.replay ? "Hide what happened" : "Show what happened next"}</button></div>` +
+    `<div class="chartbox" id="hero"></div>` +
+    `<div class="legend"><span><i style="background:var(--fg)"></i>Glucose</span><span><i style="background:var(--accent)"></i>Forecast and 80% range</span><span><i style="background:var(--accent);height:3px;width:10px;vertical-align:3px"></i>Meal, grams of carbohydrate</span>${S.replay ? '<span><i style="background:var(--z-high)"></i>Simulated reading</span>' : ""}<span><i style="background:var(--band);border:1px solid var(--z-in)"></i>Target ${gv(70)} to ${gv(180)}</span></div></div>` +
+    `<div style="display:grid;gap:14px;align-content:start"><div class="card"><h3>Next two hours</h3><p class="sub">Point forecast and the range the model expects to contain the reading 8 times in 10.</p><div class="fcs">${fcs}</div>${replay}</div>` +
+    `<div class="card"><h3>Chance of crossing a threshold</h3><p class="sub">Ordering aid for the patient list. <span class="chip ${l}">${LEVEL_TEXT[l]}</span></p><div class="risk">${risk}</div></div></div></div>`;
+}
+
+function reportView(p) {
+  const kp = (h, v, t) => `<div class="kpi"><div class="h">${h}</div><div class="v">${v}</div><div class="t">${t}</div></div>`;
+  return `<div class="card"><h3>Ambulatory glucose profile</h3><p class="sub">${p.days} days of data, 100% sensor coverage (simulated). Line = median, dark band = middle half of days, light band = 5th to 95th percentile.</p>` +
+    `<div class="grid4" style="margin-bottom:14px">${kp("Mean glucose", gv(p.mean) + " <small>" + unitLabel() + "</small>", "")}${kp("Glucose management indicator", p.gmi.toFixed(1) + "%", "Estimated from the mean")}${kp("Variability (CV)", p.cv.toFixed(1) + "%", p.cv <= 36 ? "At or below the 36% target" : "Above the 36% target")}${kp("Days of data", p.days, "Consensus asks for 14")}</div>` +
+    `<div class="chartbox" data-c="agp"></div></div>` +
+    `<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);align-items:start"><div class="card"><h3>Time in ranges</h3><p class="sub">Share of all readings.</p>${tirBar(p)}</div><div class="card"><h3>Against consensus targets</h3><p class="sub">International consensus on CGM metrics, 2019.</p>${targetRows(p)}</div></div>`;
+}
+
+function recordView(p) {
+  const r = p.record, coord = S.role !== "clinician";
+  const dx = [["hypertension", "Hypertension"], ["dyslipidaemia", "Dyslipidaemia"], ["ckd_stage3plus", "Kidney disease, stage 3 or higher"], ["retinopathy", "Retinopathy"], ["neuropathy", "Neuropathy"], ["coronary_disease", "Coronary disease"], ["family_history_t2d", "Family history of type 2 diabetes"]];
+  const meds = [["med_metformin", "Metformin"], ["med_sulfonylurea", "Sulfonylurea"], ["med_dpp4", "DPP-4 inhibitor"], ["med_sglt2", "SGLT2 inhibitor"], ["med_insulin", "Insulin"], ["med_statin", "Statin"], ["med_acei_arb", "ACE inhibitor or ARB"]];
+  const chips = (rows) => `<div class="dx">${rows.map(([k, l]) => `<span class="${r[k] ? "on" : ""}"><i></i>${l}</span>`).join("")}</div>`;
+  const dots = (n) => `<span class="dots">${[0, 1].map((i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
+  const gen = [["gt_tcf7l2_rs7903146_T", "TCF7L2 rs7903146 (T)"], ["gt_fto_rs9939609_A", "FTO rs9939609 (A)"], ["gt_slc30a8_rs13266634_C", "SLC30A8 rs13266634 (C)"]];
+  const lab = `<div class="grid4">` + [["HbA1c", r.hba1c_pct.toFixed(1) + "%"], ["Fasting glucose", gv(r.fasting_glucose_mgdl) + " " + unitLabel()], ["eGFR", r.egfr_ml_min.toFixed(0) + " mL/min"], ["BMI", r.bmi.toFixed(1)]]
+    .map(([h, v]) => `<div class="kpi"><div class="h">${h}</div><div class="v" style="font-size:20px">${v}</div></div>`).join("") + `</div>`;
+  const lock = (what) => `<div class="locked">Hidden for the care coordinator role. ${what} is visible to clinicians only.</div>`;
+  return `<div class="card"><h3>Laboratory and measurements</h3><p class="sub">Simulated electronic health record. Every value is assumed, none is a measurement.</p>${lab}</div>` +
+    `<div class="grid2"><div class="card"><h3>Diagnoses and history</h3><p class="sub">Highlighted items are present for this patient.</p>${coord ? lock("The diagnosis list") : chips(dx)}</div>` +
+    `<div class="card"><h3>Medications</h3><p class="sub">Diabetes and related drugs.</p>${coord ? lock("The medication list") : chips(meds)}</div></div>` +
+    `<div class="card"><h3>Genetic markers</h3><p class="sub">Risk-allele count out of 2. These values are display only: they have no effect on the simulated glucose and are not used by the forecast.</p>` +
+    (coord ? lock("Genetic data") : `<div class="scroll"><table class="t"><tbody>${gen.map(([k, l]) => `<tr><td>${l}</td><td>${dots(r[k])} <span class="num">${r[k]}/2</span></td></tr>`).join("")}<tr><td><b>Risk alleles in total</b></td><td class="num">${r.genetic_risk_alleles}/6</td></tr></tbody></table></div>`) + `</div>`;
+}
+
+function sleepView(p) {
+  const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  const ls = [["Deep", "#7b52e0"], ["REM", "#a77bff"], ["Light", "#cdb8ff"], ["Awake", "#f2b544"]].map(([l, col]) => `<span><i style="background:${col}"></i>${l}</span>`).join("");
+  return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Sleep, HRV and steps are generated, not measured. In our tests these signals did not improve glucose forecasts, so they are shown as context for the clinician.</span></div>` +
+    `<div class="card"><h3>Sleep stages per night</h3><p class="sub">Average ${avg(p.sleep.map((q) => q.h)).toFixed(1)} hours of sleep over ${p.sleep.length} nights. Bars are minutes in each stage.</p><div class="chartbox" data-c="stages"></div><div class="legend">${ls}</div></div>` +
+    `<div class="grid2" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="card"><h3>Heart rate variability</h3><p class="sub">RMSSD after each night, ms. Average ${avg(p.sleep.map((q) => q.hrv)).toFixed(0)}.</p><div class="chartbox" data-c="hrv"></div></div>` +
+    `<div class="card"><h3>Resting heart rate</h3><p class="sub">Lowest 5% of each day, bpm.</p><div class="chartbox" data-c="rhr"></div></div></div>` +
+    `<div class="card"><h3>Steps per day</h3><p class="sub">Average ${Math.round(avg(p.steps_daily)).toLocaleString()} steps.</p><div class="chartbox" data-c="bars"></div></div>`;
+}
+
+function accessView() {
+  const clin = S.role === "clinician";
+  const log = S.log.length ? S.log.map((e) => `<div><span>${e.t}</span><b>${e.who}</b><span>${esc(e.what)}</span></div>`).join("") : `<div><span></span><b></b><span>No actions yet in this session.</span></div>`;
+  return `<div class="notice"><span class="tag">Concept</span><span>This tab shows how access could work in a hospital. There is no real sign-in and no real log: entries below are your own clicks in this session.</span></div>` +
+    `<div class="grid2" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="card"><h3>Your role</h3><p class="sub">Roles decide which parts of the record you can open.</p>` +
+    `<div class="seg" role="group" aria-label="Role"><button data-role="clinician" aria-pressed="${clin}">Clinician</button><button data-role="coordinator" aria-pressed="${!clin}">Care coordinator</button></div>` +
+    `<table class="t" style="margin-top:12px"><thead><tr><th>Area</th><th>Clinician</th><th>Care coordinator</th></tr></thead><tbody>` +
+    [["Glucose and forecast", "View", "View"], ["Glucose report", "View", "View"], ["Diagnoses and medications", "View", "Hidden"], ["Genetic markers", "View", "Hidden"], ["Edit or export", "Not in demo", "Not in demo"]].map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("") + `</tbody></table></div>` +
+    `<div class="card"><h3>Patient consent</h3><p class="sub">What a patient would agree to under India's Digital Personal Data Protection Act, 2023.</p><table class="t"><tbody>` +
+    [["Purpose", "Glucose decision support for the treating team"], ["Data used", "Glucose, meals, activity, sleep, health record"], ["Shared with", "Treating clinicians at this clinic"], ["Valid until", "Withdrawn at any time"]].map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("") + `</tbody></table><div style="margin-top:12px"><button class="btn ghost" disabled>Withdraw consent (concept)</button></div></div></div>` +
+    `<div class="card"><h3>Access log</h3><p class="sub">Every open and tab view in this session, newest first.</p><div class="log">${log}</div></div>`;
+}
+
+const TABS = [["now", "Now and next"], ["report", "Glucose report"], ["record", "Health record"], ["sleep", "Sleep and wearables"], ["access", "Access"]];
+function mainView() {
+  const p = cur();
+  const body = { now: nowView, report: reportView, record: recordView, sleep: sleepView, access: accessView }[S.tab](p);
+  $("#main").innerHTML = headView(p) +
+    `<div class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join("")}</div>` + body +
+    `<div class="foot">Research prototype, not a medical device. This is decision support for a clinician: it is not a diagnosis and it does not prescribe treatment. ` +
+    `Every patient on this page is simulated. Forecasts come from ${S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data"}; the dashboard does not recompute them for new patients.</div>`;
+  drawCharts();
+}
+function drawCharts() {
+  const p = cur();
+  const hero = $("#hero");
+  if (hero) { const c = heroChart(p, Math.max(300, hero.clientWidth)); hero.innerHTML = c.svg + '<div class="tip" style="display:none"></div>'; attachHover(hero, c, p); }
+  document.querySelectorAll("[data-c]").forEach((box) => {
+    const w = Math.max(280, box.clientWidth), k = box.dataset.c;
+    box.innerHTML = k === "agp" ? agpChart(p, w) : sleepCharts(p, w)[k];
+  });
+}
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.pid) drawCharts(); }, 120); });
+
+function shell() {
+  const dev = S.data.forecast_source === "dev";
+  $("#app").className = "";
+  $("#app").innerHTML =
+    `<div class="top"><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M5 20c3 0 3-9 6-9s3 11 6 11 3-8 5-8 2 4 5 4" fill="none" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>GlucoTwin<small>Clinic console</small></div><div class="grow"></div>` +
+    `<div class="seg" role="group" aria-label="Glucose units"><button data-unit="mgdl" aria-pressed="true">mg/dL</button><button data-unit="mmol" aria-pressed="false">mmol/L</button></div></div>` +
+    `<div class="notice"><span class="tag">Simulated patients</span>${dev ? '<span class="tag warn">Development forecast</span>' : ""}<span>${S.data.patients.length} virtual adults with type 2 diabetes, ${S.data.cohort.days} days of data each. No real person is shown.</span></div>` +
+    `<div class="shell"><aside class="rail"><div class="rail-head"><h2>Patients <span id="count"></span></h2>` +
+    `<input class="search" id="q" type="search" placeholder="Find by ID, age or sex" aria-label="Find a patient"><div class="sorts" role="group" aria-label="Sort patients">` +
+    [["attention", "Attention first"], ["glucose", "Glucose now"], ["hba1c", "HbA1c"], ["id", "ID"]].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${S.sort === k}">${l}</button>`).join("") +
+    `</div></div><div class="list" id="list"></div></aside><main class="main" id="main"></main></div>`;
+}
+
+function select(id, why) {
+  S.pid = id; S.replay = false; logAction(why || `Opened ${id}`);
+  listView(); mainView();
+}
+
+function bind() {
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.id) select(b.dataset.id);
+    else if (b.dataset.tab) { S.tab = b.dataset.tab; logAction(`Viewed ${TABS.find((t) => t[0] === S.tab)[1]} for ${S.pid}`); mainView(); }
+    else if (b.dataset.sort) { S.sort = b.dataset.sort; document.querySelectorAll("[data-sort]").forEach((x) => x.setAttribute("aria-pressed", x === b)); listView(); }
+    else if (b.dataset.unit) { S.unit = b.dataset.unit; document.querySelectorAll("[data-unit]").forEach((x) => x.setAttribute("aria-pressed", x === b)); listView(); mainView(); }
+    else if (b.dataset.win) { S.win = +b.dataset.win; mainView(); }
+    else if (b.dataset.role) { S.role = b.dataset.role; logAction(`Switched role to ${b.textContent}`); mainView(); }
+    else if (b.id === "replay") { S.replay = !S.replay; if (S.replay) logAction(`Compared forecast with simulated outcome for ${S.pid}`); mainView(); }
+  });
+  document.addEventListener("input", (e) => { if (e.target.id === "q") { S.q = e.target.value; listView(); } });
+}
+
+fetch("data.json").then((r) => r.json()).then((d) => {
+  S.data = d; shell(); bind();
+  const first = d.patients.slice().sort((a, b) => attention(b) - attention(a))[0];
+  select(first.id, `Opened ${first.id}`);
+}).catch(() => { $("#app").innerHTML = '<div class="loading">The patient data file could not be loaded.</div>'; });
+})();
+</script>

@@ -19,6 +19,31 @@ from src.utils.config import PROJECT_ROOT, load_config
 OUT = PROJECT_ROOT / "data" / "processed" / "india" / "synthetic_dataset"
 
 
+SENSOR_RANGE = (40.0, 400.0)  # Dexcom reporting range (configs/data.yaml)
+MAX_PATIENT_MEAN = 300.0  # mg/dL; a profile above this needs urgent care, not a routine clinic list
+
+
+def plausible(c: dict[str, pd.DataFrame], n_keep: int, icfg: dict[str, Any]) -> dict[str, pd.DataFrame]:
+    """Apply the CGM reporting range and keep the first ``n_keep`` patients with a plausible mean.
+
+    HbA1c and diabetes status are recomputed from the sensor-range glucose so the profile stays
+    consistent with what a CGM would have reported.
+    """
+    g = c["grid"].copy()
+    g["glucose"] = g["glucose"].clip(*SENSOR_RANGE)
+    means = g.groupby("patient_id", sort=False)["glucose"].mean()
+    keep = list(means.index[means <= MAX_PATIENT_MEAN])[:n_keep]
+    out = {k: v[v["patient_id"].isin(keep)].reset_index(drop=True) for k, v in c.items()}
+    out["grid"] = g[g["patient_id"].isin(keep)].reset_index(drop=True)
+    s = icfg["static"]
+    st = out["static"].set_index("patient_id")
+    a1c = (means[keep] - s["eag_intercept"]) / s["eag_slope"]
+    st["hba1c_pct"] = a1c
+    st["diabetes_status"] = pd.cut(a1c, s["hba1c_bins"], labels=s["hba1c_labels"], right=False).astype(str)
+    out["static"] = st.reset_index()
+    return out
+
+
 def with_history(static: pd.DataFrame, seed: int, ecfg: dict[str, Any]) -> pd.DataFrame:
     """Static profile plus the simulated EHR history (own random stream per patient)."""
     rows = []
@@ -80,7 +105,7 @@ def datasheet(t: dict[str, pd.DataFrame], ecfg: dict[str, Any]) -> str:
 | HbA1c (from CGM, simulated) | mean {st['hba1c_pct'].mean():.2f} % |
 
 ## Tables
-- `cgm_wearables.csv`: 5-minute glucose (with sensor noise), heart rate, activity intensity, steps.
+- `cgm_wearables.csv`: 5-minute glucose (with sensor noise, limited to the CGM range 40 to 400 mg/dL), heart rate, activity intensity, steps.
 - `meals.csv`: Indian meal presets (idli, dosa, poha, dal, rice, roti, ...) with carbohydrate, protein, fat, fibre, kcal.
 - `sleep_nightly.csv`: one row per night: total sleep, efficiency, minutes awake / light / deep / REM, HRV (RMSSD).
 - `static_ehr.csv`: age, sex, BMI, HbA1c, fasting glucose, diabetes status (derived from the simulated CGM), plus a simulated history: diabetes duration, diagnoses (hypertension, dyslipidaemia, CKD stage 3+, retinopathy, neuropathy, coronary disease), medications, eGFR, family history and genetic-marker dosages (TCF7L2, FTO, SLC30A8). The history is assumed and has NO effect on the simulated glucose.
@@ -98,6 +123,11 @@ simple assumed distributions.
 - Insulin sensitivity shift, basal glucose shift and absorption shift for the Indian setting.
 - Meal timing and portion variability.
 
+## Selection rule
+Patients whose mean glucose over the study exceeds 300 mg/dL are left out (the simulator can draw
+such profiles; they would not be in a routine clinic list). Glucose is clipped to the CGM reporting
+range and HbA1c is recomputed from the clipped values.
+
 ## Intended use
 Demonstration of the GlucoTwin pipeline and dashboard, stress tests of models, and unit tests.
 ## Not for
@@ -111,8 +141,9 @@ def main() -> None:
     """Generate the exported synthetic cohort and write its tables and datasheet."""
     icfg, mc = load_config("india"), load_config("mech")
     e = icfg["export"]
-    c = ic.generate(icfg, mc, icfg["strengths"][e["strength"]], "exp", e["seed"], e["n_patients"],
-                    e["days"], sleep_mult=e["sleep_mult"])  # fmt: skip
+    c = ic.generate(icfg, mc, icfg["strengths"][e["strength"]], "exp", e["seed"],
+                    int(e["n_patients"] * 1.25), e["days"], sleep_mult=e["sleep_mult"])  # fmt: skip
+    c = plausible(c, e["n_patients"], icfg)
     c["static"] = with_history(c["static"], e["seed"], icfg["ehr"])
     t = tables(c)
     OUT.mkdir(parents=True, exist_ok=True)
