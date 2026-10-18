@@ -150,8 +150,9 @@ Every simulated number is labelled SIMULATED.
 | Glucose below 70 | CGMacros (8 patients with events) | 0.95 | 0.88 | 0.78 [0.67, 0.87] |
 | Glucose below 70 | Shanghai T2DM | 0.97 | 0.91 | 0.81 [0.77, 0.86] |
 
-  Probabilities are calibrated: after recalibration the calibration error at +60 min is at most
-  0.018, so a stated 40 % chance means the event happens about 40 % of the time.
+  Probabilities are calibrated, so a stated 40 % chance means the event happens about 40 % of the
+  time. The dashboards serve Platt-calibrated probabilities, whose calibration error at +60 min is
+  at most 0.025 across both cohorts and all three events; isotonic calibration reaches 0.018.
 - **Alarms at about one false alarm per day:** for hyperglycaemia the model beats both a
   "current value" alert and a trend alert (Shanghai above 180: 83 % sensitivity against 59 % and
   67 %). Alert-burden curves let a clinic choose its own sensitivity / false-alarm trade-off.
