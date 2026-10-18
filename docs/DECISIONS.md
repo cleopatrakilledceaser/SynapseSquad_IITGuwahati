@@ -1489,3 +1489,11 @@ Reading (fixed now): if C minus B at m = 1 is still indistinguishable from 0, th
 
 Not done and why: ingesting AI-READI (access barriers, listed as future work) and attaching invented sleep or HRV to real patients (it would carry no real signal).
 
+## D-067: published synthetic Indian T2D dataset (SYNTHETIC)
+
+Why: the organizers allow synthetic wearable data, and name sleep stages, HRV and step count. The open real cohorts are small and have none of them (CGMacros: heart rate and activity only; Big IDEAs: 16 people, high-normal glucose, no sleep). A documented synthetic dataset lets the dashboard and pipeline show all named streams, each labelled SIMULATED.
+
+What it is: `make synth-data` writes CSVs (5-minute glucose, heart rate, activity, steps; Indian meals; nightly sleep with awake, light, deep and REM minutes and HRV; static EHR) and DATASHEET.md for 200 virtual patients x 14 days (seed 301, insulin-resistance strength moderate, sleep effect multiplier 1). Sleep stages use their own random stream, so no earlier simulated number changes (tests assert this). Internal simulator variables (true glucose, parameters) are not exported.
+
+What it is not: evidence. Sleep, HRV and stage distributions and the sleep-to-insulin link are assumed. It is not used to train or validate any reported model (Part 8b showed synthetic augmentation did not help real patients). Nothing is committed to git; the dataset is regenerated from the seed.
+

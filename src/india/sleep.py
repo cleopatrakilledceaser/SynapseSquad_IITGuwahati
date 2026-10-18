@@ -36,6 +36,28 @@ def draw_nights(
     return {"sleep_h": dur, "sleep_eff": eff, "sleep_deep": deep, "hrv_rmssd": hrv}
 
 
+def stage_minutes(
+    rng: np.random.Generator, nights: dict[str, np.ndarray], scfg: dict[str, Any]
+) -> dict[str, np.ndarray]:
+    """Minutes awake, in light, deep and REM sleep per night (ASSUMED, no glucose effect).
+
+    ``sleep_h`` is total sleep time; time in bed = total sleep / efficiency; deep = deep fraction x
+    total sleep; REM fraction is a separate draw; light is the remainder. Uses its own random
+    stream so that adding stages never changes any other simulated quantity.
+    """
+    r = scfg["rem_frac"]
+    n = len(nights["sleep_h"])
+    rem = np.clip(rng.normal(r["mean"], r["sd"], n), r["lo"], r["hi"])
+    tst = nights["sleep_h"] * 60.0
+    tib = tst / nights["sleep_eff"]
+    deep = nights["sleep_deep"] * tst
+    rem_min = rem * tst
+    return {
+        "sleep_awake_min": tib - tst, "sleep_light_min": tst - deep - rem_min,
+        "sleep_deep_min": deep, "sleep_rem_min": rem_min,
+    }  # fmt: skip
+
+
 def si_shift(sleep_h: np.ndarray, scfg: dict[str, Any], mult: float) -> np.ndarray:
     """Log shift of SI after each night: -beta * mult * deficit (<= 0)."""
     deficit = np.maximum(scfg["baseline_h"] - sleep_h, 0.0)

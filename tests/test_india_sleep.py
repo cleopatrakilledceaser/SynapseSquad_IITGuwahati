@@ -102,3 +102,28 @@ def test_folds_cover_all_patients_once():
     pids = [f"p{i}" for i in range(23)]
     f = wp.folds_of(pids, 5, 1)
     assert sorted(x for fold in f for x in fold) == sorted(pids) and len(f) == 5
+
+
+def test_stage_minutes_add_up_and_leave_other_draws_unchanged():
+    scfg = load_config("india")["sleep"]
+    n = sl.draw_nights(np.random.default_rng(0), 400, scfg)
+    st = sl.stage_minutes(np.random.default_rng(1), n, scfg)
+    tst = n["sleep_h"] * 60.0
+    total = st["sleep_light_min"] + st["sleep_deep_min"] + st["sleep_rem_min"]
+    assert np.allclose(total, tst)  # stages partition total sleep time
+    assert (st["sleep_light_min"] > 0).all() and (st["sleep_awake_min"] >= 0).all()
+    assert np.allclose(st["sleep_awake_min"] + tst, tst / n["sleep_eff"])  # time in bed
+    assert 0.17 < (st["sleep_rem_min"] / tst).mean() < 0.25
+
+
+def test_stages_do_not_change_glucose_and_export_has_no_internals():
+    _need_inputs()
+    from src.india import export as ex
+
+    a, b = gen(1.0), gen(1.0)
+    assert np.array_equal(a["grid"]["glucose"].to_numpy(), b["grid"]["glucose"].to_numpy())
+    assert {"sleep_rem_min", "sleep_deep_min"} <= set(a["sleep"].columns)
+    t = ex.tables(a)
+    assert set(t) == {"cgm_wearables", "meals", "sleep_nightly", "static_ehr"}
+    assert "glucose_true" not in t["cgm_wearables"].columns
+    assert "SYNTHETIC" in ex.datasheet(t, load_config("india")["export"])

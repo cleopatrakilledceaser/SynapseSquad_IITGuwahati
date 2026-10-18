@@ -219,6 +219,7 @@ def generate(
                 "patient_id": pid, "k": np.arange(n_days),
                 "wake_t": t0 + pd.to_timedelta(np.array(edges) * DT_MIN, unit="m"),
                 "sleep_effect_mult": sleep_mult, "si_log_shift": shifts, **nights,
+                **sl.stage_minutes(np.random.default_rng([seed, i, 8]), nights, scfg),
             }))  # fmt: skip
         for m in meals:
             meal_rows.append({

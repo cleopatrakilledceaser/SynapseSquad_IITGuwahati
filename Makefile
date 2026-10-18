@@ -84,6 +84,9 @@ improve:  ## Part 10 tuned LightGBM (D-065): CV only; run the single-shot holdou
 sleep-scale:  ## Part 8d larger simulated study (D-066; SYNTHETIC; a few hours)
 	$(PY) -W ignore -u -m src.india.wearable_power scale
 
+synth-data:  ## D-067 export the SYNTHETIC Indian T2D dataset + datasheet (a few minutes)
+	$(PY) -W ignore -u -m src.india.export
+
 federated-privacy:  ## Part 8c exploratory privacy sweep (D-063a; needs make federated first)
 	$(PY) -W ignore -u -m src.federated.privacy_sweep
 	$(PY) -W ignore -m src.federated.report

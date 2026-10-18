@@ -73,6 +73,7 @@ sleep:
   efficiency: {mean: 0.88, sd: 0.05, lo: 0.6, hi: 0.98}   # ASSUMED, no glucose effect
   deep_frac: {mean: 0.17, sd: 0.04, lo: 0.05, hi: 0.35}   # ASSUMED, no glucose effect
   hrv: {mean_ms: 32.0, per_hour_deficit: 0.05, noise_sd_log: 0.15}   # link to deficit ASSUMED
+  rem_frac: {mean: 0.21, sd: 0.04, lo: 0.08, hi: 0.35}    # ASSUMED, no glucose effect
   wake_minute: 360                   # a night becomes known at 06:00
   si_beta_per_hour: 0.03             # ASSUMPTION within 0.023-0.045 (Buxton 2010, Diabetes 59:2126)
   steps: {per_activity_unit_5min: 333.0, noise_sd: 40.0}
@@ -90,3 +91,9 @@ sleep_scale:                         # D-066: the D-064 analysis on a larger sim
   days: 30
   multipliers: [0.0, 1.0]            # control and literature scale only
   seed: 212
+export:                              # D-067: the published synthetic dataset (SYNTHETIC)
+  n_patients: 200
+  days: 14
+  seed: 301
+  strength: moderate                 # insulin-resistance shift of D-062
+  sleep_mult: 1.0                    # literature-scale sleep effect on insulin sensitivity
