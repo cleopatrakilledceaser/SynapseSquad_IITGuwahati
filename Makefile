@@ -126,5 +126,8 @@ web-data:
 web-evidence:
 	python -m src.web.evidence
 
+web-pages:  ## wrap web/index.html into a standalone site in web/_site (for GitHub Pages)
+	python -m src.web.pages
+
 web-real:  ## D-069 zero-shot model forecasts + what-ifs into web/data.json (needs make app-data and make web-data)
 	python -W ignore -u -m src.web.real_forecast

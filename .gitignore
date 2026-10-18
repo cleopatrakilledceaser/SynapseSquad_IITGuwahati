@@ -39,3 +39,5 @@ reports/screens/
 web/data.json
 web/evidence.json
 web/figures/
+
+web/_site/

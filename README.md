@@ -3,6 +3,22 @@
 **A clinician-facing digital twin for glucose management in Type 2 Diabetes.**
 Happiest Health Digital Twin Challenge 2026.
 
+**▶ Live clinician console: https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/** — opens in a browser,
+no install, no sign-in. 120 simulated patients.
+
+### What this is, in five lines
+
+- A **type 2 diabetes digital twin**: the static health record fused with CGM, wearable and meal streams.
+- Forecasts glucose at **+30 / +60 / +120 min** with calibrated 80 % intervals, and the calibrated
+  **probability of an adverse event** (above 180 mg/dL, below 70 mg/dL).
+- Answers **"what if"** — a different meal, fewer carbohydrates, a post-meal walk — through a
+  monotone-constrained model and a fitted physiological twin.
+- Built and tested on **two real open cohorts (145 patients, two countries)** plus a synthetic
+  Indian cohort, with **federated training** so records never leave the clinic.
+- Every protocol was **pre-registered before the run that tested it** — over 70 numbered decisions
+  in [docs/DECISIONS.md](docs/DECISIONS.md) — and every comparison carries a patient-level
+  confidence interval.
+
 > **Research prototype, not a medical device.** Outputs are decision support for a clinician.
 > They are not a diagnosis and do not prescribe treatment. Open data and clearly labelled
 > synthetic data only; no patient data is stored in this repository.
@@ -12,12 +28,12 @@ Happiest Health Digital Twin Challenge 2026.
 | | |
 |---|---|
 | Team leader | Jahnavi Harsha |
-| Team name | **[TEAM NAME: fill in]** |
+| Team name | Synapse Squad |
 | Team members | Solo submission |
 
 ## 2. College / incubator
 
-Indian Institute of Technology Guwahati. Incubator: **[name, or "none"]**.
+Indian Institute of Technology Guwahati. Incubator: none.
 
 ## 3. Project title
 
@@ -64,7 +80,8 @@ Everything runs on a laptop CPU.
 | What-if engine | Counterfactual edits to meals and activity, played through a monotone-in-carbohydrate LightGBM and through the twin. |
 | Federated simulation | NumPy MLP trained with FedAvg / FedProx across simulated clinics. |
 
-Design choices and every decision taken are in [docs/DECISIONS.md](docs/DECISIONS.md).
+The model card is [docs/model_card.md](docs/model_card.md); design choices and every decision
+taken are in [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## 8. Data
 
@@ -122,21 +139,33 @@ Every simulated number is labelled SIMULATED.
 | Glucose below 70 | CGMacros (8 patients with events) | 0.95 | 0.88 | 0.78 [0.67, 0.87] |
 | Glucose below 70 | Shanghai T2DM | 0.97 | 0.90 | 0.81 [0.76, 0.85] |
 
-  Calibration error at +60 is at most 0.014 after recalibration.
-- **Alarms at about one false alarm per day:** the model beats a "current value" and a trend
-  alert for hyperglycaemia (Shanghai > 180: 71 % sensitivity vs 59 % and 67 %). For
-  hypoglycaemia on Shanghai a simple alert is better, and we say so.
-- **Intervals:** 80 % bands cover 80.8 % (CGMacros) and 79.5 % (Shanghai) at +60 min. Coverage is
-  lower for T2D rows (73 %) than healthy rows (87 %), which the dashboard does not hide.
-- **Sensor bias and drift are the main risk**: a +20 mg/dL bias drops 80 % coverage to about 65 %,
-  and the data-quality score does not detect it. This is stated on the Data quality page.
+  Probabilities are calibrated: after recalibration the calibration error at +60 min is at most
+  0.014, so a stated 40 % chance means the event happens about 40 % of the time.
+- **Alarms at about one false alarm per day:** for hyperglycaemia the model beats both a
+  "current value" alert and a trend alert (Shanghai above 180: 71 % sensitivity against 59 % and
+  67 %). Alert-burden curves let a clinic choose its own sensitivity / false-alarm trade-off.
+- **Intervals hold their promise:** 80 % bands cover 80.8 % (CGMacros) and 79.5 % (Shanghai) at
+  +60 min, against an 80 % target. Coverage is reported per subgroup as well as pooled, and both
+  dashboards show it.
+- **Robustness is tested, not assumed:** sensor faults are injected into the test data and the
+  causal features recomputed, and a data-quality score (completeness, recency, plausibility, rate
+  of change) travels with every forecast. Section 15 records where this is weakest.
 
 ### 9.3 What-if engine
 
-Model-based estimates of how a different meal or a walk changes the forecast. On matched real
-breakfasts the models predict 18 mg/dL of the 39 mg/dL observed rise, so sizes are shown as lower
-bounds (details in [docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md) and
-[docs/limitations.md](docs/limitations.md)).
+The what-if engine answers counterfactual questions a clinician actually asks: what if this meal
+had less carbohydrate, what if it were an idli instead of a dosa, what if the patient walked for
+thirty minutes afterwards.
+
+Two engines run side by side: a LightGBM with a **monotonicity constraint in carbohydrate** — so
+less carbohydrate can never predict a higher peak, guaranteed by construction rather than hoped
+for — and the fitted mechanistic twin. Both are scored against physiological plausibility checks
+(carbohydrate monotonicity, activity direction, identity, causality, bounds, dose–response) and
+against **87 matched real breakfasts**.
+
+On those matched meals the models predict 18 mg/dL of the 39 mg/dL observed rise, so the interface
+presents every magnitude as a **lower bound**, printed beside the result rather than buried
+(details in [docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md)).
 
 ### 9.4 India readiness (Part 8)
 
@@ -201,9 +230,14 @@ Indian patients.
 
 ### 9.5 Sleep, HRV and step count (SIMULATED)
 
-The competition names these signals, but CGMacros contains no sleep, HRV or step data. We therefore
-asked a different question: *if sleep affected insulin sensitivity, could a model detect it in 10
-days of data?* On a simulated cohort of 100 patients (67,000 scored windows per condition), sleep
+No open dataset pairs real CGM with real sleep staging and HRV in type 2 patients, so we built a
+powered simulation and answered a sharper question than "does it help": *how much data would you
+need before a sleep effect of the size the literature reports becomes visible at all?* The answer
+is roughly **9,000 patient-days** — a result about the field, not only about this system, and the
+reason the console presents these channels as clinical context, which is what a clinician uses
+them for.
+
+The design: *if sleep affected insulin sensitivity, could a model detect it in 10 days of data?* On a simulated cohort of 100 patients (67,000 scored windows per condition), sleep
 shortens each night and lowers insulin sensitivity from 06:00 the next day. A multiplier m scales
 the effect (m = 0 is a false-positive control; m = 1 is literature scale). We compare nested
 models: A (CGM, time of day, meals), B (A plus heart rate and activity) and C (B plus sleep, HRV
@@ -236,14 +270,30 @@ keeps sleep, HRV and steps as context. This is a simulation result about detecta
 
 ## 10. Dashboard
 
-`make app` starts a Streamlit dashboard in Happiest Health purple, with ten pages: Overview,
-Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state, Personalization,
-Input tiers, Data quality, Evidence and a PDF export. A units switch shows mg/dL or mmol/L. Every
-page carries the decision-support disclaimer.
+Two interfaces, both reading the same bundle so they never disagree on a number.
+
+**Web console** — live at **https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/** (source in `web/`).
+A single-page clinician console. A patient list ordered by who needs
+attention, then per patient: the forecast with its 80 % band, the what-if lab, the glucose report
+(AGP, time in range, GMI), the health record, sleep and activity context, a visit summary, and an
+evidence section carrying every cohort-level result. Access is role-gated — a clinician and a care
+coordinator see different fields — with a session access log. Dark and light themes, a mg/dL ⇄
+mmol/L switch, readable at tablet width. The demo runs on 120 **simulated** patients with the
+models applied zero-shot.
+
+**Streamlit application** (`make app`) — the full working app in Happiest Health purple, with ten
+pages: Overview, Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state,
+Personalization, Input tiers, Data quality, Evidence, and a PDF export for the patient file. Runs
+locally; no data leaves the machine.
+
+Every page of both carries the decision-support disclaimer: the clinician remains the decision
+maker and the system never recommends a dose or a drug.
 
 ## 11. Demo video
 
-**[VIDEO LINK: unlisted YouTube or recorded slides]**
+**[VIDEO LINK — unlisted YouTube, to be added]**
+
+A timed walkthrough of the live console, the Streamlit application and the evidence behind both.
 
 ## 12. Open-source licence
 
@@ -251,11 +301,13 @@ Code: MIT ([LICENSE](LICENSE)). Datasets keep their own licences (section 8).
 
 ## 13. Architecture diagram
 
-**[LINK: docs/architecture.pdf]**
+[docs/architecture.pdf](docs/architecture.pdf) — one page: the four data streams, harmonisation,
+the model layer, calibration, the clinical outputs and both interfaces, with the method,
+evaluation protocol, AI/ML models, measured results, privacy design and scope.
 
 ## 14. Presentation
 
-**[LINK: docs/GlucoTwin_presentation.pdf]**
+**[PRESENTATION LINK — docs/GlucoTwin_presentation.pdf, to be added]**
 
 ## 15. Limitations and responsible AI
 
@@ -263,7 +315,12 @@ Code: MIT ([LICENSE](LICENSE)). Datasets keep their own licences (section 8).
 - The India, wearable-sleep and federated results are **simulations**; they test design, not clinical
   performance.
 - The what-if carbohydrate effect is under-estimated; magnitudes are lower bounds.
-- Sensor bias and drift are not detected by the quality score.
+- Sensor bias and drift are not detected by the quality score: a +20 mg/dL bias drops 80 %
+  interval coverage to about 65 %. This is stated on the Data quality page.
+- Interval coverage is not uniform across subgroups (73 % on T2D rows against 87 % on healthy
+  rows); both dashboards report it per subgroup.
+- For hypoglycaemia on Shanghai a simple threshold alert outperforms the model at one false alarm
+  per day.
 - Hypoglycaemia evidence is thin (8 CGMacros patients with events).
 - Not validated prospectively; not a medical device. Decision support only.
 - Data handling is mapped to India's DPDP Act in [docs/limitations.md](docs/limitations.md).
