@@ -1487,5 +1487,5 @@ Why: the D-064 run (100 patients, 10 days) found no detectable gain from sleep, 
 
 Reading (fixed now): if C minus B at m = 1 is still indistinguishable from 0, the honest statement is that, at literature-scale effects, the sleep channel does not improve 30 to 120 minute forecasts even with about 9 times more patient-days, because the mean glucose shift it causes (about 0.3 mg/dL at m = 1 in D-064) is far smaller than meal-driven variation. If C minus B is below 0 with a CI excluding 0 at m = 1 and not at m = 0, it is detectable at that scale. m = 0 below 0 would be a leak and a bug. This is a SIMULATION result and says nothing about real patients.
 
-Not done and why: ingesting AI-READI (access barriers, D-0xx) and attaching invented sleep or HRV to real patients (it would carry no real signal).
+Not done and why: ingesting AI-READI (access barriers, listed as future work) and attaching invented sleep or HRV to real patients (it would carry no real signal).
 
