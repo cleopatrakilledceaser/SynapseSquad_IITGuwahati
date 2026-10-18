@@ -1,0 +1,938 @@
+{
+  "name": "improve_holdout",
+  "timestamp_utc": "2026-10-18T08:22:24.642288+00:00",
+  "git_hash": "3fdb7992b91f9b0a7e2ac721119dc7a3d4638866",
+  "seed": 42,
+  "data_hash": "257c76169a348f0094f505354f8893d31b36b6a6fb7b1780abd3c244083057b2",
+  "config": {
+    "seed": 42,
+    "configs": {
+      "cgmacros": [
+        "D_cgm_wear_meal",
+        "E_full"
+      ],
+      "shanghai_t2dm": [
+        "E_full"
+      ]
+    },
+    "horizons_min": [
+      30,
+      60,
+      120
+    ],
+    "cv_repeats": [
+      0
+    ],
+    "n_parallel": 5,
+    "lgbm_threads": 2,
+    "tuning": {
+      "seed": 42,
+      "n_trials": 16,
+      "top_k": 3,
+      "early_stopping_rounds": 50,
+      "fixed": {
+        "n_estimators": 2000,
+        "subsample_freq": 1,
+        "verbose": -1
+      },
+      "status_quo": {
+        "objective": "l2",
+        "num_leaves": 15,
+        "min_child_samples": 50,
+        "learning_rate": 0.05,
+        "colsample_bytree": 0.8,
+        "subsample": 0.8,
+        "reg_lambda": 1.0,
+        "reg_alpha": 0.0
+      },
+      "space": {
+        "objective": [
+          "l2",
+          "l1",
+          "huber10",
+          "huber25"
+        ],
+        "num_leaves": [
+          7,
+          15,
+          31,
+          63
+        ],
+        "min_child_samples": [
+          20,
+          50,
+          100,
+          200,
+          400
+        ],
+        "learning_rate": [
+          0.02,
+          0.03,
+          0.05
+        ],
+        "colsample_bytree": [
+          0.5,
+          0.7,
+          0.9
+        ],
+        "subsample": [
+          0.6,
+          0.8,
+          1.0
+        ],
+        "reg_lambda": [
+          0.0,
+          1.0,
+          5.0,
+          20.0
+        ],
+        "reg_alpha": [
+          0.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "design": "B: holdout test patients, single shot",
+    "runs": {
+      "cgmacros|D_cgm_wear_meal": {
+        "n_patients": 9,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 14.116589185221434,
+            "mae_ci": [
+              11.97019719479903,
+              16.494942805426938
+            ],
+            "n_patients": 9,
+            "n_rows": 8174
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 21.463360746286977,
+            "mae_ci": [
+              17.305893554534162,
+              25.93380846835645
+            ],
+            "n_patients": 9,
+            "n_rows": 8147
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 30.190828402366865,
+            "mae_ci": [
+              22.930053580543085,
+              37.90112215885032
+            ],
+            "n_patients": 9,
+            "n_rows": 8112
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 30,
+            "mae": 11.842051010866737,
+            "mae_ci": [
+              9.827579909751211,
+              13.900930065174299
+            ],
+            "n_patients": 9,
+            "n_rows": 8174
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 30,
+            "mae": 11.779082235404056,
+            "mae_ci": [
+              9.691239371395133,
+              13.886620285236788
+            ],
+            "n_patients": 9,
+            "n_rows": 8174
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 60,
+            "mae": 17.761229161917665,
+            "mae_ci": [
+              14.37180733691586,
+              21.47332744536662
+            ],
+            "n_patients": 9,
+            "n_rows": 8147
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 60,
+            "mae": 17.539783454081526,
+            "mae_ci": [
+              13.969829487176728,
+              21.44988348100396
+            ],
+            "n_patients": 9,
+            "n_rows": 8147
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 120,
+            "mae": 23.119021279062462,
+            "mae_ci": [
+              17.657783318848175,
+              29.146395683101755
+            ],
+            "n_patients": 9,
+            "n_rows": 8112
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 120,
+            "mae": 22.693075120325464,
+            "mae_ci": [
+              17.07869681097653,
+              29.213636534916155
+            ],
+            "n_patients": 9,
+            "n_rows": 8112
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 30,
+            "diff_mae": -0.06296877546268043,
+            "diff_mae_ci": [
+              -0.14981261378237476,
+              0.0292521051069956
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 9
+          },
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 60,
+            "diff_mae": -0.22144570783613915,
+            "diff_mae_ci": [
+              -0.4493740898007133,
+              0.05611631260739526
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 9
+          },
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 120,
+            "diff_mae": -0.42594615873699837,
+            "diff_mae_ci": [
+              -0.9521470463234633,
+              0.16040629860152608
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 9
+          }
+        ],
+        "selection": {
+          "reg_30": {
+            "status_quo_inner_mae": 12.004615524613897,
+            "ensemble_inner_mae": 11.86539128763565,
+            "selected": [
+              {
+                "trial": 13,
+                "inner_mae": 11.896711145841456,
+                "n_iter": 319,
+                "objective": "l2",
+                "num_leaves": 31,
+                "min_child_samples": 200,
+                "learning_rate": 0.02,
+                "colsample_bytree": 0.9,
+                "subsample": 0.6,
+                "reg_lambda": 20.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 15,
+                "inner_mae": 11.910855224096355,
+                "n_iter": 810,
+                "objective": "huber10",
+                "num_leaves": 15,
+                "min_child_samples": 100,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 5,
+                "inner_mae": 11.919279891795707,
+                "n_iter": 311,
+                "objective": "l2",
+                "num_leaves": 31,
+                "min_child_samples": 400,
+                "learning_rate": 0.02,
+                "colsample_bytree": 0.9,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              }
+            ]
+          },
+          "reg_60": {
+            "status_quo_inner_mae": 18.042469305331476,
+            "ensemble_inner_mae": 17.92176837405434,
+            "selected": [
+              {
+                "trial": 11,
+                "inner_mae": 17.982426095447437,
+                "n_iter": 269,
+                "objective": "huber25",
+                "num_leaves": 15,
+                "min_child_samples": 20,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.7,
+                "subsample": 1.0,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 15,
+                "inner_mae": 17.993942639834902,
+                "n_iter": 794,
+                "objective": "huber10",
+                "num_leaves": 15,
+                "min_child_samples": 100,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 6,
+                "inner_mae": 18.01853370420663,
+                "n_iter": 132,
+                "objective": "l2",
+                "num_leaves": 63,
+                "min_child_samples": 200,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              }
+            ]
+          },
+          "reg_120": {
+            "status_quo_inner_mae": 23.506318069080027,
+            "ensemble_inner_mae": 23.106480546813074,
+            "selected": [
+              {
+                "trial": 15,
+                "inner_mae": 23.155731770367698,
+                "n_iter": 1114,
+                "objective": "huber10",
+                "num_leaves": 15,
+                "min_child_samples": 100,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 4,
+                "inner_mae": 23.1683313083607,
+                "n_iter": 182,
+                "objective": "huber25",
+                "num_leaves": 31,
+                "min_child_samples": 100,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.7,
+                "subsample": 0.8,
+                "reg_lambda": 1.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 10,
+                "inner_mae": 23.229313120295156,
+                "n_iter": 604,
+                "objective": "l1",
+                "num_leaves": 7,
+                "min_child_samples": 200,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 5.0,
+                "reg_alpha": 1.0
+              }
+            ]
+          }
+        }
+      },
+      "cgmacros|E_full": {
+        "n_patients": 9,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 14.116589185221434,
+            "mae_ci": [
+              11.97019719479903,
+              16.494942805426938
+            ],
+            "n_patients": 9,
+            "n_rows": 8174
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 21.463360746286977,
+            "mae_ci": [
+              17.305893554534162,
+              25.93380846835645
+            ],
+            "n_patients": 9,
+            "n_rows": 8147
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 30.190828402366865,
+            "mae_ci": [
+              22.930053580543085,
+              37.90112215885032
+            ],
+            "n_patients": 9,
+            "n_rows": 8112
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 30,
+            "mae": 11.824341703801133,
+            "mae_ci": [
+              9.874972871145406,
+              13.828192716834922
+            ],
+            "n_patients": 9,
+            "n_rows": 8174
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 30,
+            "mae": 11.864971858741791,
+            "mae_ci": [
+              9.902994397646697,
+              13.924385696984897
+            ],
+            "n_patients": 9,
+            "n_rows": 8174
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 60,
+            "mae": 17.800561012437168,
+            "mae_ci": [
+              14.238069755914186,
+              21.791521598373002
+            ],
+            "n_patients": 9,
+            "n_rows": 8147
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 60,
+            "mae": 17.78220547506282,
+            "mae_ci": [
+              14.008139958262865,
+              21.961290874784574
+            ],
+            "n_patients": 9,
+            "n_rows": 8147
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 120,
+            "mae": 24.14178632978998,
+            "mae_ci": [
+              17.86329036092377,
+              30.878861717366206
+            ],
+            "n_patients": 9,
+            "n_rows": 8112
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 120,
+            "mae": 23.64840398220643,
+            "mae_ci": [
+              17.537311606726078,
+              30.91849674515408
+            ],
+            "n_patients": 9,
+            "n_rows": 8112
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 30,
+            "diff_mae": 0.0406301549406578,
+            "diff_mae_ci": [
+              -0.036804997504047275,
+              0.12850600216442276
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 9
+          },
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 60,
+            "diff_mae": -0.018355537374347364,
+            "diff_mae_ci": [
+              -0.29385142038881673,
+              0.26822895157493176
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 9
+          },
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 120,
+            "diff_mae": -0.4933823475835517,
+            "diff_mae_ci": [
+              -2.4128021079241617,
+              0.8018132402380366
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 9
+          }
+        ],
+        "selection": {
+          "reg_30": {
+            "status_quo_inner_mae": 11.932410128952977,
+            "ensemble_inner_mae": 11.863913776954792,
+            "selected": [
+              {
+                "trial": 2,
+                "inner_mae": 11.8941846626256,
+                "n_iter": 205,
+                "objective": "l2",
+                "num_leaves": 7,
+                "min_child_samples": 100,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.9,
+                "subsample": 1.0,
+                "reg_lambda": 5.0,
+                "reg_alpha": 1.0
+              },
+              {
+                "trial": 11,
+                "inner_mae": 11.90379754158322,
+                "n_iter": 128,
+                "objective": "huber25",
+                "num_leaves": 15,
+                "min_child_samples": 20,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.7,
+                "subsample": 1.0,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 8,
+                "inner_mae": 11.923464777649615,
+                "n_iter": 539,
+                "objective": "huber10",
+                "num_leaves": 7,
+                "min_child_samples": 200,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.9,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              }
+            ]
+          },
+          "reg_60": {
+            "status_quo_inner_mae": 18.0462335505409,
+            "ensemble_inner_mae": 17.84592275389157,
+            "selected": [
+              {
+                "trial": 11,
+                "inner_mae": 17.870354945460832,
+                "n_iter": 225,
+                "objective": "huber25",
+                "num_leaves": 15,
+                "min_child_samples": 20,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.7,
+                "subsample": 1.0,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 15,
+                "inner_mae": 17.918153765443282,
+                "n_iter": 673,
+                "objective": "huber10",
+                "num_leaves": 15,
+                "min_child_samples": 100,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 9,
+                "inner_mae": 17.921441552212997,
+                "n_iter": 380,
+                "objective": "l1",
+                "num_leaves": 15,
+                "min_child_samples": 400,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.8,
+                "reg_lambda": 20.0,
+                "reg_alpha": 0.0
+              }
+            ]
+          },
+          "reg_120": {
+            "status_quo_inner_mae": 23.727858984348128,
+            "ensemble_inner_mae": 23.215859511303606,
+            "selected": [
+              {
+                "trial": 15,
+                "inner_mae": 23.232951745432,
+                "n_iter": 831,
+                "objective": "huber10",
+                "num_leaves": 15,
+                "min_child_samples": 100,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 0.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 10,
+                "inner_mae": 23.269659697581126,
+                "n_iter": 689,
+                "objective": "l1",
+                "num_leaves": 7,
+                "min_child_samples": 200,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.6,
+                "reg_lambda": 5.0,
+                "reg_alpha": 1.0
+              },
+              {
+                "trial": 9,
+                "inner_mae": 23.29984959164021,
+                "n_iter": 338,
+                "objective": "l1",
+                "num_leaves": 15,
+                "min_child_samples": 400,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 0.8,
+                "reg_lambda": 20.0,
+                "reg_alpha": 0.0
+              }
+            ]
+          }
+        }
+      },
+      "shanghai_t2dm|E_full": {
+        "n_patients": 19,
+        "mae": [
+          {
+            "model": "persistence",
+            "horizon_min": 30,
+            "mae": 11.949867181840133,
+            "mae_ci": [
+              10.65306214135773,
+              13.362744923139958
+            ],
+            "n_patients": 19,
+            "n_rows": 24846
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 60,
+            "mae": 20.386959677419355,
+            "mae_ci": [
+              18.002028584502654,
+              23.040781265558014
+            ],
+            "n_patients": 19,
+            "n_rows": 24800
+          },
+          {
+            "model": "persistence",
+            "horizon_min": 120,
+            "mae": 31.78455560951918,
+            "mae_ci": [
+              27.89588667645812,
+              36.156957555844095
+            ],
+            "n_patients": 19,
+            "n_rows": 24708
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 30,
+            "mae": 9.096844069604703,
+            "mae_ci": [
+              8.457437335957314,
+              9.830857924317606
+            ],
+            "n_patients": 19,
+            "n_rows": 24846
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 30,
+            "mae": 9.044247960249525,
+            "mae_ci": [
+              8.336085591031539,
+              9.840177947566366
+            ],
+            "n_patients": 19,
+            "n_rows": 24846
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 60,
+            "mae": 16.68321533249304,
+            "mae_ci": [
+              15.343930531360993,
+              18.08555746837514
+            ],
+            "n_patients": 19,
+            "n_rows": 24800
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 60,
+            "mae": 16.463378959781267,
+            "mae_ci": [
+              15.195709785229171,
+              17.94246356535477
+            ],
+            "n_patients": 19,
+            "n_rows": 24800
+          },
+          {
+            "model": "status_quo",
+            "horizon_min": 120,
+            "mae": 25.06941134290982,
+            "mae_ci": [
+              22.5759303260885,
+              28.140586896981404
+            ],
+            "n_patients": 19,
+            "n_rows": 24708
+          },
+          {
+            "model": "tuned",
+            "horizon_min": 120,
+            "mae": 25.047605853570108,
+            "mae_ci": [
+              22.521003482222646,
+              28.129592927669012
+            ],
+            "n_patients": 19,
+            "n_rows": 24708
+          }
+        ],
+        "diff": [
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 30,
+            "diff_mae": -0.052596109355178555,
+            "diff_mae_ci": [
+              -0.18221217868389464,
+              0.04722284169357594
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 19
+          },
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 60,
+            "diff_mae": -0.21983637271177514,
+            "diff_mae_ci": [
+              -0.6658027374109133,
+              0.05728088653560162
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 19
+          },
+          {
+            "model_1": "tuned",
+            "model_2": "status_quo",
+            "horizon_min": 120,
+            "diff_mae": -0.02180548933971238,
+            "diff_mae_ci": [
+              -0.24685711875923577,
+              0.172457468777015
+            ],
+            "distinguishable_from_zero": false,
+            "n_patients": 19
+          }
+        ],
+        "selection": {
+          "reg_30": {
+            "status_quo_inner_mae": 9.801368846074102,
+            "ensemble_inner_mae": 9.728955648836699,
+            "selected": [
+              {
+                "trial": 6,
+                "inner_mae": 9.745817536706546,
+                "n_iter": 121,
+                "objective": "l2",
+                "num_leaves": 63,
+                "min_child_samples": 200,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              },
+              {
+                "trial": 4,
+                "inner_mae": 9.750142335564792,
+                "n_iter": 135,
+                "objective": "huber25",
+                "num_leaves": 31,
+                "min_child_samples": 100,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.7,
+                "subsample": 0.8,
+                "reg_lambda": 1.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 13,
+                "inner_mae": 9.754504539975414,
+                "n_iter": 213,
+                "objective": "l2",
+                "num_leaves": 31,
+                "min_child_samples": 200,
+                "learning_rate": 0.02,
+                "colsample_bytree": 0.9,
+                "subsample": 0.6,
+                "reg_lambda": 20.0,
+                "reg_alpha": 0.0
+              }
+            ]
+          },
+          "reg_60": {
+            "status_quo_inner_mae": 17.152034873636733,
+            "ensemble_inner_mae": 17.06951798036563,
+            "selected": [
+              {
+                "trial": 13,
+                "inner_mae": 17.07226013337653,
+                "n_iter": 181,
+                "objective": "l2",
+                "num_leaves": 31,
+                "min_child_samples": 200,
+                "learning_rate": 0.02,
+                "colsample_bytree": 0.9,
+                "subsample": 0.6,
+                "reg_lambda": 20.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 5,
+                "inner_mae": 17.142131099588244,
+                "n_iter": 152,
+                "objective": "l2",
+                "num_leaves": 31,
+                "min_child_samples": 400,
+                "learning_rate": 0.02,
+                "colsample_bytree": 0.9,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              },
+              {
+                "trial": 6,
+                "inner_mae": 17.14336268723791,
+                "n_iter": 73,
+                "objective": "l2",
+                "num_leaves": 63,
+                "min_child_samples": 200,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              }
+            ]
+          },
+          "reg_120": {
+            "status_quo_inner_mae": 25.921403343062842,
+            "ensemble_inner_mae": 25.866286920504336,
+            "selected": [
+              {
+                "trial": 0,
+                "inner_mae": 25.921403343062842,
+                "n_iter": 68,
+                "objective": "l2",
+                "num_leaves": 15,
+                "min_child_samples": 50,
+                "learning_rate": 0.05,
+                "colsample_bytree": 0.8,
+                "subsample": 0.8,
+                "reg_lambda": 1.0,
+                "reg_alpha": 0.0
+              },
+              {
+                "trial": 6,
+                "inner_mae": 25.99355119822397,
+                "n_iter": 64,
+                "objective": "l2",
+                "num_leaves": 63,
+                "min_child_samples": 200,
+                "learning_rate": 0.03,
+                "colsample_bytree": 0.5,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              },
+              {
+                "trial": 5,
+                "inner_mae": 26.01757149652256,
+                "n_iter": 95,
+                "objective": "l2",
+                "num_leaves": 31,
+                "min_child_samples": 400,
+                "learning_rate": 0.02,
+                "colsample_bytree": 0.9,
+                "subsample": 1.0,
+                "reg_lambda": 1.0,
+                "reg_alpha": 1.0
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
