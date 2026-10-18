@@ -1546,6 +1546,8 @@ Output: `data.json` gets `forecast_tag = "Calibrated forecast"`, `forecast_note 
 
 ### D-070a: outcome (recorded after the run)
 
+Superseded (note added after D-072a; the values below are kept as recorded): these console numbers are for the status-quo forecaster. Since D-072 the console serves the tuned forecaster, and D-072a records the new values under the same D-070 protocol: calibrated MAE 10.7/16.0/20.5 mg/dL, calibrated minus persistence at +60 min -1.78 [-2.91, -0.78], so the D-070 decision rule is now met and the console note says so.
+
 Decision rule not met: calibrated minus persistence at +60 min is -0.60 mg/dL [-1.89, +0.56]. Calibrated MAE (+30/+60/+120): 11.7/17.2/22.8; persistence 11.5/17.8/26.6; uncalibrated model 12.3/19.0/26.3 (126,240 anchors at +60, 120 patients, days 4 onward). Calibrated minus persistence +0.18 [-0.50, +0.76], -0.60 [-1.89, +0.56], -3.84 [-5.82, -2.08]. Band coverage by patient, mean: calibrated 81.5/81.3/82.6 %, zero-shot 83.1/80.8/76.4 %; 10th percentile of calibrated coverage at +120 is 64 %. The offset is the shrunk mean of D-062 (n/(n+288)), the pre-registered method; the plain mean was not tried because choosing it after this result would be tuning on these patients. Per D-070 the console serves the calibrated forecast, `forecast_note` says plainly that it is not better than persistence at +60 min, and no further tuning was done. Zero-shot (D-069) is worse than persistence at every horizon on one "now" per patient; the table above (all anchors) agrees at +30 and +60.
 
 ## D-071: EHR history from Synthea for the simulated patients (SPEC, not yet run)

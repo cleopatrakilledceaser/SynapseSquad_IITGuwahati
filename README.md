@@ -143,12 +143,12 @@ Every simulated number is labelled SIMULATED.
 
 | Event | Cohort | +30 min | +60 min | +120 min |
 |---|---|---|---|---|
-| Glucose above 180 | CGMacros | 0.90 | 0.83 | 0.76 [0.71, 0.81] |
-| Glucose above 180 | Shanghai T2DM | 0.96 | 0.90 | 0.82 [0.80, 0.85] |
-| Glucose above 140 | CGMacros | 0.86 | 0.78 | 0.72 [0.67, 0.76] |
+| Glucose above 180 | CGMacros | 0.91 | 0.83 | 0.77 [0.72, 0.81] |
+| Glucose above 180 | Shanghai T2DM | 0.96 | 0.89 | 0.82 [0.79, 0.85] |
+| Glucose above 140 | CGMacros | 0.85 | 0.77 | 0.73 [0.68, 0.77] |
 | Glucose above 140 | Shanghai T2DM | 0.92 | 0.85 | 0.80 [0.78, 0.83] |
 | Glucose below 70 | CGMacros (8 patients with events) | 0.95 | 0.88 | 0.78 [0.67, 0.87] |
-| Glucose below 70 | Shanghai T2DM | 0.97 | 0.90 | 0.81 [0.76, 0.85] |
+| Glucose below 70 | Shanghai T2DM | 0.97 | 0.91 | 0.81 [0.77, 0.86] |
 
   Probabilities are calibrated: after recalibration the calibration error at +60 min is at most
   0.014, so a stated 40 % chance means the event happens about 40 % of the time.
