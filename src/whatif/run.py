@@ -46,12 +46,20 @@ def check_lock(force: bool) -> int:
     return n
 
 
-def write_lock(n_before: int, force: bool) -> None:
-    """Record the final run (count, forced re-runs)."""
+def write_lock(n_before: int, force: bool, note: str = "") -> None:
+    """Record the final run (count, forced re-runs); earlier log entries are kept."""
     OUT.mkdir(parents=True, exist_ok=True)
-    LOCK.write_text(
-        json.dumps({"runs": n_before + 1, "forced_reruns": n_before if force else 0}, indent=1)
-    )
+    old = json.loads(LOCK.read_text()) if LOCK.exists() else {}
+    lock = {**old, "runs": n_before + 1}
+    if force:
+        n = int(old.get("forced_reruns", 0)) + 1
+        lock["forced_reruns"] = n
+        lock["forced_rerun_log"] = old.get("forced_rerun_log", []) + [
+            f"{n}: final stage re-run{': ' + note if note else ''}"
+        ]
+    else:
+        lock["forced_reruns"] = 0
+    LOCK.write_text(json.dumps(lock, indent=1))
 
 
 def _periods(data: dict, pids: list[str]) -> list[str]:
@@ -136,7 +144,7 @@ def _final_fold(wc: dict, fold: int) -> tuple[Any, pd.DataFrame, pd.DataFrame]:
     return fc, pl_df, test_mae(fc, data, wc)
 
 
-def final(wc: dict, force: bool) -> None:
+def final(wc: dict, force: bool, note: str = "") -> None:
     """Final stage (run once): every fold's test patients, matched meals for every patient."""
     n_before = check_lock(force)
     t0 = time.time()
@@ -161,7 +169,7 @@ def final(wc: dict, force: bool) -> None:
     info["seconds"] = round(time.time() - t0, 1)
     info["forced_reruns"] = n_before if force else 0
     (OUT / "final.json").write_text(json.dumps(info, indent=1, default=str))
-    write_lock(n_before, force)
+    write_lock(n_before, force, note)
     print(f"final stage done: {info['seconds']:.0f}s", flush=True)
 
 
@@ -173,7 +181,8 @@ def main() -> None:
     if stage == "dev":
         dev(wc)
     elif stage == "final":
-        final(wc, "--force" in sys.argv)
+        note = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--note=")), "")
+        final(wc, "--force" in sys.argv, note)
     else:
         raise SystemExit(f"unknown stage {stage}")
 

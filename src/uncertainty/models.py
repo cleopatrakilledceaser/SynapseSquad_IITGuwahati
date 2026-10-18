@@ -15,18 +15,61 @@ import pandas as pd
 from src.hybrid.twin_features import HORIZONS
 from src.models.experiment import inner_split
 from src.personalize import methods as pm
-from src.personalize.data import PopH, fit_fixed, fit_pop, inner_folds
+from src.personalize.data import PopEns, PopH, fit_fixed, fit_pop, fit_pop_tuned, inner_folds
+
+
+def tuning_config() -> dict | None:
+    """D-065 ``tuning`` section if ``point_model: tuned`` (D-072), else None (status quo)."""
+    from src.utils.config import load_config
+
+    if load_config("uncertainty").get("point_model", "status_quo") != "tuned":
+        return None
+    return load_config("improve")["tuning"]
 
 
 def fit_population(
-    tab: pd.DataFrame, pids: list[str], cols: list[str], strata: dict, bc: dict, threads: int
-) -> tuple[dict[int, PopH], list[str], list[str]]:
-    """Part 5 population model on ``pids`` (inner split seed 42 for leaves / early stopping)."""
+    tab: pd.DataFrame,
+    pids: list[str],
+    cols: list[str],
+    strata: dict,
+    bc: dict,
+    threads: int,
+    tcfg: dict | None = None,
+) -> tuple[dict[int, Any], list[str], list[str]]:
+    """Population model on ``pids`` (inner split seed 42 for selection / early stopping).
+
+    ``tcfg`` None: Part 5 status quo (leaf grid). Otherwise the D-065 tuned search (D-072).
+    """
     in_tr, in_va = inner_split(pids, strata, bc, 42)
     rows = tab[tab.patient_id.isin(pids)]
     tr, va = rows[rows.patient_id.isin(in_tr)], rows[rows.patient_id.isin(in_va)]
-    pop, _ = fit_pop(tr, va, cols, False, bc, threads)
+    if tcfg is None:
+        pop, _ = fit_pop(tr, va, cols, False, bc, threads)
+    else:
+        pop, _ = fit_pop_tuned(tr, va, cols, bc, tcfg, threads)
     return pop, in_tr, in_va
+
+
+def ft_fit(mp: Any, xa: pd.DataFrame, ya: np.ndarray, prm: dict, t_max: int) -> Any:
+    """Fine-tune booster(s): one per member of a ``PopEns`` (each from its own trimmed booster)."""
+    if isinstance(mp, PopEns):
+        return [
+            pm.finetune(m.model_str(), m.n_iter, xa[m.cols], ya, prm, t_max) for m in mp.members
+        ]
+    return pm.finetune(mp.model_str(), mp.n_iter, xa[mp.cols], ya, prm, t_max)
+
+
+def ft_extra(mp: Any, b: Any, x: pd.DataFrame, trees: int) -> np.ndarray:
+    """Contribution of the first ``trees`` fine-tune trees (mean over members of a ``PopEns``)."""
+    if isinstance(mp, PopEns):
+        return np.mean(
+            [
+                bi.predict(x[m.cols], start_iteration=m.n_iter, num_iteration=trees)
+                for bi, m in zip(b, mp.members, strict=True)
+            ],
+            axis=0,
+        )
+    return b.predict(x[mp.cols], start_iteration=mp.n_iter, num_iteration=trees)
 
 
 def inner_models(
@@ -110,13 +153,10 @@ def finetune_frame(
         base = d[mp.base].to_numpy(float)
         for lr in lrs:
             prm = pm.finetune_params(bc["lightgbm"]["params"], ft, lr)
-            b = pm.finetune(
-                mp.model_str(), mp.n_iter, d.loc[a, mp.cols], y[rows][a] - base[a], prm, max(trees)
-            )
+            b = ft_fit(mp, d.loc[a], y[rows][a] - base[a], prm, max(trees))
             boosters[p][lr] = b
             for t in trees:
-                extra = b.predict(d.loc[e, mp.cols], start_iteration=mp.n_iter, num_iteration=t)
-                out[(lr, t)][rows[e]] = popf[e] + extra
+                out[(lr, t)][rows[e]] = popf[e] + ft_extra(mp, b, d.loc[e], t)
     return out, boosters
 
 
@@ -130,9 +170,7 @@ def ft_apply(
     e = df["days_since_start"].to_numpy(float) >= k
     out = popf.copy()
     if e.any():
-        out[e] += booster[lr].predict(
-            df.loc[e, mp.cols], start_iteration=mp.n_iter, num_iteration=trees
-        )
+        out[e] += ft_extra(mp, booster[lr], df.loc[e], trees)
     return out
 
 

@@ -222,7 +222,7 @@ def test_final_stage_runs_once_unless_forced(tmp_path, monkeypatch) -> None:
     n = wr.check_lock(True)
     wr.write_lock(n, True)
     info = json.loads((tmp_path / "FINAL_DONE").read_text())
-    assert info == {"runs": 2, "forced_reruns": 1}
+    assert info == {"runs": 2, "forced_reruns": 1, "forced_rerun_log": ["1: final stage re-run"]}
 
 
 def test_india_library_schema() -> None:
@@ -243,6 +243,11 @@ def test_india_library_schema() -> None:
 
 
 def test_dev_stage_uses_training_patients_only() -> None:
+    from pathlib import Path
+
+    splits = Path(__file__).resolve().parents[1] / "data" / "processed" / "splits"
+    if not (splits / "cgmacros_cv.csv").exists():
+        pytest.skip("split files not built (run `make data`)")
     from src.models.fusion_lgbm import folds
 
     for _, f, tr, te in folds("cgmacros", [WC["cv_repeat"]]):

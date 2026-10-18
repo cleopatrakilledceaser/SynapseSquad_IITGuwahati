@@ -45,6 +45,87 @@ class PopH:
         return self.est.booster_.model_to_string(num_iteration=self.n_iter)
 
 
+MEMBER_SEP = "\n#GLUCOTWIN_MEMBER\n"  # separates member boosters in an exported PopEns text
+
+
+@dataclass
+class PopEns:
+    """One horizon of the tuned population model (D-072): base column + mean of member boosters.
+
+    ``members`` are ``PopH`` objects (best-ranked first); ``params`` are their LightGBM training
+    parameters, used to refit each member with its own hyperparameters and tree count.
+    """
+
+    members: list[PopH]
+    params: list[dict[str, Any]]
+
+    @property
+    def base(self) -> str:
+        """Base column (shared by all members)."""
+        return self.members[0].base
+
+    @property
+    def cols(self) -> list[str]:
+        """Feature columns (shared by all members)."""
+        return self.members[0].cols
+
+    @property
+    def leaves(self) -> int:
+        """Leaf count of the best-ranked member (used by the CQR quantile models)."""
+        return self.members[0].leaves
+
+    @property
+    def est(self) -> Any:
+        """Estimator of the best-ranked member (parameter inspection only)."""
+        return self.members[0].est
+
+    def raw(self, df: pd.DataFrame) -> np.ndarray:
+        """Mean booster output of the members (delta to the base column)."""
+        return np.mean([m.raw(df) for m in self.members], axis=0)
+
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
+        """Absolute glucose forecast (mg/dL)."""
+        return df[self.base].to_numpy(float) + self.raw(df)
+
+    def model_str(self) -> str:
+        """Member texts joined by ``MEMBER_SEP`` (the app runtime averages them)."""
+        return MEMBER_SEP.join(m.model_str() for m in self.members)
+
+
+def fit_pop_tuned(
+    tr: pd.DataFrame, va: pd.DataFrame, cols: list[str], bc: dict, tcfg: dict, n_jobs: int
+) -> tuple[dict[int, PopEns], dict[str, Any]]:
+    """D-065 tuned search (inner-validation MAE, top-k average), served model of D-072.
+
+    Monotone constraints in ``bc`` (Part 7 ``mono`` form) are added to every candidate;
+    LightGBM cannot combine them with the absolute-error loss, so those candidates are skipped
+    for that form (D-072 amendment). Candidate numbering is unchanged.
+    """
+    from src.models.tuned import TunedLGBM, lgb_params, trial_params
+
+    mono = bc["lightgbm"]["params"].get("monotone_constraints")
+    if mono is not None:
+        tcfg = {
+            **tcfg,
+            "fixed": {**tcfg["fixed"], "monotone_constraints": list(mono)},
+            "skip_objectives": ["l1"],
+        }
+    m = TunedLGBM(cols, {}, seed=42, target="delta", base="cgm_now", tcfg=tcfg, n_jobs=n_jobs)
+    m.fit(tr, val=va, horizons=list(HORIZONS), events=False)
+    trials = trial_params(tcfg)
+    out = {}
+    for h in HORIZONS:
+        sel = m.chosen[f"reg_{h}"]["selected"]
+        mems, prms = [], []
+        for s, est in zip(sel, m.members[h], strict=True):
+            t = trials[s["trial"]]
+            n_it = int(est.best_iteration_ or est.n_estimators)
+            mems.append(PopH(est, "cgm_now", n_it, cols, int(t["num_leaves"])))
+            prms.append(lgb_params(t, tcfg, 42, n_jobs))
+        out[h] = PopEns(mems, prms)
+    return out, m.chosen
+
+
 def first_period(tab: pd.DataFrame) -> pd.DataFrame:
     """Rows of each patient's first (earliest) period only."""
     start = tab.groupby("period_id")["t"].transform("min")
@@ -74,13 +155,25 @@ def fit_pop(
 
 
 def fit_fixed(
-    tr: pd.DataFrame, pop: dict[int, PopH], bc: dict, n_jobs: int, seed: int = 42
-) -> dict[int, PopH]:
-    """Refit with the outer model's leaves / trees (no early stopping) on other patients' rows."""
-    out = {}
+    tr: pd.DataFrame, pop: dict[int, Any], bc: dict, n_jobs: int, seed: int = 42
+) -> dict[int, Any]:
+    """Refit with the outer model's leaves / trees (no early stopping) on other patients' rows.
+
+    A ``PopEns`` is refitted member by member with each member's own parameters and trees.
+    """
+    out: dict[int, Any] = {}
     for h, p in pop.items():
         y = tr[f"y_{h}"].to_numpy(float) - tr[p.base].to_numpy(float)
         ok = ~np.isnan(y)
+        if isinstance(p, PopEns):
+            mems = []
+            for m, prm in zip(p.members, p.params, strict=True):
+                n = max(m.n_iter, 1)
+                prm = {**prm, "n_jobs": n_jobs, "random_state": seed, "n_estimators": n}
+                est = lgb.LGBMRegressor(**prm).fit(tr.loc[ok, m.cols], y[ok])
+                mems.append(PopH(est, m.base, n, m.cols, m.leaves))
+            out[h] = PopEns(mems, p.params)
+            continue
         params = {**bc["lightgbm"]["params"], "n_jobs": n_jobs, "random_state": seed}
         params |= {"num_leaves": p.leaves, "n_estimators": max(p.n_iter, 1)}
         est = lgb.LGBMRegressor(**params).fit(tr.loc[ok, p.cols], y[ok])

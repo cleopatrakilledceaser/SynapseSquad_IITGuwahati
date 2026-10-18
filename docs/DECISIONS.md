@@ -1329,3 +1329,285 @@ No test window or evaluated patient was used to choose the revision. Ranges are 
   - Part 5 hybrids and Part 6 use alpha_E = 0 (bitwise unchanged, checked above).
   - Consequence for Part 7: `twin_learned_d056` uses the ORIGINAL Part 4 `alpha_on` (as
     pre-specified in this entry), not the re-selected value.
+
+
+## D-057 Part 9 step 1: explainability (SHAP + templates, no LLM)
+- **Model explained:** the Part 5/6 population LightGBM (A0: CGM + time of day + meals + glycemic
+  static, delta target), one booster per horizon. TreeSHAP (LightGBM `pred_contrib`, restricted to
+  the `n_iter` trees the model uses) explains the predicted CHANGE in mg/dL: base value + sum of
+  contributions = predicted delta (checked on 60 training-patient rows: max |diff| 2e-13 at every
+  horizon; the `shap` package gives identical values, max |diff| 0.0).
+- **Template rules (`src/explain/templates.py`, `configs/explain.yaml`):** a feature is quoted
+  only if (i) the model really uses it (positive split gain in the used trees), (ii) |SHAP| >= 1
+  mg/dL at that horizon, (iii) the push points the way the sentence says (towards the event for
+  moderate / high / very high risk, away from it for low risk). One reason per topic (trend, meal,
+  level, activity, time, profile, data), at most two clauses; clinically meaningful topics are
+  listed before time of day / profile / data. Every number in a clause is read from the row; a
+  feature without a template raises `KeyError` (tested for every used feature).
+- **Wording of probabilities** (display choice, not a model result): < 10 % low, < 30 % moderate,
+  < 60 % high, otherwise very high. The probability itself is the Part 6 calibrated event
+  probability (Platt on training out-of-fold rows); not available is shown as "not available".
+- **Limits:** SHAP explains the model, not the physiology: a quoted feature is what moved the
+  forecast, not a cause. Time of day and HbA1c can appear as reasons when nothing else stands out.
+  Explanations exist for the population model only (not for the monotone model or the twin).
+- **Fonts (Part 9 design):** Atkinson Hyperlegible (Braille Institute) and Source Serif 4 (Adobe),
+  both SIL Open Font License 1.1, bundled locally as woff2 in `app/static/fonts` (latin subsets
+  fetched once from the fontsource packages at build time, never at run time).
+
+## D-058 Part 9 step 3: app data bundle (`make app-data`, `app/demo`, offline)
+Status: written before the first run of the builder; the guard values below are recorded in
+`app/demo/manifest.json` by each build, not claimed here.
+- **Owner decisions (checkpoint 1):** a display-only very-high band at 250 mg/dL and a very-low
+  band at 54 mg/dL (no risk is computed for them; models and alerts keep 70, 140, 180); damson
+  plum with Atkinson Hyperlegible and Source Serif 4; what-ifs run LIVE from saved models.
+- **What is shipped:** the fold-0 population models (unconstrained and monotone forms, full model
+  plus the three inner-fold models of the Part 6 CV+ arm, trimmed to the trees they use) as
+  LightGBM text, their out-of-fold residuals, Platt maps and alert thresholds from the fold's
+  TRAINING patients, stored cohort numbers copied from the Part 3/5/6/7 metric files, SHAP values
+  and template sentences, and six evidence figures. No raw or processed dataset is committed
+  (`app/demo/` is gitignored; CGMacros is CC BY-NC-SA).
+- **Which patients:** fold-0 test patients that have Part 6 test rows, chosen by a rule fixed in
+  `configs/app.yaml` before looking at any result (first patient per diabetes status by sorted id,
+  then the next T2D patient), plus one SYNTHETIC patient from the Part 4 simulator (the simulated
+  patient whose Gb is closest to the cohort median), labelled synthetic on every page.
+- **No outcome is ever used for a displayed patient:** the builder reads the test patients'
+  anchor rows only after dropping `y_*` and `*_any_*` columns (`cgm_slope_30` is a trailing-slope input, kept); every forecast is from a
+  fold model that never saw the patient; calibration and alert thresholds are fitted on training
+  patients only. A guard fails the build if an outcome column appears in any output frame.
+- **Live what-if:** meal and activity inputs are recomputed on the period prefix with the Part 2
+  code (Part 7 edit semantics); CGM, time and static inputs cannot change. The shipped runtime
+  (`src/appdata/rt.py`) needs no LightGBM and no training data; the build checks it reproduces the
+  in-memory forecasts and CV+ bands (`rtform_max_abs_diff`, limit 1e-6 mg/dL).
+- **Twin:** needs the fitted per-patient state, so its what-if trajectories are precomputed on a
+  (carbs, slowing-ratio) grid per window, once with the learned activity effect and once with the
+  assumed walk effect (D-052), both with the one-sided activity term (D-056). Values between grid
+  nodes are bilinear interpolations and are labelled as such; the build measures the interpolation
+  error against the engine at random off-grid points (`interp_max_abs_diff`, limit 5 mg/dL).
+  The synthetic patient has no fitted twin: "not available".
+- **Alerts in the replay are causal:** the at-risk flag uses only readings up to the anchor, which
+  differs slightly from Part 6 (its episode flags knew the confirmation 15 min later). This is a
+  display rule and is stated in the app.
+- **Confidence label** (uncertain / moderate / high) is a DESIGN CHOICE, not a validated rule:
+  interval wider than 1.5 x the fold's median CV+ width at +60, or data quality below 0.70, or a
+  sensor reading older than 60 min.
+- **Removed:** `src/dash/live.py` duplicated `src/appdata/rt.py` and imported LightGBM; the
+  calibration and patient-state code moved into `rt.py`.
+- **Not run yet:** the builder has not been executed at the time of writing.
+
+## D-059 Part 9 step 3: UI rules (apply to every page)
+- Language is decision support: never "diagnosis" or "prescribe". A footer on every page states
+  that GlucoTwin is a research prototype, not a medical device.
+- Only the baseline glucose Gb of the twin is shown (the only identifiable parameter, test-retest
+  r 0.62; the others 0.14 to 0.24); SG, SI, fc, kabs and beta are never displayed.
+- Every what-if result carries the fixed note: "Model-based estimate, not a causal guarantee. In
+  matched real breakfasts the models predicted about half the observed rise; treat sizes as lower
+  bounds." The monotone model is the default; the twin and the unconstrained model are alternatives.
+- Interpolated twin values, assumed inputs (synthetic patient profile, macro ratios) and display
+  thresholds are labelled as such.
+- Data-quality text says the score detects missing data, not wrong data (bias and drift are not
+  detected, Part 6). Personalization text says the gain is about 1 mg/dL after 3 to 5 days of the
+  patient's own CGM and that heart rate and activity add nothing measurable (Parts 4 and 5).
+- Colour is never the only carrier of meaning: each glucose state has a pattern and a label.
+
+## D-060: Dashboard visual redesign after first screenshots (Part 9)
+
+Context: first screenshots looked plain, the Material icon font printed as text ("_arrow_right"), a heading was duplicated, the overview URL was wrong in the screenshot script, and Atkinson's slashed zero looked odd in numbers.
+Decision: dark damson sidebar with icons, white rounded cards, three number tiles per patient (glucose now, +60 min, chance of the headline event), word-plus-dot chips for risk and alerts, softer zone patterns (pattern and label still on every zone), system UI font stack instead of Atkinson (offline, native look, no slashed zero), Source Serif 4 kept only for the decision sentence. Streamlit toolbar and Deploy button hidden.
+Unchanged: every wording rule, fixed what-if note, disclaimer on every page, decision-support language, display of only Gb, no invented numbers. This departs from the flat, text-only look in docs/DESIGN.md section 2 at the user's request.
+
+## D-061: Part 8a cross-cohort transfer protocol (written before any run)
+
+Question: how much accuracy is lost when a model trained on one open cohort forecasts another, and what recovers it?
+Setup: CGMacros on the common 15-min grid (`cgmacros_15` tables) and Shanghai T2DM, both directions, 6 h windows, +30/+60/+120 min. LightGBM, delta target, Part 2 protocol (inner patient split for early stopping).
+Features: only columns present in both tables: `cgm_*` (shared names), time of day (sin, cos; `days_since_start` excluded because recording lengths differ), and optionally the five static fields both cohorts have (age, sex, BMI, HbA1c, fasting glucose). No wearable or meal features (Shanghai has none).
+Methods, all scored on the same rows (first period of each target patient, anchors at day >= 3, patients with >= 96 such anchors, real y at +60):
+1. persistence (last CGM value);
+2. in-cohort: target-cohort CV repeat 0 with the same features and the saved split files;
+3. zero-shot: trained on all source patients only;
+4. zero-shot + few-shot correction with the target patient's first k = 1 or 3 days (shrunk mean residual "offset", or ridge on four features). Only pairs whose target time is before day k are used (unit-tested). Hyperparameters are fixed in `configs/transfer.yaml` before running and are not tuned on target patients;
+5. pooled: all source patients plus the target training patients of each CV fold.
+Reported: MAE with patient-bootstrap 95% intervals; paired differences (zero-shot vs in-cohort = domain-shift penalty; pooled vs in-cohort; few-shot vs zero-shot); for CGMacros as target also the T2D-only subgroup (Shanghai is T2D only, so this is the fair comparison).
+Not done: South Asian subgroup (neither dataset records ethnicity; see data_card.md). Event (hypo / hyper) transfer is not run. A negative result will be reported as found.
+
+## D-062: Part 8b India synthetic cohort, stress test and augmentation (written before any run)
+
+Question: if South Asian physiology differs from the training cohorts in the assumed ways, how does a model trained on real data degrade, and does adding synthetic data to training help real patients?
+Why synthetic: no open dataset records ethnicity and has CGM, meals and wearables together, and the competition rules require anonymized, open-source or synthetic data. AI-READI was checked (D-063 note below) and needs a controlled-access request plus an Azure storage container; it has no confirmed meal log and its ethnicity field is controlled.
+Cohort: 100 simulated patients x 10 days per strength. Generator: Part 4 mechanistic simulator; the log-parameter covariance comes from the real CGMacros twin fits (k = 3 days), only the MEAN is shifted. Shifts at strength 1.0: insulin sensitivity ln(4.7/7.5) = -0.46 (clamp study, healthy Asian Indians vs Caucasians, J Clin Endocrinol Metab 2001; the mapping to the model parameter is an ASSUMPTION), fasting glucose parameter +0.05 and absorption rate +0.15 (both ASSUMPTIONS). Strengths: control 0, mild 0.5, moderate 1.0, strong 1.5.
+Inputs: 16 assumed Indian meal presets (src/india/meals.json; composition from IFCT 2017 tables, recipes assumed), a documented wearable generator (walking bouts, then activity, heart rate and intensity), static fields derived from the simulated CGM (HbA1c from eAG = 28.7 x A1C - 46.7, Nathan 2008) plus assumed age, sex and BMI draws. Noise and activity gain come from stored Part 4 results.
+A. Stress test: LightGBM trained on all real CGMacros patients (same features that exist in both tables: cgm, time of day, wearable, meal, five static), zero-shot and offset few-shot (k = 1, 3) on each synthetic cohort; same evaluation rows rule as D-061; MAE, bias, paired differences with patient-bootstrap intervals; compared with persistence and with the in-cohort CGMacros reference on the same features.
+B. Augmentation: CGMacros CV repeat 0; train on real patients only, real + control cohort, real + moderate cohort; evaluate on the real validation patients only. Fixed hyperparameters; no tuning on evaluation patients.
+Every number involving a synthetic cohort is labelled SIMULATED. It supports claims about robustness under assumed shifts, never claims about accuracy on Indian patients. A negative result will be reported as found.
+Known limits: the cohort skews to the diabetic range (the fitted parameters come from CGMacros, which includes healthy participants but the shifts push towards impaired glucose handling); meal presets are assumed recipes; wearable signals are simple functions of the simulated activity; carbohydrate energy share is compared with ICMR-INDIAB (62%) in the cohort summary.
+Note on AI-READI: public CGM and Garmin files exist, but access requires CILogon, ethics training, a licence agreement, a publicly listed research description and an Azure container. Not pursued; listed as future work.
+
+## D-063: Part 8c federated learning simulation (written before any run)
+
+Question: can clinics that cannot share patient records still train a shared glucose forecaster, and what does it cost in accuracy compared with pooling the data? This is a SIMULATION on one machine: the "clinics" are groups of patients from the two open cohorts (no network, no real hospitals).
+Data and features: CGMacros and Shanghai T2DM on the common 15-min grid, the shared features of D-061 (`cgm_*`, time of day, five common static fields), 6 h windows, targets delta at +30/+60/+120 min (glucose at +h minus now). Evaluation rows follow D-061 (first period, anchors from day 3, patients with at least 96 evaluable anchors).
+Model: a small MLP (64-32, ReLU) written in NumPy so it runs anywhere and is unit-tested. It is NOT claimed to beat the LightGBM models of Parts 2-3; the comparison is federated against centralized and local-only versions of the SAME model. Inputs are standardized with statistics aggregated across clinics from sums only (a federated-analytics step; aggregate statistics are shared, not records); missing values become 0 after standardization.
+Clinic layouts (5 clinics except where noted): (1) IID: patients of both cohorts dealt at random; (2) non-IID by HbA1c: patients sorted by HbA1c and cut into contiguous groups; (3) by dataset: 2 clinics, one per cohort (cross-silo). In each clinic 20% of patients are held out for testing (5 random splits; same hold-out for every method); training uses only the other patients.
+Methods: persistence; local-only (each clinic alone, tested on its held-out patients); centralized (all training patients pooled); FedAvg (sample-weighted, all clinics every round); FedProx (proximal weight mu); FedAvg with client-level differential privacy (update clipping at norm C, Gaussian noise z*C on the sum, equal weights). Every method makes the same number of passes over each patient's training data (rounds x local epochs), so centralized training takes more optimizer steps than one client does. All hyperparameters (rounds, local epochs, learning rate, mu, C, z) are fixed in `configs/federated.yaml` before the first run and are not tuned on test patients.
+Privacy accounting: epsilon of the DP runs is reported with delta = 1e-5 from the Renyi-DP accounting of the Gaussian mechanism under full participation (no subsampling amplification claimed). With only 2 to 5 clients, client-level DP is expected to cost a lot of accuracy; the result will be reported as found. The DP here protects a clinic's whole contribution; it is not patient-level DP.
+Reported: MAE per method, layout and horizon with 95% patient-bootstrap intervals (resampling patient-split pairs); federated minus centralized and federated minus local-only paired differences; epsilon table.
+Not done (listed deferred): patient-level DP-SGD (per-example clipping); secure aggregation; communication cost beyond counting rounds and parameters; real multi-site deployment; heterogeneous model architectures; client dropout. Mapping to the DPDP Act (purpose limitation, data minimisation, no raw-record transfer) is in docs, not a legal opinion.
+
+## D-064: Part 8d simulated sleep, HRV and step channel, and a detectability (power) analysis (written before any run)
+
+Why: the organizers' page names sleep stages, heart-rate variability and step count as example dynamic streams. Our real cohorts have none of them (CGMacros has heart rate and activity only), and Parts 4 and 5 found that heart rate and activity add nothing measurable. This part shows that the pipeline CAN ingest such channels and asks how large a sleep effect would have to be before the model could use it. It does not claim that sleep helps real patients.
+Generator (all SYNTHETIC, India cohort of D-062): one night of sleep before each day: duration ~ N(6.8, 1.0) h clipped to [3.5, 9.5], efficiency ~ N(0.88, 0.05), deep-sleep fraction ~ N(0.17, 0.04) (independent of glucose, an ASSUMPTION, so these carry no signal), nightly HRV (RMSSD) = 32 ms x exp(-0.05 x deficit + noise) where deficit = 7 h minus duration (the HRV link to short sleep is an ASSUMPTION), and a step count derived from the simulated activity. A night's summary becomes known at 06:00 on the day after it (causal).
+Glucose effect (the only path from sleep to glucose): from 06:00 each day insulin sensitivity SI is multiplied by exp(-beta x m x deficit), where deficit = 7 h minus last night's duration (never negative: longer sleep has no effect), beta = 0.03 per hour (ASSUMPTION, between 0.023 and 0.045 per hour implied by Buxton et al., Diabetes 2010: 7 nights at 5 h versus 10 h in bed, n = 20 healthy men, insulin sensitivity -11 +/- 5.5% by clamp and -20 +/- 24% by IVGTT) and m = effect multiplier. Conditions m = 0 (no effect, the false-positive control), 1 (literature scale), 3 and 5 (stronger than the literature, to find the point where the channel becomes usable). Patients, parameters, meals and sleep draws are identical across conditions (paired design); only m changes.
+Test: within each condition, patient-level 5-fold CV (seeded random folds) of LightGBM (D-061 fit protocol, +30/+60/+120 min, 15-min grid, 6 h windows) with three nested feature sets: A = CGM, time of day, meal features; B = A + heart rate and activity; C = B + sleep, HRV and step features. Evaluation rows: day >= 3 with a real target. Reported: MAE, paired patient-bootstrap difference B - A and C - B with 95% intervals.
+Reading the result: if C - B is indistinguishable from 0 at m = 1 and negative only at larger m, the honest statement is "at literature-scale effects the sleep channel is not detectable in 10 days of data; the dashboard shows it as context only". If C - B is negative at m = 0 something is leaking and the run is a bug. A negative result will be reported as found. No claim about real patients.
+
+### D-063a: exploratory noise sweep (added AFTER the first federated run; not pre-registered)
+
+The two noise multipliers fixed in D-063 (z = 0.5 and 1.0) both ruined the model (about +20 to +155 mg/dL at +60 min, epsilon 50 to 141), which is the outcome D-063 said to expect with 2 to 5 clinics. To show where accuracy survives and what privacy that buys, a sweep over smaller multipliers z = 0.01, 0.03, 0.1, 0.2 is run with everything else unchanged (same clip, rounds, splits, seeds, same FedAvg reference). It is labelled EXPLORATORY in the metrics file and in every figure because it was chosen after seeing the first result. It is a privacy-utility curve, not a tuned model: no setting is selected on test patients and no setting is proposed for use. Expected reading: accuracy returns only when the noise is so small that epsilon is in the thousands or more, i.e. client-level differential privacy is not usable with a handful of clinics; a real deployment would need many more clients or patient-level DP-SGD (still deferred).
+
+## D-065: Part 10 tuned LightGBM (protocol written before any run)
+
+Why: the shipped forecaster uses a squared-error loss and tunes only the number of leaves, while it is scored on absolute error. A wider search and an absolute-error-type loss may lower MAE. Because Parts 2 to 9 looked at the same patients many times, the protocol below limits how much a gain can be due to selection.
+
+Candidates (`configs/improve.yaml`): 16 candidates, the first one is exactly the Part 2/3 setting, the rest are seeded random draws over loss (squared, absolute, Huber with alpha 10 and 25), leaves, minimum child samples, learning rate, column and row subsampling and L1/L2 penalties. The candidate list is identical for every fold and horizon.
+
+Selection: inside each outer training fold, on the INNER validation patients only (the Part 2 inner split). Score = MAE. The 3 best candidates are averaged. Test patients are never used for any choice, so the search cannot do worse than the status quo on inner validation but may do worse on test.
+
+Feature sets: CGMacros D_cgm_wear_meal and E_full, Shanghai T2DM E_full (fusion.yaml), delta target. Nothing else changes.
+
+Design A (cv): outer CV repeat 0 (5 patient-grouped folds), status quo refitted on the same folds, paired patient-bootstrap difference tuned minus status quo at +30/+60/+120.
+Design B (holdout): the holdout test patients (never used for any choice in Parts 2 to 9; used in Part 6 only for evaluation), run ONCE after the design A result is recorded, train = holdout train patients, validation = holdout calibration patients. The runner refuses a second run.
+
+Decision rule (fixed now): the tuned model becomes the default forecaster only if (1) on design A its +60 min difference has a CI entirely below 0 in at least one cohort, (2) its point difference is below 0 at all three horizons for every cohort and config, and (3) the holdout +60 point difference has the same sign. Otherwise the status quo stays and the result is reported as found. Either way the numbers go in the README.
+
+What this does not do: it does not change event classifiers, intervals, the twin or the what-if engine. If tuned forecasts are adopted, intervals and event scores are NOT recomputed in this part; that would be a new, separately documented step.
+
+## D-066: Part 8d scale-up: would more simulated patients and days reveal the sleep effect? (written before the run)
+
+Why: the D-064 run (100 patients, 10 days) found no detectable gain from sleep, HRV and steps at any multiplier. A fair next question is whether that is only a lack of data. Same generator, same features, same CV, same analysis; only the size changes: 300 patients, 30 days, multipliers 0 (control) and 1 (literature scale). Seed 212 (different draws from D-064).
+
+Reading (fixed now): if C minus B at m = 1 is still indistinguishable from 0, the honest statement is that, at literature-scale effects, the sleep channel does not improve 30 to 120 minute forecasts even with about 9 times more patient-days, because the mean glucose shift it causes (about 0.3 mg/dL at m = 1 in D-064) is far smaller than meal-driven variation. If C minus B is below 0 with a CI excluding 0 at m = 1 and not at m = 0, it is detectable at that scale. m = 0 below 0 would be a leak and a bug. This is a SIMULATION result and says nothing about real patients.
+
+Not done and why: ingesting AI-READI (access barriers, listed as future work) and attaching invented sleep or HRV to real patients (it would carry no real signal).
+
+## D-067: published synthetic Indian T2D dataset (SYNTHETIC)
+
+Why: the organizers allow synthetic wearable data, and name sleep stages, HRV and step count. The open real cohorts are small and have none of them (CGMacros: heart rate and activity only; Big IDEAs: 16 people, high-normal glucose, no sleep). A documented synthetic dataset lets the dashboard and pipeline show all named streams, each labelled SIMULATED.
+
+What it is: `make synth-data` writes CSVs (5-minute glucose, heart rate, activity, steps; Indian meals; nightly sleep with awake, light, deep and REM minutes and HRV; static EHR) and DATASHEET.md for 200 virtual patients x 14 days (seed 301, insulin-resistance strength moderate, sleep effect multiplier 1). Sleep stages use their own random stream, so no earlier simulated number changes (tests assert this). Internal simulator variables (true glucose, parameters) are not exported.
+
+What it is not: evidence. Sleep, HRV and stage distributions and the sleep-to-insulin link are assumed. It is not used to train or validate any reported model (Part 8b showed synthetic augmentation did not help real patients). Nothing is committed to git; the dataset is regenerated from the seed.
+
+## D-068: simulated EHR history for the synthetic cohort (diagnoses, medications, genetic markers)
+
+Why: the organizers' page lists "demographics, past diagnoses, lab results, genetic markers" as the static stream. The open cohorts have demographics and labs only (Shanghai also medications and kidney function), and no genetic data.
+
+What: `src/india/ehr.py` adds diabetes duration, hypertension, dyslipidaemia, CKD stage 3+, retinopathy, neuropathy, coronary disease, diabetes and statin / ACEi-ARB medications, eGFR, family history and risk-allele dosages for three well-known T2D variants (TCF7L2 rs7903146, FTO rs9939609, SLC30A8 rs13266634) to every synthetic patient. All probabilities and allele frequencies in `configs/india.yaml` (`ehr:`) are ASSUMPTIONS chosen to look plausible; none is an estimate.
+
+Limits (stated in the datasheet and the dashboard): the history has NO effect on the simulated glucose, so no result may claim that diagnoses or genetic markers help the forecast. It uses its own random stream per patient, so no earlier simulated number changes (tested). It exists so the pipeline and the doctor dashboard handle and display a full EHR, which is what the organizers ask the prototype to demonstrate.
+
+### D-065a: outcome of the Part 10 tuned forecaster (recorded after both stages ran)
+
+Design A (CV, repeat 0, paired with Part 3): the tuned model is better than the status quo at all three horizons in every cohort and config. +60 min difference (MAE, mg/dL, negative = tuned better): CGMacros D_cgm_wear_meal -0.38 [-0.58, -0.17], CGMacros E_full -0.63 [-1.01, -0.33], Shanghai T2DM E_full -0.33 [-0.53, -0.15]. The tuning mostly selected absolute-error and Huber losses (the old model trained on squared error but is scored on absolute error).
+
+Design B (single-shot holdout, 9 CGMacros and 19 Shanghai patients): +60 min differences -0.22, -0.02 and -0.22. The sign agrees in every config, so the pre-registered rule is met. Every holdout CI includes 0 (small samples), CGMacros E_full is a tie (-0.02 at +60, +0.04 at +30). The holdout was used once.
+
+Decision on adoption: the rule is met, so the tuned forecaster is reported as a validated modest improvement (about 2 to 4 % of MAE). The dashboard keeps serving the status-quo forecaster, because its interval bands, event probabilities and what-if results were calibrated and, for Part 7, locked for that model (D-065 says they are not recomputed here). Serving the tuned model would need a new documented step that re-runs Parts 6 and 7; it is listed as future work, not done.
+
+
+## D-069: real forecasts and what-ifs for the console's 120 simulated patients (SPEC, not yet run)
+
+Why: `web/data.json` currently carries a development forecast (ridge, about equal to persistence) so the layout could be built. The submission must show the project's real models.
+
+What: a new step `python -m src.web.real_forecast` (target `make web-real`) that, for each of the 120 simulated T2D patients written by `src.web.build_data`, does what `src/appdata/synthetic.py` and `src/appdata/replay.py` already do for the single synthetic demo patient of Part 9: turn the simulated record into model inputs (period grid, meal log with the Indian presets' macros, heart rate and activity as in the cohort table; the static profile is the simulated HbA1c and fasting glucose), then run the shipped fold-0 models (`src.appdata.rt`, `app/demo/models`, `calib.npz`) at the patient's "now" anchor. The models never saw these patients (zero-shot, like the Indian stress test of D-062), so the page must say "model trained on open data, applied zero-shot to simulated patients".
+
+Replaces in `data.json` (same keys, so `index.html` does not change): `fc` (point forecast and CV+ 80 % band at +30, +60, +120 min, clamped to 40 to 400 mg/dL as in Part 9), `ev` (calibrated event probabilities: hi180_60, hi180_120, hi250_120, lo70_60; `Calibration.prob`; if no calibrator exists for 250, say so and drop that bar rather than invent one), and `forecast_source` becomes "model". The dev banner then disappears by itself.
+
+Adds for the What-if lab (read by `whatifView`): top-level `whatif_meta = {carbs_grid: [0, 10, ..., 150], models: {mono: "Monotone model (default)", unc: "Unconstrained model"}, presets: [{key, label, portion, macros{carbs_g, protein_g, fat_g, fiber_g}}]}` (presets from `src.india.library`) and per patient `whatif = {windows: [...]}`: up to 3 logged meals in the last 24 h that end at least 125 minutes before "now". Each window is `{label, m, base_macros{carbs}, models: {mono: M, unc: M}}`, `m` in the same minute convention as `meals[].m`, and `M = {base: {"30","60","120"}, logged_walk: {...}, pred: {"30": [no-walk list, walk list], "60": ..., "120": ...}, presets: [{pred: {"30": [no-walk, walk], ...}}]}`: `base` is the logged meal without a walk; `pred[h][w][i]` is the forecast when the meal is replaced by `carbs_grid[i]` grams (protein, fat and fibre scaled per gram as in `src.dash.whatif.edits_for`), with the walk off or on; `presets[j]` replaces the meal by preset j. All values come from `rt.edited_forecast` with the Part 7 edit semantics; nothing is invented. Twin what-ifs are not offered for these patients (no fitted twin) and the page says so.
+
+Honesty rules: report on the page that results are zero-shot on simulated patients; do not show forecast error against the simulated future as an accuracy claim (the replay compares one forecast with one simulated reading, for illustration); the fixed what-if note stays; if an edit is outside the tested range (more than 150 g carbohydrate) clamp to the grid edge and say so. Add a test that `fc` bands are ordered (lo <= p <= hi), event probabilities lie in [0, 1], `monotone` carbohydrate predictions are non-decreasing in grams for the monotone model, and that the output is deterministic.
+
+Acceptance: `make web-data` followed by `make web-real` gives a `data.json` whose Now-and-next, Visit summary and What-if tabs show model forecasts; MAE of the new point forecast against the simulated future at +30, +60, +120 is reported next to the persistence MAE in the run output (not on the page) so any failure of the zero-shot model is visible before submission.
+
+### D-066a: outcome of the larger sleep study (recorded after the run)
+
+300 simulated patients x 30 days, 777,000 scored windows per condition, seed 212. C minus B (mg/dL, 95 % CI): m = 0: +0.064 [+0.040, +0.100], +0.067 [+0.047, +0.087], +0.058 [+0.016, +0.113] at +30, +60, +120 min; m = 1: -0.061 [-0.097, -0.035], -0.031 [-0.073, +0.011], +0.005 [-0.045, +0.051]. No leak (m = 0 is not below 0). At literature scale the sleep channel is detectable at +30 min only, by about 0.06 mg/dL (0.5 % of the error); not detectable at +60 or +120 min. Decision: the dashboard keeps showing sleep, HRV and steps as context, not as forecast drivers. Simulation result only. Provenance note: the recorded git hash (e363284-dirty) is not the code that ran; the run used e046baa code, and a `git pull` mid-run changed HEAD. None of the changed files is used by this analysis, so the results stand.
+
+## D-070: calibrate the console's forecasts on each simulated patient's first 3 days (SPEC, written before the run)
+
+Why: D-069 ran and the zero-shot model loses to persistence on the 120 simulated patients (one "now" per patient, MAE +30/+60/+120: 17.9/24.6/34.4 against 15.5/20.7/28.6 mg/dL; mean error +5.3/+11.0/+13.9; 80 % range holds the reading in 66/72/60 % of patients). That is the same finding as D-061 and D-062: a model trained on other populations is not better than "stay where you are" and needs local calibration. The few-shot offset of D-062 (k = 3 days) is the pre-registered remedy, so the console should show the path the project recommends rather than the zero-shot model. This is not tuning on a result: the method and k are fixed by D-062.
+
+What: in `src/web/real_forecast.py`, for each patient run the shipped models on every anchor (15-minute stride) of days 1 to 3 and compute the per-horizon mean residual (forecast minus simulated reading); that additive offset is subtracted from every later forecast of that patient (point, and the band moves with it), including what-if baselines and predictions (a constant offset leaves what-if differences unchanged). The band width is set from the pooled calibration-day residual quantiles (10th and 90th percentile after the offset) over all patients, per horizon; say this in `forecast_note`.
+
+Evaluation (all anchors from day 4 onward, 15-minute stride, 120 patients; patient-bootstrap 95 % intervals, 2000 resamples, seed 7): MAE of persistence, zero-shot model and calibrated model at +30/+60/+120; paired difference calibrated minus persistence; coverage of the 80 % band by patient. Report the zero-shot row too: it is a result, not something to hide.
+
+Decision rule (fixed now): if calibrated MAE is below persistence at +60 with a paired interval that excludes 0, the console serves the calibrated forecasts. If not, serve them anyway only if you report that plainly in `forecast_note`, and stop: no further tuning on these patients, tell me.
+
+Output: `data.json` gets `forecast_tag = "Calibrated forecast"`, `forecast_note = "Model trained on open data, applied to simulated patients with an offset calibrated on each patient's first 3 days (D-070). Simulated patients, not clinical evidence."` and `forecast_eval = {title, sub, cols, rows, note}` (table rows: Persistence, Model without calibration, Model with 3-day calibration; columns +30, +60, +120 with intervals; note with coverage). The console shows it under Evidence, India readiness. The "now" of each patient stays the last day, so the replay and what-if charts keep their 24 h history. The >250 probability stays dropped; do not invent a calibrator.
+
+### D-070a: outcome (recorded after the run)
+
+Superseded (note added after D-072a; the values below are kept as recorded): these console numbers are for the status-quo forecaster. Since D-072 the console serves the tuned forecaster, and D-072a records the new values under the same D-070 protocol: calibrated MAE 10.7/16.0/20.5 mg/dL, calibrated minus persistence at +60 min -1.78 [-2.91, -0.78], so the D-070 decision rule is now met and the console note says so.
+
+Decision rule not met: calibrated minus persistence at +60 min is -0.60 mg/dL [-1.89, +0.56]. Calibrated MAE (+30/+60/+120): 11.7/17.2/22.8; persistence 11.5/17.8/26.6; uncalibrated model 12.3/19.0/26.3 (126,240 anchors at +60, 120 patients, days 4 onward). Calibrated minus persistence +0.18 [-0.50, +0.76], -0.60 [-1.89, +0.56], -3.84 [-5.82, -2.08]. Band coverage by patient, mean: calibrated 81.5/81.3/82.6 %, zero-shot 83.1/80.8/76.4 %; 10th percentile of calibrated coverage at +120 is 64 %. The offset is the shrunk mean of D-062 (n/(n+288)), the pre-registered method; the plain mean was not tried because choosing it after this result would be tuning on these patients. Per D-070 the console serves the calibrated forecast, `forecast_note` says plainly that it is not better than persistence at +60 min, and no further tuning was done. Zero-shot (D-069) is worse than persistence at every horizon on one "now" per patient; the table above (all anchors) agrees at +30 and +60.
+
+## D-071: EHR history from Synthea for the simulated patients (SPEC, not yet run)
+
+Why: the organisers name Synthea as a source for the static EHR. Our EHR history (D-068) is drawn from assumed probabilities. Synthea (Apache-2.0) is an established synthetic-patient generator with a diabetes disease model, so using it makes the static stream a recognised source instead of our own guesses. It does not produce glucose or wearable data; those stay simulated (D-067).
+
+What: `make synthea-ehr` downloads the Synthea release jar (needs Java 17+), generates a population with a fixed seed (start with 3000 adults, `exporter.csv.export=true`, other exporters off, Synthea's default Massachusetts demographics), keeps living adults with a recorded type 2 diabetes condition (SNOMED 44054006), and builds one EHR row per patient: age, sex, BMI, HbA1c, fasting glucose, eGFR (latest observations by LOINC), diabetes duration (first diagnosis to the reference date), hypertension, dyslipidaemia (hyperlipidaemia), CKD stage 3 or higher, retinopathy, neuropathy, coronary disease (conditions by SNOMED code), and diabetes, statin and ACE-inhibitor/ARB medications (active medications by RxNorm description). Each console patient (the 120 from `src.web.build_data`) is matched without replacement to the nearest Synthea patient on sex, age band and HbA1c, and takes that patient's diagnoses, medications, eGFR and diabetes duration. Age, sex, BMI, HbA1c and the glucose record stay those of the simulated patient. Genetic markers stay the assumed dosages of D-068, because Synthea has no genotype data.
+
+Limits to state in the datasheet and the page: Synthea's population is US-based (Massachusetts), so age, sex and comorbidity mix are US-like, not Indian; matching is by a few fields only; the EHR history still has NO effect on the simulated glucose, so nothing may claim that diagnoses or medications help the forecast; Synthea output is regenerated from the seed and not committed; record the Synthea version, seed and config in DATASHEET.md and in `data.json` (`ehr_source`).
+
+Acceptance: `data.json` carries `ehr_source = "Synthea <version>, seed <n>"`; the Health record tab shows a "Synthea (synthetic)" label next to the simulated one; tests cover the code mapping (a hand-written mini CSV fixture), the matching (no Synthea patient used twice, ties broken by id) and determinism; counts of patients with each diagnosis are printed next to the old D-068 prevalences so any large mismatch is visible.
+
+## D-072: serve the D-065 tuned forecaster; re-run Parts 6 and 7 for it (SPEC, written before any run)
+
+Why: D-065a validated the tuned LightGBM (about 2 to 4 % lower MAE) but the app kept the status-quo model, because its bands, event probabilities and what-if results were calibrated for that model. This step re-runs Part 6 and Part 7 for the tuned model so the served bands, probabilities and what-ifs belong to the model that is served.
+
+What changes (only the point-model fit): wherever Parts 6 and 7 fit the population model (`src.uncertainty.models.fit_population`, used by the Part 6 CV+ and split arms and by the Part 7 `unc` and `mono` forms), the status-quo LightGBM (leaf grid {15, 63}, squared error) is replaced by the D-065 tuned configuration: the `tuning` section of `configs/improve.yaml` unchanged (16 candidates, candidate 0 = status quo, seeded random draws, early stopping on MAE, the 3 best by inner-validation MAE averaged). The search runs on the same inner patient split as before (seed 42), with the same LightGBM seed (42) and threads (2). The feature set stays A0 (CGM, time of day, meals, glycemic static, delta target), the one Parts 5 to 9 serve. D-065 measured the tuned search on the D_cgm_wear_meal and E_full feature sets, not on A0; this re-run is therefore the first measurement on A0 and is reported as found. The `mono` form gets the Part 7 monotone constraints (`configs/whatif.yaml`) added to every candidate. A switch `point_model: tuned` in `configs/uncertainty.yaml` selects the model for both parts (Part 7 must use the Part 6 model, its OOF guard checks that).
+
+Unchanged: folds (CV repeat 0 and the holdout), patient roles, seeds, inner 3-fold split, fine-tune grid and selection rule (k = 3), conformal methods, ACI gamma grid, event definitions and Platt / isotonic maps, alert rules, data-quality score, fault ladders, the what-if edit semantics, windows, pass rules, matched-meal design, the twin (no ML part, not re-run), and every guard (Part 6 clean rebuild 0, Part 7 `unc` OOF equal to Part 6 within 1e-6, zero-edit identity, app runtime within 1e-6).
+
+How the 3-member average maps onto the protocol (each is the status-quo rule applied per member):
+- inner-fold and CV+ refits (`fit_fixed`): every member refitted with its own hyperparameters and tree count, no early stopping; the refit forecast is the mean of the members;
+- fine-tuning (M_ft): every member is fine-tuned from its own trimmed booster with the unchanged Part 5 fine-tune parameters and grid; the correction is the mean of the members' extra trees;
+- CQR quantile models: as before, with the leaf count of the best-ranked member (the status quo used the point model's single leaf count);
+- SHAP explanations: the mean of the members' TreeSHAP values (exact for an average);
+- app runtime: the members are shipped as LightGBM text and averaged (leaf values divided by the member count), no LightGBM at run time.
+
+Events: Part 6 calibrates hyper 180, hyper 140 and hypo 70 only. There is no 250 mg/dL event in Part 6 (D-069 and D-070 drop that bar for this reason), so the identical protocol produces no 250 calibrator and none is added here; adding one would be a new design.
+
+Re-run accounting: the old Part 6 and Part 7 processed outputs are moved to `data/processed/uncertainty_status_quo` and `data/processed/whatif_status_quo`, and the old metrics files are copied to `reports/metrics/status_quo_d072/`, before anything runs. Part 6 test windows are scored again (`report --final`) for the new model. The Part 7 final stage is re-run with `--force`: this is forced re-run 2 of the Part 7 final stage (D-053), recorded in its lock file. The D-056 twin walk tests are not re-run (no ML). The holdout test patients enter Part 6 design B for evaluation only, as before.
+
+Stop rule (fixed now): the served band is the design A CV+ arm population 80 % interval. If its overall test coverage is below 75 % at any horizon in either cohort, stop: no `make app-data`, `make web-data`, `make web-real` or `make web-evidence`, nothing ships, and the result is reported.
+
+Amendment (before the Part 7 run; Part 6 already ran and is unaffected): LightGBM refuses monotone constraints with the absolute-error loss ("Cannot use monotone_constraints in regression_l1 objective"), and candidates 9 and 10 of the D-065 list use it. The `mono` form therefore searches the other 14 candidates (same numbering, same selection rule and top-3 average); squared-error and both Huber losses accept the constraints. `unc`, Part 6 and Part 10 are unchanged. Found when the Part 7 dev stage stopped at its first fit; nothing was written and the lock was not touched.
+
+Reported in D-072a, old and new side by side: design A test MAE of the served point forecast (CV+ arm M_pop) at +30 / +60 / +120 per cohort; 80 % coverage (CV+ M_pop; also split conformal M_pop); onset AUROC of the calibrated event probabilities at +60 (hyper 180, hyper 140, hypo 70); Part 7 plausibility pass rates (carb monotonicity, activity direction, identity, causality, bounds, dose-response, cross-model) for `unc` and `mono`, and the matched-meal slope; whether coverage is still near 80 %.
+
+### D-072a: outcome (recorded after the runs)
+
+Runs: Part 6 (12 jobs, 6488 s; report 415 s; clean-rebuild guard 0.0 in every design A fold), Part 7 dev (742 s) and final (1736 s, forced re-run 2, lock `runs: 3, forced_reruns: 2` with the D-056 entry kept; `unc` OOF guard 0.0 in all 5 folds), app-data (532 s; `rtform_max_abs_diff` 0.0, zero-edit recompute 0.0, twin interpolation unchanged), web-data, web-real (1529 s), web-evidence. Code: b9608bc (Part 6), e537dac (Part 7 and later, after the `mono` amendment).
+
+Stop rule: not triggered. Design A CV+ M_pop 80 % coverage is 80.3 % or more at every horizon in both cohorts. Coverage stays near 80 %.
+
+Design A test patients, old (status quo) -> new (tuned). MAE = mean over patients of per-patient MAE (mg/dL); coverage = overall test coverage of the 80 % interval; width = median CV+ 80 % width (mg/dL).
+
+| Cohort | Horizon | MAE served (CV+ M_pop) | CV+ 80 % coverage | CV+ 80 % width | Split 80 % coverage |
+|---|---|---|---|---|---|
+| CGMacros | +30 | 11.04 -> 10.88 | 81.2 -> 80.3 | 35.9 -> 34.5 | 78.1 -> 77.7 |
+| CGMacros | +60 | 16.23 -> 15.70 | 81.3 -> 80.5 | 50.6 -> 47.8 | 80.8 -> 79.8 |
+| CGMacros | +120 | 20.98 -> 19.96 | 81.6 -> 80.8 | 65.3 -> 61.0 | 82.2 -> 81.7 |
+| Shanghai T2DM | +30 | 8.89 -> 8.73 | 80.9 -> 80.5 | 28.5 -> 27.4 | 80.9 -> 81.1 |
+| Shanghai T2DM | +60 | 15.84 -> 15.51 | 81.2 -> 80.5 | 51.7 -> 49.2 | 79.5 -> 79.7 |
+| Shanghai T2DM | +120 | 23.37 -> 22.79 | 81.1 -> 80.8 | 77.1 -> 74.2 | 78.1 -> 78.1 |
+
+Design B (holdout, confirmatory) CV+ 80 % coverage: CGMacros 80.9/78.9/78.0 -> 79.7/78.3/77.6; Shanghai 80.6/81.0/80.7 -> 80.8/80.9/80.5.
+
+Onset AUROC of the calibrated event probability at +60 min, old -> new: CGMacros hyper 180 0.832 -> 0.826, hyper 140 0.782 -> 0.775, hypo 70 0.877 -> 0.880 (limited evidence); Shanghai hyper 180 0.897 -> 0.892, hyper 140 0.854 -> 0.847, hypo 70 0.903 -> 0.910. No 250 calibrator (none in Part 6; see D-072).
+
+Part 7, final test patients (pass rate old -> new; `unc` / `mono`): identity, causality and bounds 1.000 -> 1.000 for both; carb monotonicity `unc` 0.247 -> 0.275 (within 2 mg/dL 0.752 -> 0.949), `mono` 1.000 -> 1.000; activity direction `unc` 0.687 -> 0.679, `mono` 1.000 -> 0.999 (one of 857 checks: patient 033, peak +0.11 mg/dL; the monotone constraint is only on `act_post_meal`, while a walk also changes other, unconstrained activity features, so "true by construction" was never strictly guaranteed); dose window `unc` 0.958 -> 0.983, `mono` 1.000 -> 1.000; cross-model `unc` 0.627 -> 0.599, `mono` 0.617 -> 0.613. Median dose response (pre-registered range 0.3 to 1.3 mg/dL per g, still FAILED): `unc` 0.218 -> 0.200, `mono` 0.201 -> 0.190. Matched breakfasts, within-patient +60 min: slope `unc` 1.04 -> 0.93, `mono` 0.58 -> 0.85; mean predicted vs observed difference `unc` 24.8 -> 19.2, `mono` 22.8 -> 18.6, observed 35.3 (the models predict about half to two-thirds of the observed carb effect; the fixed what-if note still applies). Part 7 test MAE +30/+60/+120: `unc` 11.09/16.20/20.80 -> 10.96/15.75/19.95, `mono` 11.13/16.36/20.64 -> 10.95/15.84/20.15.
+
+Console (web-real, 120 SIMULATED patients, D-070 protocol unchanged): calibrated MAE 11.7/17.2/22.8 -> 10.7/16.0/20.5, calibrated minus persistence at +60 min -0.60 [-1.89, +0.56] -> -1.78 [-2.91, -0.78], so the D-070 decision rule is now met and the generated `forecast_note` says the calibrated forecast is better than persistence at all three horizons. Calibrated band coverage by patient (mean) 80.5/81.0/80.7 %. The >250 bar stays dropped.
+
+Departures from the request: no 250 mg/dL calibrator (Part 6 has none); the `mono` search excludes the two absolute-error candidates (LightGBM limit, amendment above); the tuned search had been validated on other feature sets (D-065), the served A0 result is the one above. Sizes: app/demo grew to 24.8 MB (design target < 25 MB), because each horizon now ships three boosters. Text that quotes the old console numbers (D-070a, README 9.4d) is not edited here.

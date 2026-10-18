@@ -1,0 +1,38 @@
+# Part 10 (D-065): tuned LightGBM. Every choice is made on INNER validation patients of each outer
+# training fold (nested, same protocol as Parts 2-3). Test patients are never used for a choice.
+seed: 42
+configs:                        # feature configs from fusion.yaml (the ones the app can use)
+  cgmacros: [D_cgm_wear_meal, E_full]
+  shanghai_t2dm: [E_full]
+horizons_min: [30, 60, 120]
+cv_repeats: [0]                 # outer folds: repeat 0 (5 patient-grouped folds), paired with Part 3
+n_parallel: 5                   # outer folds run in parallel
+lgbm_threads: 2
+tuning:
+  seed: 42
+  n_trials: 16                  # trial 0 is the status-quo config, so the search cannot do worse
+  top_k: 3                      # average the k best trials (by inner-validation MAE)
+  early_stopping_rounds: 50
+  fixed: {n_estimators: 2000, subsample_freq: 1, verbose: -1}
+  status_quo:                   # the Part 2 / Part 3 setting
+    objective: l2
+    num_leaves: 15
+    min_child_samples: 50
+    learning_rate: 0.05
+    colsample_bytree: 0.8
+    subsample: 0.8
+    reg_lambda: 1.0
+    reg_alpha: 0.0
+  space:
+    objective: [l2, l1, huber10, huber25]
+    num_leaves: [7, 15, 31, 63]
+    min_child_samples: [20, 50, 100, 200, 400]
+    learning_rate: [0.02, 0.03, 0.05]
+    colsample_bytree: [0.5, 0.7, 0.9]
+    subsample: [0.6, 0.8, 1.0]
+    reg_lambda: [0.0, 1.0, 5.0, 20.0]
+    reg_alpha: [0.0, 1.0]
+# Pre-registered decision rule (D-065): the tuned model becomes the default only if, on design A
+# (cv), its paired MAE difference vs status quo at +60 min has a CI below 0 in at least one cohort
+# and its point difference is below 0 at all three horizons in every cohort and config; and the
+# single-shot holdout (design B) point difference at +60 min has the same sign.

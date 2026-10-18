@@ -76,7 +76,9 @@ def cvplus_arm(ctx: dict, out: pd.DataFrame, oof: pd.DataFrame, ch: dict) -> dic
     """CV+ arm: Part 5 base on all fold-training patients, inner 3-fold OOF residuals."""
     tab, fp, r, uc, pc, bc = (ctx[k] for k in ("tab", "fp", "r", "uc", "pc", "bc"))
     k, thr = uc["k_finetune"], uc["threads"]
-    pop, _, _ = um.fit_population(tab, r["cvplus"], ctx["cols"], ctx["strata"], bc, thr)
+    pop, _, _ = um.fit_population(
+        tab, r["cvplus"], ctx["cols"], ctx["strata"], bc, thr, ctx["tcfg"]
+    )
     fmap, mods = um.inner_models(tab, r["cvplus"], pop, pc["inner_folds"], ctx["seed"], bc, thr)
     trf, te = ctx["trf"], ctx["te"]
     reg_tr = region(trf, uc)
@@ -121,7 +123,9 @@ def split_arm(ctx: dict, out: pd.DataFrame, oof: pd.DataFrame, ch: dict) -> dict
     """Split arm: fits on PROPER training patients; calibration patients give scores only."""
     tab, r, uc, pc, bc = (ctx[k] for k in ("tab", "r", "uc", "pc", "bc"))
     k, thr, te = uc["k_finetune"], uc["threads"], ctx["te"]
-    pop, in_tr, in_va = um.fit_population(tab, r["proper"], ctx["cols"], ctx["strata"], bc, thr)
+    pop, in_tr, in_va = um.fit_population(
+        tab, r["proper"], ctx["cols"], ctx["strata"], bc, thr, ctx["tcfg"]
+    )
     rows = tab[tab.patient_id.isin(r["proper"])]
     qs = arms._quantile_levels(uc["alphas"])
     qm = um.fit_quantiles(
@@ -294,6 +298,7 @@ def run_job(design: str, cohort: str, fold: int, train: list[str], test: list[st
         "trf": fp[fp.patient_id.isin(r["cvplus"])].reset_index(drop=True),
         "te": fp[fp.patient_id.isin(r["test_eval"])].reset_index(drop=True),
         "clip": tuple(load_config("data")["cgm"]["glucose_range_mgdl"][cohort]),
+        "tcfg": um.tuning_config(),  # D-072: tuned served model (None = status quo)
     }
     te, trf = ctx["te"], ctx["trf"]
     out = te[KEYS + ["days_since_start", "cgm_now"]].copy()

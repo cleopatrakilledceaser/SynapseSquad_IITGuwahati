@@ -1,0 +1,857 @@
+{
+  "name": "india_sleep_scale",
+  "timestamp_utc": "2026-10-18T09:52:17.625947+00:00",
+  "git_hash": "e363284a9acf05925086906b461eb98ce8d0d261-dirty",
+  "seed": 212,
+  "data_hash": "synthetic",
+  "config": {
+    "seed": 42,
+    "name": "synthetic_india_v1",
+    "n_patients": 100,
+    "days": 10,
+    "start_datetime": "2026-01-05 00:00",
+    "fit_source": {
+      "csv": "reports/metrics/mech_fitted_params.csv",
+      "model": "twin_pop_actoff_k3",
+      "cohort": "cgmacros"
+    },
+    "noise_source": {
+      "json": "reports/metrics/mech_cgmacros.json"
+    },
+    "shifts": {
+      "SI": -0.46,
+      "Gb": 0.05,
+      "kabs": 0.15
+    },
+    "strengths": {
+      "control": 0.0,
+      "mild": 0.5,
+      "moderate": 1.0,
+      "strong": 1.5
+    },
+    "main_strength": "moderate",
+    "meals": {
+      "portion_sd_patient": 0.2,
+      "portion_sd_meal": 0.15,
+      "slots": {
+        "breakfast": {
+          "time": [
+            480,
+            40
+          ],
+          "p": 1.0,
+          "pool": [
+            "idli_sambar",
+            "plain_dosa",
+            "masala_dosa",
+            "poha",
+            "upma",
+            "aloo_paratha"
+          ]
+        },
+        "lunch": {
+          "time": [
+            810,
+            45
+          ],
+          "p": 1.0,
+          "pool": [
+            "roti_2_dal_sabzi",
+            "rice_1katori_dal_sabzi",
+            "rice_2katori_dal_sabzi",
+            "veg_thali",
+            "dal_chawal",
+            "rajma_chawal",
+            "curd_rice"
+          ]
+        },
+        "snack": {
+          "time": [
+            1020,
+            40
+          ],
+          "p": 0.5,
+          "pool": [
+            "upma",
+            "poha"
+          ],
+          "portion": 0.4
+        },
+        "dinner": {
+          "time": [
+            1230,
+            40
+          ],
+          "p": 1.0,
+          "pool": [
+            "roti_2_dal_sabzi",
+            "rice_1katori_dal_sabzi",
+            "veg_biryani",
+            "chicken_biryani",
+            "dal_chawal",
+            "chole_bhature",
+            "curd_rice"
+          ]
+        }
+      },
+      "carb_energy_share_reference": 0.62
+    },
+    "activity": {
+      "morning": {
+        "p": 0.5,
+        "time": [
+          390,
+          30
+        ],
+        "duration": [
+          20,
+          45
+        ],
+        "level": [
+          1.0,
+          2.0
+        ]
+      },
+      "evening": {
+        "p": 0.6,
+        "time": [
+          1110,
+          40
+        ],
+        "duration": [
+          20,
+          45
+        ],
+        "level": [
+          1.0,
+          2.0
+        ]
+      },
+      "daytime_base": {
+        "from_min": 540,
+        "to_min": 1200,
+        "level": 0.2
+      },
+      "hr": {
+        "rest_bpm": 64,
+        "per_unit": 18,
+        "night_dip": 6,
+        "noise_sd": 3
+      },
+      "intensity_per_unit": 1.2
+    },
+    "static": {
+      "age": {
+        "mean": 52,
+        "sd": 9,
+        "lo": 30,
+        "hi": 75
+      },
+      "male_fraction": 0.6,
+      "bmi": {
+        "mean": 25.5,
+        "sd": 3.2,
+        "lo": 18,
+        "hi": 38
+      },
+      "eag_slope": 28.7,
+      "eag_intercept": -46.7,
+      "hba1c_bins": [
+        0.0,
+        5.7,
+        6.5,
+        99.0
+      ],
+      "hba1c_labels": [
+        "healthy",
+        "prediabetes",
+        "t2d"
+      ]
+    },
+    "stress": {
+      "n_patients": 100,
+      "days": 10,
+      "seeds": {
+        "control": 101,
+        "mild": 102,
+        "moderate": 103,
+        "strong": 104
+      },
+      "n_hours": 6,
+      "horizons_min": [
+        30,
+        60,
+        120
+      ],
+      "test_from_day": 3,
+      "min_test_anchors": 96,
+      "cv_repeat": 0,
+      "k_grid": [
+        1,
+        3
+      ],
+      "augment": {
+        "control": "control",
+        "india": "moderate"
+      },
+      "feature_groups": [
+        "cgm",
+        "tod",
+        "wearable",
+        "meals",
+        "static"
+      ],
+      "static": [
+        "age_years",
+        "sex_male",
+        "bmi",
+        "hba1c_pct",
+        "fasting_glucose_mgdl"
+      ]
+    },
+    "sleep": {
+      "baseline_h": 7.0,
+      "duration": {
+        "mean": 6.8,
+        "sd": 1.0,
+        "lo": 3.5,
+        "hi": 9.5
+      },
+      "efficiency": {
+        "mean": 0.88,
+        "sd": 0.05,
+        "lo": 0.6,
+        "hi": 0.98
+      },
+      "deep_frac": {
+        "mean": 0.17,
+        "sd": 0.04,
+        "lo": 0.05,
+        "hi": 0.35
+      },
+      "hrv": {
+        "mean_ms": 32.0,
+        "per_hour_deficit": 0.05,
+        "noise_sd_log": 0.15
+      },
+      "rem_frac": {
+        "mean": 0.21,
+        "sd": 0.04,
+        "lo": 0.08,
+        "hi": 0.35
+      },
+      "wake_minute": 360,
+      "si_beta_per_hour": 0.03,
+      "steps": {
+        "per_activity_unit_5min": 333.0,
+        "noise_sd": 40.0
+      },
+      "multipliers": [
+        0.0,
+        1.0
+      ],
+      "n_patients": 300,
+      "days": 30,
+      "seed": 212,
+      "n_hours": 6,
+      "horizons_min": [
+        30,
+        60,
+        120
+      ],
+      "test_from_day": 3,
+      "n_folds": 5
+    },
+    "sleep_scale": {
+      "n_patients": 300,
+      "days": 30,
+      "multipliers": [
+        0.0,
+        1.0
+      ],
+      "seed": 212
+    },
+    "export": {
+      "n_patients": 200,
+      "days": 14,
+      "seed": 301,
+      "strength": "moderate",
+      "sleep_mult": 1.0
+    },
+    "ehr": {
+      "duration_years": {
+        "mean": 7.0,
+        "sd": 4.0,
+        "lo": 0.5,
+        "hi": 25.0
+      },
+      "hypertension": {
+        "base": 0.25,
+        "per_year_age_over_40": 0.015,
+        "per_bmi_over_25": 0.012,
+        "t2d_add": 0.15
+      },
+      "dyslipidaemia": {
+        "base": 0.3,
+        "t2d_add": 0.25
+      },
+      "ckd_stage3plus": {
+        "base": 0.03,
+        "per_year_duration": 0.008,
+        "per_hba1c_over_7": 0.01
+      },
+      "retinopathy": {
+        "per_year_duration": 0.018,
+        "per_hba1c_over_7": 0.015
+      },
+      "neuropathy": {
+        "per_year_duration": 0.02,
+        "per_hba1c_over_7": 0.01
+      },
+      "coronary_disease": {
+        "base": 0.02,
+        "per_year_age_over_50": 0.006,
+        "t2d_add": 0.04
+      },
+      "family_history_t2d": 0.45,
+      "meds": {
+        "metformin": 0.85,
+        "sulfonylurea": 0.35,
+        "dpp4": 0.25,
+        "sglt2": 0.15,
+        "insulin": {
+          "base": 0.05,
+          "per_year_duration": 0.015,
+          "per_hba1c_over_8": 0.06
+        },
+        "statin": 0.55,
+        "acei_arb": 0.4
+      },
+      "genetics": {
+        "tcf7l2_rs7903146_T": 0.3,
+        "fto_rs9939609_A": 0.3,
+        "slc30a8_rs13266634_C": 0.6
+      }
+    },
+    "main_strength_value": 1.0
+  },
+  "metrics": {
+    "SYNTHETIC": true,
+    "multipliers": [
+      0.0,
+      1.0
+    ],
+    "n_patients": 300,
+    "days": 30,
+    "m0": {
+      "n_patients": 300,
+      "mean_glucose": 158.11601246824017,
+      "pct_gt180": 26.773225308641972,
+      "mean_si_log_shift": 0.0,
+      "n_features": {
+        "A": 55,
+        "B": 76,
+        "C": 81
+      },
+      "mae": [
+        {
+          "model": "persistence",
+          "horizon_min": 30,
+          "mae": 11.965252731727242,
+          "mae_ci": [
+            11.222142521045342,
+            12.7404586232863
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "A",
+          "horizon_min": 30,
+          "mae": 9.162299118174829,
+          "mae_ci": [
+            8.708050980834875,
+            9.662306343097049
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "B",
+          "horizon_min": 30,
+          "mae": 9.135205622536631,
+          "mae_ci": [
+            8.697788327133638,
+            9.632614837132394
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "C",
+          "horizon_min": 30,
+          "mae": 9.1991924131407,
+          "mae_ci": [
+            8.748025046163482,
+            9.702882959161691
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "persistence",
+          "horizon_min": 60,
+          "mae": 18.310398888010976,
+          "mae_ci": [
+            16.909524838771652,
+            19.728113609488467
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "A",
+          "horizon_min": 60,
+          "mae": 12.84479095385178,
+          "mae_ci": [
+            12.145211541540839,
+            13.630849706170716
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "B",
+          "horizon_min": 60,
+          "mae": 12.86363269689494,
+          "mae_ci": [
+            12.174841000892938,
+            13.645647689958631
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "C",
+          "horizon_min": 60,
+          "mae": 12.930479170405526,
+          "mae_ci": [
+            12.226806892500045,
+            13.725165865883502
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "persistence",
+          "horizon_min": 120,
+          "mae": 26.366659137325666,
+          "mae_ci": [
+            24.19485396636533,
+            28.438535099108858
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        },
+        {
+          "model": "A",
+          "horizon_min": 120,
+          "mae": 16.52071197840448,
+          "mae_ci": [
+            15.487847064157615,
+            17.59752198806053
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        },
+        {
+          "model": "B",
+          "horizon_min": 120,
+          "mae": 16.602635218232102,
+          "mae_ci": [
+            15.557134110343952,
+            17.680556555456473
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        },
+        {
+          "model": "C",
+          "horizon_min": 120,
+          "mae": 16.660856028848695,
+          "mae_ci": [
+            15.602558380337063,
+            17.759627050255073
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        }
+      ],
+      "diff": [
+        {
+          "model_1": "B",
+          "model_2": "A",
+          "horizon_min": 30,
+          "diff_mae": -0.02709349563819785,
+          "diff_mae_ci": [
+            -0.05917917895601828,
+            -0.004423904435462505
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "B",
+          "model_2": "A",
+          "horizon_min": 60,
+          "diff_mae": 0.01884174304316133,
+          "diff_mae_ci": [
+            -0.037437263558277804,
+            0.05767048704463442
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 300
+        },
+        {
+          "model_1": "B",
+          "model_2": "A",
+          "horizon_min": 120,
+          "diff_mae": 0.08192323982762062,
+          "diff_mae_ci": [
+            0.05841728129267359,
+            0.1084878269015764
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "B",
+          "horizon_min": 30,
+          "diff_mae": 0.0639867906040692,
+          "diff_mae_ci": [
+            0.0395117823739378,
+            0.09950032627835
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "B",
+          "horizon_min": 60,
+          "diff_mae": 0.06684647351058537,
+          "diff_mae_ci": [
+            0.04696940284925764,
+            0.08740452880432453
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "B",
+          "horizon_min": 120,
+          "diff_mae": 0.0582208106165929,
+          "diff_mae_ci": [
+            0.015549540095510841,
+            0.11339278013473163
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "A",
+          "horizon_min": 30,
+          "diff_mae": 0.03689329496587135,
+          "diff_mae_ci": [
+            0.024699771239786464,
+            0.048934374797740696
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "A",
+          "horizon_min": 60,
+          "diff_mae": 0.0856882165537467,
+          "diff_mae_ci": [
+            0.041681200940463195,
+            0.12449879935883866
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "A",
+          "horizon_min": 120,
+          "diff_mae": 0.14014405044421352,
+          "diff_mae_ci": [
+            0.08995211821047479,
+            0.20149016887349366
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        }
+      ]
+    },
+    "m1": {
+      "n_patients": 300,
+      "mean_glucose": 158.40736583877054,
+      "pct_gt180": 26.940547839506173,
+      "mean_si_log_shift": -0.015496666401296936,
+      "n_features": {
+        "A": 55,
+        "B": 76,
+        "C": 81
+      },
+      "mae": [
+        {
+          "model": "persistence",
+          "horizon_min": 30,
+          "mae": 11.96388979340929,
+          "mae_ci": [
+            11.221900121958102,
+            12.738902412555609
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "A",
+          "horizon_min": 30,
+          "mae": 9.216444908864844,
+          "mae_ci": [
+            8.748010330283062,
+            9.72770319322275
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "B",
+          "horizon_min": 30,
+          "mae": 9.2031767303917,
+          "mae_ci": [
+            8.740667383425784,
+            9.70514015221737
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "C",
+          "horizon_min": 30,
+          "mae": 9.142535044935807,
+          "mae_ci": [
+            8.697733249211625,
+            9.633531668719847
+          ],
+          "n_patients": 300,
+          "n_rows": 777000
+        },
+        {
+          "model": "persistence",
+          "horizon_min": 60,
+          "mae": 18.312766579297886,
+          "mae_ci": [
+            16.913400390263885,
+            19.73790067398096
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "A",
+          "horizon_min": 60,
+          "mae": 12.839804373729129,
+          "mae_ci": [
+            12.145905505734452,
+            13.62699011712602
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "B",
+          "horizon_min": 60,
+          "mae": 12.893642265891215,
+          "mae_ci": [
+            12.190127873146782,
+            13.697558987950252
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "C",
+          "horizon_min": 60,
+          "mae": 12.86214953946824,
+          "mae_ci": [
+            12.162772403684844,
+            13.636970693144427
+          ],
+          "n_patients": 300,
+          "n_rows": 776400
+        },
+        {
+          "model": "persistence",
+          "horizon_min": 120,
+          "mae": 26.387047857362113,
+          "mae_ci": [
+            24.20711452320302,
+            28.466095692300463
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        },
+        {
+          "model": "A",
+          "horizon_min": 120,
+          "mae": 16.533990276327362,
+          "mae_ci": [
+            15.510192260063516,
+            17.62338223120551
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        },
+        {
+          "model": "B",
+          "horizon_min": 120,
+          "mae": 16.576436842609915,
+          "mae_ci": [
+            15.525385181017526,
+            17.66094514369988
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        },
+        {
+          "model": "C",
+          "horizon_min": 120,
+          "mae": 16.58163997887585,
+          "mae_ci": [
+            15.537563704993154,
+            17.669799372936126
+          ],
+          "n_patients": 300,
+          "n_rows": 775200
+        }
+      ],
+      "diff": [
+        {
+          "model_1": "B",
+          "model_2": "A",
+          "horizon_min": 30,
+          "diff_mae": -0.013268178473143877,
+          "diff_mae_ci": [
+            -0.03816172593920782,
+            0.010284121495027367
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 300
+        },
+        {
+          "model_1": "B",
+          "model_2": "A",
+          "horizon_min": 60,
+          "diff_mae": 0.05383789216208612,
+          "diff_mae_ci": [
+            0.015371093705006224,
+            0.10163504340997484
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "B",
+          "model_2": "A",
+          "horizon_min": 120,
+          "diff_mae": 0.04244656628255328,
+          "diff_mae_ci": [
+            0.007051613023906758,
+            0.07536377717998718
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "B",
+          "horizon_min": 30,
+          "diff_mae": -0.060641685455893324,
+          "diff_mae_ci": [
+            -0.09666427549260796,
+            -0.035130253092664536
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "B",
+          "horizon_min": 60,
+          "diff_mae": -0.03149272642297518,
+          "diff_mae_ci": [
+            -0.07291077261850383,
+            0.01059254112537968
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "B",
+          "horizon_min": 120,
+          "diff_mae": 0.0052031362659334945,
+          "diff_mae_ci": [
+            -0.0450352780815351,
+            0.05071659110152868
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "A",
+          "horizon_min": 30,
+          "diff_mae": -0.0739098639290372,
+          "diff_mae_ci": [
+            -0.11099730124141381,
+            -0.04466713875064638
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "A",
+          "horizon_min": 60,
+          "diff_mae": 0.02234516573911094,
+          "diff_mae_ci": [
+            -0.00958685100746161,
+            0.05621922943189616
+          ],
+          "distinguishable_from_zero": false,
+          "n_patients": 300
+        },
+        {
+          "model_1": "C",
+          "model_2": "A",
+          "horizon_min": 120,
+          "diff_mae": 0.04764970254848677,
+          "diff_mae_ci": [
+            0.014189060214277485,
+            0.08200943611571557
+          ],
+          "distinguishable_from_zero": true,
+          "n_patients": 300
+        }
+      ]
+    }
+  }
+}

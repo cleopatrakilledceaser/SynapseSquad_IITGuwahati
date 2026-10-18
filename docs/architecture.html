@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GlucoTwin architecture</title>
+<style>
+  @page { size: A3 landscape; margin: 11mm; }
+  :root{
+    --purple:#6A3FD0; --deep:#43285E; --ink:#1D1430; --muted:#5B4F77;
+    --rule:#E3DCF2; --tint:#F7F4FC; --paper:#FFFFFF;
+    --real:#0F9A78; --sim:#B7791F;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Inter","DejaVu Sans",sans-serif;color:var(--ink);background:var(--paper);
+       line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:28px;
+         border-bottom:2.5px solid var(--purple);padding-bottom:8px;margin-bottom:12px;}
+  header img{height:38px;width:auto;object-fit:contain;}
+  header img.dtc{height:44px;}
+  .htext{flex:1;}
+  h1{font-size:25px;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--deep);}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:900px;}
+
+  /* ---------- flow ---------- */
+  .canvas{position:relative;width:1500px;height:610px;}
+  .canvas svg.links{position:absolute;inset:0;width:1500px;height:610px;}
+  .colhead{position:absolute;top:0;font-size:12.5px;font-weight:800;letter-spacing:.11em;
+           text-transform:uppercase;color:var(--purple);}
+  .bx{position:absolute;border:1.3px solid var(--rule);border-radius:8px;background:var(--paper);
+      padding:11px 13px;overflow:hidden;}
+  .bx h4{margin:0 0 4px;font-size:14px;font-weight:700;line-height:1.2;}
+  .bx p{margin:0;font-size:11.8px;color:var(--muted);line-height:1.35;}
+  .bx.key{border-color:var(--purple);border-width:1.9px;background:var(--tint);}
+  .bx.fill{background:var(--deep);border-color:var(--deep);}
+  .bx.fill h4{color:#fff;} .bx.fill p{color:#DCD2F0;}
+  .tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+       padding:1.5px 5px;border-radius:3px;margin-bottom:4px;}
+  .t-real{background:#E7F3EC;color:var(--real);} .t-sim{background:#FBF0DA;color:var(--sim);}
+  .mono{font-family:"DejaVu Sans Mono",monospace;font-size:10.5px;color:var(--purple);}
+  .bx p b{color:var(--ink);}
+
+  .fence{position:absolute;border:1.7px dashed var(--purple);border-radius:12px;opacity:.7;}
+  .fence-lab{position:absolute;font-size:11.5px;font-weight:700;color:var(--purple);
+             background:var(--paper);padding:0 7px;}
+
+  /* ---------- bottom ---------- */
+  .panels{display:grid;grid-template-columns:1.1fr 1.45fr 0.72fr 1fr 0.95fr;gap:11px;margin-top:12px;}
+  .pn{border:1.3px solid var(--rule);border-radius:8px;padding:11px 13px;}
+  .pn.hi{border-color:var(--purple);background:var(--tint);}
+  .pn h3{margin:0 0 6px;font-size:12.5px;font-weight:800;color:var(--deep);
+         text-transform:uppercase;letter-spacing:.06em;}
+  .pn ul{margin:0;padding-left:13px;} .pn li{font-size:10.9px;margin-bottom:2.8px;color:var(--muted);}
+  .pn li b{color:var(--ink);}
+  table{border-collapse:collapse;width:100%;font-size:11.2px;}
+  th,td{text-align:left;padding:3px 5px;border-bottom:1px solid var(--rule);}
+  th{color:var(--muted);font-weight:700;font-size:9.6px;text-transform:uppercase;letter-spacing:.05em;}
+  td.n{font-family:"DejaVu Sans Mono",monospace;text-align:right;color:var(--deep);font-weight:700;}
+  footer{margin-top:9px;border-top:1px solid var(--rule);padding-top:6px;
+         font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between;}
+  code{font-family:"DejaVu Sans Mono",monospace;color:var(--purple);}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="assets/happiest-health.png" alt="Happiest Health">
+  <div class="htext">
+    <h1>GlucoTwin — system architecture</h1>
+    <div class="sub">A patient-specific type&nbsp;2 diabetes digital twin. Four input streams are harmonised onto one causal
+      timeline, fused by the model layer, calibrated into prediction intervals and adverse-event probabilities, and served
+      to two clinician interfaces. Raw patient records never leave the clinic.</div>
+    <div class="sub" style="margin-top:4px;color:#1D1430"><b>Team Synapse Squad</b> · Jahnavi Harsha · Indian Institute of Technology Guwahati</div>
+  </div>
+  <img class="dtc" src="assets/digital-twin-challenge.png" alt="Digital Twin Challenge 2026">
+</header>
+
+<div class="canvas">
+
+<svg class="links" viewBox="0 0 1500 610" aria-hidden="true">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 1 L9 5 L0 9 z" fill="#6A3FD0"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#6A3FD0" stroke-width="1.7" marker-end="url(#ah)" opacity=".85">
+    <path d="M228 110 C246 110 244 321 262 321"/>
+    <path d="M228 251 C246 251 244 321 262 321"/>
+    <path d="M228 392 C246 392 244 321 262 321"/>
+    <path d="M228 533 C246 533 244 321 262 321"/>
+
+    <path d="M458 321 C476 321 474 97 492 97"/>
+    <path d="M458 321 C476 321 474 209 492 209"/>
+    <path d="M458 321 C476 321 474 321 492 321"/>
+    <path d="M458 321 C476 321 474 433 492 433"/>
+    <path d="M458 321 C476 321 474 545 492 545"/>
+
+    <path d="M710 97  C728 97 726 110 744 110"/>
+    <path d="M710 209 C728 209 726 251 744 251"/>
+    <path d="M710 321 C728 321 726 392 744 392"/>
+    <path d="M710 433 C728 433 726 392 744 392"/>
+    <path d="M710 545 C728 545 726 533 744 533"/>
+
+    <path d="M940 110 C958 110 956 110 974 110"/>
+    <path d="M940 251 C958 251 956 251 974 251"/>
+    <path d="M940 392 C958 392 956 392 974 392"/>
+    <path d="M940 533 C958 533 956 533 974 533"/>
+
+    <path d="M1170 110 C1188 110 1186 180 1204 180"/>
+    <path d="M1170 251 C1188 251 1186 180 1204 180"/>
+    <path d="M1170 392 C1188 392 1186 462 1204 462"/>
+    <path d="M1170 533 C1188 533 1186 462 1204 462"/>
+  </g>
+</svg>
+
+<div class="fence" style="left:-9px;top:34px;width:728px;height:574px"></div>
+<div class="fence-lab" style="left:18px;top:26px">Inside the clinic — raw records never leave</div>
+
+<div class="colhead" style="left:0">1 · Sources</div>
+<div class="colhead" style="left:262px">2 · Harmonise &amp; fuse</div>
+<div class="colhead" style="left:492px">3 · Model layer</div>
+<div class="colhead" style="left:744px">4 · Calibrate</div>
+<div class="colhead" style="left:974px">5 · Clinical outputs</div>
+<div class="colhead" style="left:1204px">6 · Interfaces</div>
+
+<!-- C1 sources -->
+<div class="bx" style="left:0;top:46px;width:228px;height:127px">
+  <span class="tag t-sim">Static EHR</span>
+  <h4>Health record</h4>
+  <p>Age, sex, BMI, HbA1c, fasting glucose, eGFR, diagnoses, medications, genetic markers. Synthea-ready.</p>
+</div>
+<div class="bx key" style="left:0;top:187px;width:228px;height:127px">
+  <span class="tag t-real">Real · open</span>
+  <h4>CGM · 145 patients</h4>
+  <p>CGMacros (45 adults, PhysioNet) and Shanghai T2DM (100 patients, figshare). Removing this stream hurts the forecast most of all.</p>
+</div>
+<div class="bx" style="left:0;top:328px;width:228px;height:127px">
+  <span class="tag t-real">Real + simulated</span>
+  <h4>Wearable</h4>
+  <p>Fitbit heart rate and activity; sleep, HRV and steps simulated. At +60 min: <b>+0.04 mg/dL, CI includes zero</b> — reported, not hidden.</p>
+</div>
+<div class="bx" style="left:0;top:469px;width:228px;height:127px">
+  <span class="tag t-real">Real + presets</span>
+  <h4>Meals</h4>
+  <p>Logged macronutrients, plus 16 Indian presets from IFCT-2017. Meals are the <b>largest single gain</b>.</p>
+</div>
+
+<!-- C2 -->
+<div class="bx key" style="left:262px;top:46px;width:196px;height:550px">
+  <h4>One causal timeline</h4>
+  <p style="margin-top:9px"><b>Common grid.</b> Every cohort resampled to a single 5-minute schema with a shared column set; loader checksums verified.</p>
+  <p style="margin-top:10px"><b>Causal features only.</b> No feature may use information from after the prediction instant — enforced in code and covered by tests.</p>
+  <p style="margin-top:10px"><b>Patient-grouped splits.</b> Training, inner-validation, calibration and holdout patients never overlap, so no patient appears on both sides of an evaluation.</p>
+  <p style="margin-top:10px"><b>Gap and quality handling.</b> Sensor gaps flagged rather than silently interpolated; a per-window quality score travels with the forecast.</p>
+  <p style="margin-top:10px"><b>Fused feature set.</b> Recent CGM history and its slope · time of day · meal macronutrients · heart rate and activity · the static profile.</p>
+  <p class="mono" style="margin-top:10px">src/data · src/features</p>
+</div>
+
+<!-- C3 models -->
+<div class="bx key" style="left:492px;top:46px;width:218px;height:102px">
+  <h4>Fusion forecaster</h4>
+  <p>Tuned LightGBM on the <i>change</i> from the current value at +30, +60 and +120 min. The served model.</p>
+</div>
+<div class="bx" style="left:492px;top:158px;width:218px;height:102px">
+  <h4>Mechanistic twin</h4>
+  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter state. Also supplies the features used by the hybrids.</p>
+</div>
+<div class="bx key" style="left:492px;top:270px;width:218px;height:102px">
+  <h4>Hybrid physics + ML</h4>
+  <p>Twin-derived features fed to the forecaster, and a GRU trained with an ODE-consistency loss.</p>
+</div>
+<div class="bx" style="left:492px;top:382px;width:218px;height:102px">
+  <h4>Personalisation</h4>
+  <p>Fine-tuning or recursive least squares on the patient's own days: about 1 mg/dL better after 3 to 5 days.</p>
+</div>
+<div class="bx" style="left:492px;top:494px;width:218px;height:102px">
+  <h4>Federated training</h4>
+  <p>FedAvg and FedProx across simulated clinics. Five-clinic and two-site layouts, plus a privacy noise sweep.</p>
+</div>
+
+<!-- C4 calibrate -->
+<div class="bx key" style="left:744px;top:46px;width:196px;height:127px">
+  <h4>80% intervals</h4>
+  <p>Split-conformal and CV+. Served coverage 80.5% in both cohorts at +60 min, per subgroup as well as pooled.</p>
+</div>
+<div class="bx key" style="left:744px;top:187px;width:196px;height:127px">
+  <h4>Event probabilities</h4>
+  <p>Platt and isotonic calibration for crossing 180, 140 and 70 mg/dL. Calibrated means 40% happens about 40% of the time.</p>
+</div>
+<div class="bx" style="left:744px;top:328px;width:196px;height:127px">
+  <h4>Robustness &amp; quality</h4>
+  <p>Faults injected, causal features recomputed, scored on the same anchors. Quality score: completeness, recency, plausibility, rate of change.</p>
+</div>
+<div class="bx" style="left:744px;top:469px;width:196px;height:127px">
+  <h4>Alerts &amp; explainability</h4>
+  <p>Alert-burden curves let a clinic trade sensitivity against false alarms explicitly. SHAP attribution over the fused feature set explains each forecast.</p>
+</div>
+
+<!-- C5 outputs -->
+<div class="bx" style="left:974px;top:46px;width:196px;height:127px">
+  <h4>Forecast + band</h4>
+  <p>Trajectory to +120 min with its 80% interval and one plain sentence. The band widens with the horizon — that widening is the content.</p>
+</div>
+<div class="bx" style="left:974px;top:187px;width:196px;height:127px">
+  <h4>Adverse-event risk</h4>
+  <p>Calibrated chance of hyperglycaemia or hypoglycaemia inside the window, at the threshold the clinic chose. Thresholds follow the 2019 consensus.</p>
+</div>
+<div class="bx" style="left:974px;top:328px;width:196px;height:127px">
+  <h4>What-if answers</h4>
+  <p>Counterfactual meal size, carbohydrate, timing, an Indian preset swap, and a post-meal walk — through the monotone model and the twin.</p>
+</div>
+<div class="bx" style="left:974px;top:469px;width:196px;height:127px">
+  <h4>Trust surface</h4>
+  <p>Sensor data quality, personalisation depth, input tier available, feature attribution, and the limits printed beside each answer.</p>
+</div>
+
+<!-- C6 interfaces -->
+<div class="bx fill" style="left:1204px;top:46px;width:296px;height:268px">
+  <h4>Web console &nbsp;<span class="mono" style="color:#C9B6F5">web/</span></h4>
+  <p style="margin-top:7px">A single-page clinician console. Patient list with triage ordering, then per patient: forecast,
+     what-if lab, glucose report (AGP, time in range, GMI per the 2019 consensus), health record, sleep and activity
+     context, visit summary, and an evidence section carrying every cohort-level result.</p>
+  <p style="margin-top:9px">Role-gated access — clinician and care coordinator see different fields — with a session
+     access log. Dark and light themes, mg/dL ⇄ mmol/L, readable at tablet width. The demo runs on 120
+     <b style="color:#fff">simulated</b> patients with a three-day local calibration.</p>
+</div>
+<div class="bx fill" style="left:1204px;top:328px;width:296px;height:268px">
+  <h4>Streamlit application &nbsp;<span class="mono" style="color:#C9B6F5">make app</span></h4>
+  <p style="margin-top:7px">Ten pages: Overview, Live twin, Glucose report, What-if lab, Twin state, Personalization,
+     Input tiers, Data quality, Evidence, and a PDF export for the patient file.</p>
+  <p style="margin-top:9px">Runs locally; no data leaves the machine. A units switch shows mg/dL or mmol/L, and the
+     Evidence page reproduces every cohort-level table and figure.</p>
+  <p style="margin-top:9px">Both interfaces read the same bundle, so they never disagree on a number. Every page carries
+     the decision-support disclaimer: the system never recommends a dose or a drug.</p>
+</div>
+
+</div>
+
+<div class="panels">
+
+  <div class="pn hi">
+    <h3>Method &amp; evaluation</h3>
+    <ul>
+      <li><b>Pre-registered.</b> Protocol, candidates and decision rule written to <code>docs/DECISIONS.md</code> before the run. 70+ entries.</li>
+      <li><b>Patient-grouped CV</b> with repeats, an inner validation split for every choice, and a reserved holdout the runner refuses to reuse.</li>
+      <li><b>Baselines it must beat:</b> persistence, per-patient autoregression, ridge, a GRU.</li>
+      <li><b>Paired patient bootstrap</b> intervals — over patients, never over time windows.</li>
+      <li><b>Also scored:</b> coverage, event AUROC, alert burden, plausibility, 87 matched breakfasts, input-tier ablations; stressed by transfer, faults and a synthetic Indian cohort. <b>Nulls published</b> at full size.</li>
+    </ul>
+  </div>
+
+  <div class="pn">
+    <h3>AI / ML models and training</h3>
+    <ul>
+      <li><b>Inputs → target.</b> Causal features per anchor: CGM lags, rolling statistics, least-squares slope and acceleration, time-of-day sin/cos, meal macros, heart rate and activity, static profile. Target is the <i>change</i> from the current value.</li>
+      <li><b>Served forecaster.</b> LightGBM, one head per horizon, trained with an absolute-error loss to match the metric it is scored on. 16 candidates, best three averaged, on inner-validation patients only.</li>
+      <li><b>Sequence model.</b> PyTorch GRU over the causal window with FiLM static conditioning; also the backbone of the physics-informed hybrid.</li>
+      <li><b>Constrained what-if.</b> A second LightGBM with monotonicity constraints: less carbohydrate can never predict a higher peak, by construction.</li>
+      <li><b>Uncertainty.</b> Split-conformal and CV+ intervals; Platt and isotonic probability calibration.</li>
+    </ul>
+  </div>
+
+  <div class="pn">
+    <h3>Measured results — served model</h3>
+    <table>
+      <tr><th>Metric</th><th style="text-align:right">Value</th></tr>
+      <tr><td>MAE +30 min</td><td class="n">10.88</td></tr>
+      <tr><td>MAE +60 min</td><td class="n">15.70</td></tr>
+      <tr><td>MAE +120 min</td><td class="n">19.96</td></tr>
+      <tr><td>AUROC &gt;180, +60</td><td class="n">0.89</td></tr>
+      <tr><td>AUROC &lt;70, +60</td><td class="n">0.91</td></tr>
+      <tr><td>80 % coverage</td><td class="n">80.5%</td></tr>
+      <tr><td>Transfer gap</td><td class="n">3.4</td></tr>
+    </table>
+  </div>
+
+  <div class="pn">
+    <h3>Privacy by design</h3>
+    <ul>
+      <li>Anonymised open or synthetic data only; no real patient record is in the repository.</li>
+      <li><b>Federated:</b> FedAvg matches pooled training (difference 0.09–0.12 mg/dL, intervals include zero) and beats a lone small clinic by ≈2 mg/dL.</li>
+      <li>Data minimisation by design: only model updates are exchanged. No formal differential-privacy guarantee is claimed at this clinic count.</li>
+      <li>Role-gated access with a session log; mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
+    </ul>
+  </div>
+
+  <div class="pn">
+    <h3>Engineering &amp; scope</h3>
+    <ul>
+      <li>Python 3.11 · LightGBM · PyTorch · SHAP · Streamlit. Runs on a laptop CPU; no GPU required.</li>
+      <li>One <code>make</code> target per stage; everything regenerates from source. CI runs ruff, black, pytest and a smoke run. Docker image, datasheet and model card included.</li>
+      <li>One condition: <b>type 2 diabetes</b>. Decision support only — not a medical device.</li>
+      <li>India, sleep and federated results are <b>simulations</b>: they test design, not clinical performance (sleep: ≈0.06 mg/dL, <b>≈9,000 patient-days to detect</b>). Not prospectively validated.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>GlucoTwin · <code>docs/architecture.pdf</code> · full method and every result in <code>README.md</code> §9 and <code>docs/DECISIONS.md</code></span>
+  <span>Code MIT. Datasets keep their own licences. Simulated streams are labelled SIMULATED throughout.</span>
+</footer>
+
+</body>
+</html>

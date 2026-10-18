@@ -11,6 +11,9 @@ test_from_day: 7                    # evaluation region (Part 5)
 min_test_anchors: 96
 n_jobs: 4                           # parallel (design, cohort, fold) jobs
 threads: 2                          # LightGBM threads per job
+# D-072: population point model of Parts 6 and 7 (and the app). status_quo = Part 5 leaf grid;
+# tuned = the D-065 search of configs/improve.yaml (tuning), 3 best candidates averaged.
+point_model: tuned
 
 aci:
   # 0.0 = plain split conformal. Widened (0.1, 0.2) after a smoke run on TRAINING patients picked

@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: web-data web-evidence web-real federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -64,11 +64,44 @@ whatif:  ## Part 7 what-if engine: dev (fold-0 training) + final (run ONCE; lock
 	$(PY) -W ignore -m src.whatif.report --final
 	$(PY) data/scripts/make_results_md.py
 
+transfer:  ## Part 8a cross-cohort transfer (both directions; needs make features)
+	$(PY) -W ignore -u -m src.transfer.run
+	$(PY) -W ignore -m src.transfer.report
+
+india:  ## Part 8b India stress test + augmentation (SYNTHETIC cohorts; needs make features)
+	$(PY) -W ignore -u -m src.india.stress
+
+federated:  ## Part 8c federated learning simulation (needs make features)
+	$(PY) -W ignore -u -m src.federated.run
+	$(PY) -W ignore -m src.federated.report
+
+sleep-power:  ## Part 8d sleep/HRV detectability analysis (SYNTHETIC; needs make features)
+	$(PY) -W ignore -u -m src.india.wearable_power
+
+improve:  ## Part 10 tuned LightGBM (D-065): CV only; run the single-shot holdout by hand afterwards
+	$(PY) -W ignore -u -m src.improve.run cv
+
+sleep-scale:  ## Part 8d larger simulated study (D-066; SYNTHETIC; a few hours)
+	$(PY) -W ignore -u -m src.india.wearable_power scale
+
+synth-data:  ## D-067 export the SYNTHETIC Indian T2D dataset + datasheet (a few minutes)
+	$(PY) -W ignore -u -m src.india.export
+
+federated-privacy:  ## Part 8c exploratory privacy sweep (D-063a; needs make federated first)
+	$(PY) -W ignore -u -m src.federated.privacy_sweep
+	$(PY) -W ignore -m src.federated.report
+
 figures:
 	$(PY) -m src.eval.eda
 
+app-data:
+	python -m src.appdata.build
+
+app-check:
+	python -m src.appdata.build --check
+
 app:
-	@echo "[app] not yet implemented"
+	streamlit run app/main.py
 
 test:
 	$(PY) -m pytest
@@ -86,3 +119,15 @@ download:
 
 smoke:
 	$(PY) -m src.smoke
+
+web-data:
+	python -m src.web.build_data
+
+web-evidence:
+	python -m src.web.evidence
+
+web-pages:  ## wrap web/index.html into a standalone site in web/_site (for GitHub Pages)
+	python -m src.web.pages
+
+web-real:  ## D-069 zero-shot model forecasts + what-ifs into web/data.json (needs make app-data and make web-data)
+	python -W ignore -u -m src.web.real_forecast

@@ -1,0 +1,120 @@
+# Part 8b: synthetic Indian-phenotype cohort (D-062). EVERYTHING produced from this file is SYNTHETIC.
+seed: 42
+name: synthetic_india_v1
+n_patients: 100
+days: 10
+start_datetime: "2026-01-05 00:00"
+
+# Real per-patient twin fits (CGMacros, k = 3 days) give the covariance structure of the log
+# parameters; only their MEAN is shifted. Noise and activity gain come from stored Part 4 results.
+fit_source: {csv: reports/metrics/mech_fitted_params.csv, model: twin_pop_actoff_k3, cohort: cgmacros}
+noise_source: {json: reports/metrics/mech_cgmacros.json}
+
+# Log-scale shift of the parameter mean at strength 1.0 ("moderate").
+#  SI   : ln(4.7 / 7.5) = -0.46. Glucose disposal rate in a euglycemic clamp, healthy Asian Indians
+#         vs Caucasians matched for age and BMI, 12 vs 12 (J Clin Endocrinol Metab 2001;86:5366).
+#         Mapping a clamp ratio onto the model's insulin-surrogate sensitivity is an ASSUMPTION.
+#  Gb   : +0.05 (about +6 mg/dL). ASSUMPTION (higher fasting glucose at the same HbA1c is not
+#         established here; kept small).
+#  kabs : +0.15. ASSUMPTION: faster glucose appearance after refined-rice and wheat staples.
+shifts: {SI: -0.46, Gb: 0.05, kabs: 0.15}
+strengths: {control: 0.0, mild: 0.5, moderate: 1.0, strong: 1.5}
+main_strength: moderate
+
+# Diet: whole meals from src/india/meals.json (assumed recipes, IFCT 2017). Slot times are
+# minutes after midnight (mean, sd); every meal is scaled by a patient portion factor
+# (lognormal, sd below) times a meal factor (lognormal, sd below). Snack = a fraction of a portion.
+meals:
+  portion_sd_patient: 0.2
+  portion_sd_meal: 0.15
+  slots:
+    breakfast: {time: [480, 40], p: 1.0, pool: [idli_sambar, plain_dosa, masala_dosa, poha, upma, aloo_paratha]}
+    lunch: {time: [810, 45], p: 1.0, pool: [roti_2_dal_sabzi, rice_1katori_dal_sabzi, rice_2katori_dal_sabzi, veg_thali, dal_chawal, rajma_chawal, curd_rice]}
+    snack: {time: [1020, 40], p: 0.5, pool: [upma, poha], portion: 0.4}
+    dinner: {time: [1230, 40], p: 1.0, pool: [roti_2_dal_sabzi, rice_1katori_dal_sabzi, veg_biryani, chicken_biryani, dal_chawal, chole_bhature, curd_rice]}
+  carb_energy_share_reference: 0.62   # ICMR-INDIAB (Nature Medicine, Sept 2025), as reported by Down To Earth
+
+# Wearable generator (documented, simple): walking bouts drive the activity input; heart rate
+# and activity intensity are derived from it. No sleep stages (CGMacros has none either).
+activity:
+  morning: {p: 0.5, time: [390, 30], duration: [20, 45], level: [1.0, 2.0]}
+  evening: {p: 0.6, time: [1110, 40], duration: [20, 45], level: [1.0, 2.0]}
+  daytime_base: {from_min: 540, to_min: 1200, level: 0.2}
+  hr: {rest_bpm: 64, per_unit: 18, night_dip: 6, noise_sd: 3}
+  intensity_per_unit: 1.2
+static:                                  # ASSUMED demographic draws (not from data)
+  age: {mean: 52, sd: 9, lo: 30, hi: 75}
+  male_fraction: 0.6
+  bmi: {mean: 25.5, sd: 3.2, lo: 18, hi: 38}
+  eag_slope: 28.7                        # eAG = 28.7 x HbA1c - 46.7 (Nathan 2008, ADAG)
+  eag_intercept: -46.7
+  hba1c_bins: [0.0, 5.7, 6.5, 99.0]
+  hba1c_labels: [healthy, prediabetes, t2d]
+
+# Stress test and pretraining experiment (D-062). All numbers produced from SYNTHETIC cohorts.
+stress:
+  n_patients: 100
+  days: 10
+  seeds: {control: 101, mild: 102, moderate: 103, strong: 104}
+  n_hours: 6
+  horizons_min: [30, 60, 120]
+  test_from_day: 3
+  min_test_anchors: 96
+  cv_repeat: 0
+  k_grid: [1, 3]
+  augment: {control: control, india: moderate}   # synthetic cohorts added to training (label: strength name)
+  feature_groups: [cgm, tod, wearable, meals, static]
+  static: [age_years, sex_male, bmi, hba1c_pct, fasting_glucose_mgdl]
+
+# Part 8d (D-064): simulated sleep, HRV and step channel. ALL SYNTHETIC; only duration affects glucose.
+sleep:
+  baseline_h: 7.0                    # deficit = baseline - duration (never negative)
+  duration: {mean: 6.8, sd: 1.0, lo: 3.5, hi: 9.5}      # ASSUMED
+  efficiency: {mean: 0.88, sd: 0.05, lo: 0.6, hi: 0.98}   # ASSUMED, no glucose effect
+  deep_frac: {mean: 0.17, sd: 0.04, lo: 0.05, hi: 0.35}   # ASSUMED, no glucose effect
+  hrv: {mean_ms: 32.0, per_hour_deficit: 0.05, noise_sd_log: 0.15}   # link to deficit ASSUMED
+  rem_frac: {mean: 0.21, sd: 0.04, lo: 0.08, hi: 0.35}    # ASSUMED, no glucose effect
+  wake_minute: 360                   # a night becomes known at 06:00
+  si_beta_per_hour: 0.03             # ASSUMPTION within 0.023-0.045 (Buxton 2010, Diabetes 59:2126)
+  steps: {per_activity_unit_5min: 333.0, noise_sd: 40.0}
+  # power analysis (D-064)
+  multipliers: [0.0, 1.0, 3.0, 5.0]
+  n_patients: 100
+  days: 10
+  seed: 211
+  n_hours: 6
+  horizons_min: [30, 60, 120]
+  test_from_day: 3
+  n_folds: 5
+sleep_scale:                         # D-066: the D-064 analysis on a larger simulated study
+  n_patients: 300
+  days: 30
+  multipliers: [0.0, 1.0]            # control and literature scale only
+  seed: 212
+export:                              # D-067: the published synthetic dataset (SYNTHETIC)
+  n_patients: 200
+  days: 14
+  seed: 301
+  strength: moderate                 # insulin-resistance shift of D-062
+  sleep_mult: 1.0                    # literature-scale sleep effect on insulin sensitivity
+ehr:                                 # D-068: simulated EHR history. ALL ASSUMED; display only.
+  duration_years: {mean: 7.0, sd: 4.0, lo: 0.5, hi: 25.0}   # T2D only; none for non-diabetic
+  hypertension: {base: 0.25, per_year_age_over_40: 0.015, per_bmi_over_25: 0.012, t2d_add: 0.15}
+  dyslipidaemia: {base: 0.30, t2d_add: 0.25}
+  ckd_stage3plus: {base: 0.03, per_year_duration: 0.008, per_hba1c_over_7: 0.01}
+  retinopathy: {per_year_duration: 0.018, per_hba1c_over_7: 0.015}
+  neuropathy: {per_year_duration: 0.020, per_hba1c_over_7: 0.010}
+  coronary_disease: {base: 0.02, per_year_age_over_50: 0.006, t2d_add: 0.04}
+  family_history_t2d: 0.45
+  meds:                              # probability given T2D; insulin rises with duration and HbA1c
+    metformin: 0.85
+    sulfonylurea: 0.35
+    dpp4: 0.25
+    sglt2: 0.15
+    insulin: {base: 0.05, per_year_duration: 0.015, per_hba1c_over_8: 0.06}
+    statin: 0.55
+    acei_arb: 0.40
+  genetics:                          # risk-allele frequencies are ASSUMED round numbers
+    tcf7l2_rs7903146_T: 0.30
+    fto_rs9939609_A: 0.30
+    slc30a8_rs13266634_C: 0.60

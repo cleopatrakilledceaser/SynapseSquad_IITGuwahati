@@ -1,0 +1,100 @@
+{
+ "built_utc": "2026-10-18T09:49:34+00:00",
+ "git_hash": "e363284a9acf05925086906b461eb98ce8d0d261",
+ "fold": 0,
+ "cohort": "cgmacros",
+ "demo_patients": [
+  "cgmacros_004",
+  "cgmacros_012",
+  "cgmacros_022",
+  "cgmacros_038"
+ ],
+ "synthetic_patient": "syn_synthetic_029",
+ "n_train": 36,
+ "n_test": 9,
+ "ref_width60_mgdl": 52.00035718177041,
+ "alert_theta": {
+  "hyper180": 0.1537734667835686,
+  "hypo70": 0.03821399839098954
+ },
+ "figures": [
+  "fusion_ablation",
+  "personalize_cold_start_lgbm",
+  "unc_coverage",
+  "unc_alarm_froc",
+  "whatif_plausibility",
+  "whatif_matched_meals"
+ ],
+ "guards": {
+  "recompute_full_max_abs_diff|cgmacros_004": 0.0,
+  "interp_max_abs_diff|cgmacros_004": 1.4368485901519534,
+  "recompute_full_max_abs_diff|cgmacros_012": 0.0,
+  "interp_max_abs_diff|cgmacros_012": 0.38872581718510446,
+  "recompute_full_max_abs_diff|cgmacros_022": 0.0,
+  "interp_max_abs_diff|cgmacros_022": 0.04727881039480053,
+  "recompute_full_max_abs_diff|cgmacros_038": 0.0,
+  "interp_max_abs_diff|cgmacros_038": 0.6869726962034406,
+  "rtform_max_abs_diff": 0.0,
+  "labels_in_outputs": 0.0
+ },
+ "columns_checked_for_outcomes": {
+  "cgmacros_004": 104,
+  "cgmacros_012": 104,
+  "cgmacros_022": 104,
+  "cgmacros_038": 104,
+  "syn_synthetic_029": 104
+ },
+ "display": {
+  "zones": {
+   "very_low": 54.0,
+   "low": 70.0,
+   "high": 180.0,
+   "very_high": 250.0
+  },
+  "y_range": [
+   40,
+   300
+  ],
+  "history_hours": 6,
+  "forecast_min": 120,
+  "clamp": [
+   40.0,
+   400.0
+  ],
+  "risk_words": {
+   "bounds": [
+    0.1,
+    0.3,
+    0.6
+   ],
+   "words": [
+    "low",
+    "moderate",
+    "high",
+    "very high"
+   ]
+  },
+  "confidence": {
+   "wide_ratio": 1.5,
+   "dq_uncertain_below": 0.7,
+   "dq_high_from": 0.95,
+   "stale_min": 60
+  },
+  "replay_speeds": [
+   1,
+   2,
+   4,
+   8
+  ],
+  "replay_tick_s": 1.0
+ },
+ "build_seconds": 566.0,
+ "models": {
+  "horizons": [
+   30,
+   60,
+   120
+  ],
+  "n_cols": 60
+ }
+}

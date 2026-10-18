@@ -1,0 +1,188 @@
+{
+  "name": "patient_fusion",
+  "timestamp_utc": "2026-10-16T09:03:06.448643+00:00",
+  "git_hash": "4dd4365ffa474d0b4716f9329de9d1061b61c26f-dirty",
+  "seed": 42,
+  "data_hash": "ed1c6424a1e4de55ca178168c36b916fc6ee7af90c87350314fb2cca84f77dd0",
+  "config": {
+    "first_day_h": [
+      0,
+      24
+    ],
+    "next_day_h": [
+      24,
+      48
+    ],
+    "min_real_frac": 0.7,
+    "static": {
+      "cgmacros": [
+        "hba1c_pct",
+        "fasting_glucose_mgdl",
+        "age_years",
+        "bmi",
+        "sex_male"
+      ],
+      "shanghai_t2dm": [
+        "hba1c_pct",
+        "fasting_glucose_mgdl",
+        "age_years",
+        "bmi",
+        "sex_male",
+        "diabetes_duration_years"
+      ]
+    },
+    "ridge_alpha_grid": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "n_splits": 5,
+    "n_repeats": 5
+  },
+  "metrics": {
+    "cgmacros": {
+      "n_patients": 43,
+      "y_tar180": {
+        "mae": {
+          "static": 10.243376843323551,
+          "dynamic": 6.534932916077538,
+          "both": 6.543620620356104,
+          "cohort_mean_reference": 15.89030520486707
+        },
+        "both-static": {
+          "diff": -3.699756222967447,
+          "ci": [
+            -6.042632746685193,
+            -1.533526883493071
+          ],
+          "distinguishable_from_zero": true
+        },
+        "both-dynamic": {
+          "diff": 0.008687704278566244,
+          "ci": [
+            -0.9202923132657285,
+            0.8483574992119185
+          ],
+          "distinguishable_from_zero": false
+        },
+        "dynamic-static": {
+          "diff": -3.7084439272460132,
+          "ci": [
+            -6.244662114797301,
+            -1.0613908439424398
+          ],
+          "distinguishable_from_zero": true
+        },
+        "target_mean": 15.223407366909544,
+        "target_sd": 21.159393531151096
+      },
+      "y_tir": {
+        "mae": {
+          "static": 10.769652515010554,
+          "dynamic": 7.3569548798277475,
+          "both": 7.3706509691398905,
+          "cohort_mean_reference": 15.456590139209068
+        },
+        "both-static": {
+          "diff": -3.3990015458706635,
+          "ci": [
+            -5.698163225544961,
+            -1.2430052580612618
+          ],
+          "distinguishable_from_zero": true
+        },
+        "both-dynamic": {
+          "diff": 0.013696089312142945,
+          "ci": [
+            -0.890421985842782,
+            0.8915068518638107
+          ],
+          "distinguishable_from_zero": false
+        },
+        "dynamic-static": {
+          "diff": -3.4126976351828064,
+          "ci": [
+            -5.940172498097298,
+            -0.7724857331938443
+          ],
+          "distinguishable_from_zero": true
+        },
+        "target_mean": 83.99119168225552,
+        "target_sd": 20.754439057687396
+      }
+    },
+    "shanghai_t2dm": {
+      "n_patients": 100,
+      "y_tar180": {
+        "mae": {
+          "static": 19.698238379164863,
+          "dynamic": 12.097305055790297,
+          "both": 11.852374816252881,
+          "cohort_mean_reference": 21.340087719298243
+        },
+        "both-static": {
+          "diff": -7.8458635629119815,
+          "ci": [
+            -11.105362445267527,
+            -4.9433512306044305
+          ],
+          "distinguishable_from_zero": true
+        },
+        "both-dynamic": {
+          "diff": -0.24493023953741577,
+          "ci": [
+            -0.9305572115668275,
+            0.46375355608005575
+          ],
+          "distinguishable_from_zero": false
+        },
+        "dynamic-static": {
+          "diff": -7.600933323374566,
+          "ci": [
+            -10.827608270650229,
+            -4.8063587235492164
+          ],
+          "distinguishable_from_zero": true
+        },
+        "target_mean": 26.554057017543858,
+        "target_sd": 26.288865743544033
+      },
+      "y_tir": {
+        "mae": {
+          "static": 20.05766545563413,
+          "dynamic": 13.65483521380494,
+          "both": 13.952273635182626,
+          "cohort_mean_reference": 20.904631578947363
+        },
+        "both-static": {
+          "diff": -6.105391820451503,
+          "ci": [
+            -9.11986302698025,
+            -3.3573954799068124
+          ],
+          "distinguishable_from_zero": true
+        },
+        "both-dynamic": {
+          "diff": 0.29743842137768617,
+          "ci": [
+            -0.2848353210536506,
+            0.8772524995732119
+          ],
+          "distinguishable_from_zero": false
+        },
+        "dynamic-static": {
+          "diff": -6.402830241829189,
+          "ci": [
+            -9.443390544009285,
+            -3.5111506477549357
+          ],
+          "distinguishable_from_zero": true
+        },
+        "target_mean": 71.35219298245616,
+        "target_sd": 25.776448530430862
+      }
+    }
+  }
+}
