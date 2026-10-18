@@ -85,3 +85,8 @@ sleep:
   horizons_min: [30, 60, 120]
   test_from_day: 3
   n_folds: 5
+sleep_scale:                         # D-066: the D-064 analysis on a larger simulated study
+  n_patients: 300
+  days: 30
+  multipliers: [0.0, 1.0]            # control and literature scale only
+  seed: 212

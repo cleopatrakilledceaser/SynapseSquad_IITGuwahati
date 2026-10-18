@@ -74,7 +74,7 @@ def folds_of(pids: list[str], n_folds: int, seed: int) -> list[list[str]]:
 
 def run_condition(
     mult: float, icfg: dict[str, Any], mc: dict[str, Any], fcfg: dict[str, Any], bc: dict[str, Any],
-    pre: dict[str, Any],
+    pre: dict[str, Any], tag: str = "",
 ) -> dict[str, Any]:  # fmt: skip
     """Generate one condition, run the nested-feature-set CV, return summary metrics."""
     sc = icfg["sleep"]
@@ -109,7 +109,7 @@ def run_condition(
     models = ["persistence", *sets]
     pairs = [("B", "A"), ("C", "B"), ("C", "A")]
     boot = bc["bootstrap"]
-    ev.to_parquet(OUT / f"sleep_power_m{mult:g}.parquet", index=False)
+    ev.to_parquet(OUT / f"sleep_power{tag}_m{mult:g}.parquet", index=False)
     return {
         "n_patients": int(ev["patient_id"].nunique()),
         "mean_glucose": float(c["grid"]["glucose_true"].mean()),
@@ -121,23 +121,34 @@ def run_condition(
     }  # fmt: skip
 
 
-def main() -> None:
-    """Run all effect multipliers and write reports/metrics/india_sleep_power.json."""
+def main(scale: bool = False) -> None:
+    """Run all effect multipliers and write reports/metrics/india_sleep_power.json.
+
+    With ``scale`` (D-066) the same analysis runs on a larger simulated study (``sleep_scale``
+    in configs/india.yaml) and writes india_sleep_scale.json; D-064 itself is unchanged.
+    """
     icfg, mc = load_config("india"), load_config("mech")
     fcfg, bc = load_config("features"), load_config("baselines")
     icfg = {**icfg, "main_strength_value": icfg["strengths"][icfg["main_strength"]]}
+    name, tag = "india_sleep_power", ""
+    if scale:
+        icfg["sleep"] = {**icfg["sleep"], **icfg["sleep_scale"]}
+        name, tag = "india_sleep_scale", "_scale"
     fits = ic.load_fits(icfg)
     noise, alpha = ic.load_noise_and_alpha(icfg)
     pre = {"fits": fits, "noise": noise, "alpha": alpha}
     OUT.mkdir(parents=True, exist_ok=True)
-    metrics: dict[str, Any] = {"SYNTHETIC": True, "multipliers": icfg["sleep"]["multipliers"]}
+    metrics: dict[str, Any] = {"SYNTHETIC": True, "multipliers": icfg["sleep"]["multipliers"],
+                               "n_patients": icfg["sleep"]["n_patients"], "days": icfg["sleep"]["days"]}  # fmt: skip
     for mult in icfg["sleep"]["multipliers"]:
         t0 = time.time()
-        metrics[f"m{mult:g}"] = run_condition(mult, icfg, mc, fcfg, bc, pre)
+        metrics[f"m{mult:g}"] = run_condition(mult, icfg, mc, fcfg, bc, pre, tag)
         print(f"  multiplier {mult:g}: {time.time() - t0:.0f}s", flush=True)
-    write_metrics("india_sleep_power", metrics, icfg, icfg["sleep"]["seed"], "synthetic")
-    print("wrote reports/metrics/india_sleep_power.json")
+    write_metrics(name, metrics, icfg, icfg["sleep"]["seed"], "synthetic")
+    print(f"wrote reports/metrics/{name}.json")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(scale="scale" in sys.argv[1:])

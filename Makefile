@@ -81,6 +81,9 @@ sleep-power:  ## Part 8d sleep/HRV detectability analysis (SYNTHETIC; needs make
 improve:  ## Part 10 tuned LightGBM (D-065): CV only; run the single-shot holdout by hand afterwards
 	$(PY) -W ignore -u -m src.improve.run cv
 
+sleep-scale:  ## Part 8d larger simulated study (D-066; SYNTHETIC; a few hours)
+	$(PY) -W ignore -u -m src.india.wearable_power scale
+
 federated-privacy:  ## Part 8c exploratory privacy sweep (D-063a; needs make federated first)
 	$(PY) -W ignore -u -m src.federated.privacy_sweep
 	$(PY) -W ignore -m src.federated.report

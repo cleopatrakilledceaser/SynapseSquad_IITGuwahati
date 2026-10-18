@@ -1481,3 +1481,11 @@ Decision rule (fixed now): the tuned model becomes the default forecaster only i
 
 What this does not do: it does not change event classifiers, intervals, the twin or the what-if engine. If tuned forecasts are adopted, intervals and event scores are NOT recomputed in this part; that would be a new, separately documented step.
 
+## D-066: Part 8d scale-up: would more simulated patients and days reveal the sleep effect? (written before the run)
+
+Why: the D-064 run (100 patients, 10 days) found no detectable gain from sleep, HRV and steps at any multiplier. A fair next question is whether that is only a lack of data. Same generator, same features, same CV, same analysis; only the size changes: 300 patients, 30 days, multipliers 0 (control) and 1 (literature scale). Seed 212 (different draws from D-064).
+
+Reading (fixed now): if C minus B at m = 1 is still indistinguishable from 0, the honest statement is that, at literature-scale effects, the sleep channel does not improve 30 to 120 minute forecasts even with about 9 times more patient-days, because the mean glucose shift it causes (about 0.3 mg/dL at m = 1 in D-064) is far smaller than meal-driven variation. If C minus B is below 0 with a CI excluding 0 at m = 1 and not at m = 0, it is detectable at that scale. m = 0 below 0 would be a leak and a bug. This is a SIMULATION result and says nothing about real patients.
+
+Not done and why: ingesting AI-READI (access barriers, D-0xx) and attaching invented sleep or HRV to real patients (it would carry no real signal).
+
