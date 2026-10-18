@@ -15,11 +15,11 @@
        line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 
   header{display:flex;align-items:center;justify-content:space-between;gap:28px;
-         border-bottom:2.5px solid var(--purple);padding-bottom:10px;margin-bottom:16px;}
-  header img{height:46px;width:auto;object-fit:contain;}
-  header img.dtc{height:52px;}
+         border-bottom:2.5px solid var(--purple);padding-bottom:8px;margin-bottom:12px;}
+  header img{height:38px;width:auto;object-fit:contain;}
+  header img.dtc{height:44px;}
   .htext{flex:1;}
-  h1{font-size:27px;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--deep);}
+  h1{font-size:25px;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--deep);}
   .sub{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:900px;}
 
   /* ---------- flow ---------- */
@@ -45,7 +45,7 @@
              background:var(--paper);padding:0 7px;}
 
   /* ---------- bottom ---------- */
-  .panels{display:grid;grid-template-columns:1.15fr 1.15fr 0.8fr 1.1fr 0.95fr;gap:11px;margin-top:16px;}
+  .panels{display:grid;grid-template-columns:1.15fr 1.15fr 0.8fr 1.1fr 0.95fr;gap:11px;margin-top:12px;}
   .pn{border:1.3px solid var(--rule);border-radius:8px;padding:11px 13px;}
   .pn.hi{border-color:var(--purple);background:var(--tint);}
   .pn h3{margin:0 0 6px;font-size:12.5px;font-weight:800;color:var(--deep);
@@ -56,7 +56,7 @@
   th,td{text-align:left;padding:3px 5px;border-bottom:1px solid var(--rule);}
   th{color:var(--muted);font-weight:700;font-size:9.6px;text-transform:uppercase;letter-spacing:.05em;}
   td.n{font-family:"DejaVu Sans Mono",monospace;text-align:right;color:var(--deep);font-weight:700;}
-  footer{margin-top:11px;border-top:1px solid var(--rule);padding-top:6px;
+  footer{margin-top:9px;border-top:1px solid var(--rule);padding-top:6px;
          font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between;}
   code{font-family:"DejaVu Sans Mono",monospace;color:var(--purple);}
 </style>
@@ -70,6 +70,7 @@
     <div class="sub">A patient-specific type&nbsp;2 diabetes digital twin. Four input streams are harmonised onto one causal
       timeline, fused by the model layer, calibrated into prediction intervals and adverse-event probabilities, and served
       to two clinician interfaces. Raw patient records never leave the clinic.</div>
+    <div class="sub" style="margin-top:4px;color:#1D1430"><b>Team Synapse Squad</b> · Jahnavi Harsha · Indian Institute of Technology Guwahati</div>
   </div>
   <img class="dtc" src="assets/digital-twin-challenge.png" alt="Digital Twin Challenge 2026">
 </header>
@@ -88,20 +89,22 @@
     <path d="M228 392 C246 392 244 321 262 321"/>
     <path d="M228 533 C246 533 244 321 262 321"/>
 
-    <path d="M458 321 C476 321 474 110 492 110"/>
-    <path d="M458 321 C476 321 474 251 492 251"/>
-    <path d="M458 321 C476 321 474 392 492 392"/>
-    <path d="M458 321 C476 321 474 533 492 533"/>
+    <path d="M458 321 C476 321 474 97 492 97"/>
+    <path d="M458 321 C476 321 474 209 492 209"/>
+    <path d="M458 321 C476 321 474 321 492 321"/>
+    <path d="M458 321 C476 321 474 433 492 433"/>
+    <path d="M458 321 C476 321 474 545 492 545"/>
 
-    <path d="M710 110 C728 110 726 132 744 132"/>
-    <path d="M710 251 C728 251 726 321 744 321"/>
-    <path d="M710 392 C728 392 726 321 744 321"/>
-    <path d="M710 533 C728 533 726 510 744 510"/>
+    <path d="M710 97  C728 97 726 110 744 110"/>
+    <path d="M710 209 C728 209 726 251 744 251"/>
+    <path d="M710 321 C728 321 726 392 744 392"/>
+    <path d="M710 433 C728 433 726 392 744 392"/>
+    <path d="M710 545 C728 545 726 533 744 533"/>
 
-    <path d="M940 132 C958 132 956 110 974 110"/>
-    <path d="M940 132 C958 132 956 251 974 251"/>
-    <path d="M940 321 C958 321 956 392 974 392"/>
-    <path d="M940 510 C958 510 956 533 974 533"/>
+    <path d="M940 110 C958 110 956 110 974 110"/>
+    <path d="M940 251 C958 251 956 251 974 251"/>
+    <path d="M940 392 C958 392 956 392 974 392"/>
+    <path d="M940 533 C958 533 956 533 974 533"/>
 
     <path d="M1170 110 C1188 110 1186 180 1204 180"/>
     <path d="M1170 251 C1188 251 1186 180 1204 180"/>
@@ -154,35 +157,43 @@
 </div>
 
 <!-- C3 models -->
-<div class="bx key" style="left:492px;top:46px;width:218px;height:127px">
+<div class="bx key" style="left:492px;top:46px;width:218px;height:102px">
   <h4>Fusion forecaster</h4>
-  <p>Tuned LightGBM predicting the <i>change</i> from the current value at +30, +60 and +120 min. The served model, selected on inner-validation patients only.</p>
+  <p>Tuned LightGBM on the <i>change</i> from the current value at +30, +60 and +120 min. The served model.</p>
 </div>
-<div class="bx" style="left:492px;top:187px;width:218px;height:127px">
+<div class="bx" style="left:492px;top:158px;width:218px;height:102px">
   <h4>Mechanistic twin</h4>
-  <p>A minimal glucose–insulin ODE fitted per patient. RK4 integration, extended Kalman filter for the state. Used for what-ifs and as a feature source.</p>
+  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter for the state.</p>
 </div>
-<div class="bx" style="left:492px;top:328px;width:218px;height:127px">
+<div class="bx key" style="left:492px;top:270px;width:218px;height:102px">
+  <h4>Hybrid physics + ML</h4>
+  <p>Twin-derived features fed to the forecaster, and a GRU trained with an ODE-consistency loss.</p>
+</div>
+<div class="bx" style="left:492px;top:382px;width:218px;height:102px">
   <h4>Personalisation</h4>
-  <p>The population model plus fine-tuning, or a recursive-least-squares correction, on the patient's own first days. Cold-start curve measured per horizon.</p>
+  <p>Fine-tuning or a recursive-least-squares correction on the patient's own first days.</p>
 </div>
-<div class="bx" style="left:492px;top:469px;width:218px;height:127px">
+<div class="bx" style="left:492px;top:494px;width:218px;height:102px">
   <h4>Federated training</h4>
-  <p>FedAvg and FedProx across simulated clinics, with a differential-privacy noise sweep. Only model updates cross the clinic boundary.</p>
+  <p>FedAvg and FedProx across simulated clinics, with a privacy noise sweep.</p>
 </div>
 
 <!-- C4 calibrate -->
-<div class="bx key" style="left:744px;top:46px;width:196px;height:172px">
-  <h4>80% prediction intervals</h4>
-  <p>Split-conformal and CV+. Measured coverage 80.8% on CGMacros and 79.5% on Shanghai at +60 min, against an 80% target. Coverage is also reported per subgroup, not only pooled.</p>
+<div class="bx key" style="left:744px;top:46px;width:196px;height:127px">
+  <h4>80% intervals</h4>
+  <p>Split-conformal and CV+. Coverage 80.8% (CGMacros) and 79.5% (Shanghai) at +60 min, per subgroup as well as pooled.</p>
 </div>
-<div class="bx key" style="left:744px;top:235px;width:196px;height:172px">
+<div class="bx key" style="left:744px;top:187px;width:196px;height:127px">
   <h4>Event probabilities</h4>
-  <p>Platt and isotonic calibration for crossing 180 mg/dL, 140 mg/dL and falling below 70 mg/dL. Reported as calibrated probabilities, never as bare alarm labels.</p>
+  <p>Platt and isotonic calibration for crossing 180, 140 and 70 mg/dL. Probabilities, never bare alarm labels.</p>
 </div>
-<div class="bx" style="left:744px;top:424px;width:196px;height:172px">
-  <h4>Alert policy &amp; explainability</h4>
-  <p>Alert-burden curves: episodes caught per false alarm per day, so a clinic sets its own threshold. SHAP attribution over the fused feature set explains each forecast.</p>
+<div class="bx" style="left:744px;top:328px;width:196px;height:127px">
+  <h4>Robustness &amp; quality</h4>
+  <p>Sensor faults injected and features recomputed. Causal quality score: completeness, recency, plausibility.</p>
+</div>
+<div class="bx" style="left:744px;top:469px;width:196px;height:127px">
+  <h4>Alerts &amp; explainability</h4>
+  <p>Alert-burden curves per false alarm a day. SHAP attribution explains each forecast.</p>
 </div>
 
 <!-- C5 outputs -->
@@ -229,20 +240,20 @@
     <h3>Method — how every number was obtained</h3>
     <ul>
       <li><b>Pre-registered.</b> Each protocol, candidate set and decision rule written to <code>docs/DECISIONS.md</code> before the run that tested it. Over 70 numbered entries.</li>
-      <li><b>Paired patient bootstrap.</b> Confidence intervals computed over patients, never over time windows — readings from one patient are not independent.</li>
-      <li><b>Untouched holdout.</b> Final claims confirmed on patients never used for any choice anywhere in the project; the runner refuses a second run.</li>
-      <li><b>Null results published.</b> Where a signal does not help, the number is reported at full size rather than dropped.</li>
+      <li><b>Paired patient bootstrap.</b> Intervals computed over patients, never over time windows — readings from one patient are not independent.</li>
+      <li><b>Untouched holdout.</b> Final claims confirmed on patients never used for any choice; the runner refuses a second run.</li>
+      <li><b>Null results published</b> at full size rather than dropped.</li>
     </ul>
   </div>
 
   <div class="pn">
     <h3>Evaluation protocol</h3>
     <ul>
-      <li><b>Patient-grouped cross-validation</b> with repeats, an inner validation split for every choice, and a reserved holdout cohort.</li>
-      <li><b>Baselines it must beat:</b> persistence (assume glucose stays where it is), ridge regression, and a GRU sequence model.</li>
-      <li><b>Horizons:</b> +30, +60 and +120 minutes, scored on mean absolute error.</li>
-      <li><b>Beyond accuracy:</b> interval coverage, event AUROC, alert burden, what-if plausibility checks, and 87 matched real breakfasts.</li>
-      <li><b>Stress tests:</b> cross-cohort transfer and a synthetic Indian cohort at four insulin-resistance settings.</li>
+      <li><b>Patient-grouped CV</b> with repeats, an inner validation split for every choice, and a reserved holdout.</li>
+      <li><b>Baselines it must beat:</b> persistence, ridge regression, a GRU sequence model.</li>
+      <li><b>Horizons</b> +30, +60, +120 min, scored on mean absolute error.</li>
+      <li><b>Also scored:</b> interval coverage, event AUROC, alert burden, plausibility checks, 87 matched breakfasts.</li>
+      <li><b>Stress:</b> cross-cohort transfer, injected sensor faults, four hybrid variants, a synthetic Indian cohort.</li>
     </ul>
   </div>
 
@@ -263,10 +274,10 @@
   <div class="pn">
     <h3>Privacy by design</h3>
     <ul>
-      <li>Anonymised open or synthetic data only. No real patient record enters the repository, and none ever did.</li>
-      <li><b>Federated:</b> FedAvg matches pooled central training (difference 0.09 to 0.12 mg/dL, intervals include zero) and beats a single small clinic alone by about 2 mg/dL.</li>
-      <li>Data minimisation is the design: records stay at the clinic, only model updates are exchanged. No formal differential-privacy guarantee is claimed at this clinic count.</li>
-      <li>Role-gated access with a session log; handling mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
+      <li>Anonymised open or synthetic data only; no real patient record is in the repository.</li>
+      <li><b>Federated:</b> FedAvg matches pooled training (difference 0.09–0.12 mg/dL, intervals include zero) and beats a lone small clinic by ≈2 mg/dL.</li>
+      <li>Data minimisation by design: only model updates are exchanged. No formal differential-privacy guarantee is claimed at this clinic count.</li>
+      <li>Role-gated access with a session log; mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
     </ul>
   </div>
 
