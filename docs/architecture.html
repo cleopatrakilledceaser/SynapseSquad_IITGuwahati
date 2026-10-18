@@ -45,12 +45,12 @@
              background:var(--paper);padding:0 7px;}
 
   /* ---------- bottom ---------- */
-  .panels{display:grid;grid-template-columns:1.15fr 1.15fr 0.8fr 1.1fr 0.95fr;gap:11px;margin-top:12px;}
+  .panels{display:grid;grid-template-columns:1.1fr 1.45fr 0.72fr 1fr 0.95fr;gap:11px;margin-top:12px;}
   .pn{border:1.3px solid var(--rule);border-radius:8px;padding:11px 13px;}
   .pn.hi{border-color:var(--purple);background:var(--tint);}
   .pn h3{margin:0 0 6px;font-size:12.5px;font-weight:800;color:var(--deep);
          text-transform:uppercase;letter-spacing:.06em;}
-  .pn ul{margin:0;padding-left:14px;} .pn li{font-size:11.2px;margin-bottom:3.5px;color:var(--muted);}
+  .pn ul{margin:0;padding-left:13px;} .pn li{font-size:10.9px;margin-bottom:2.8px;color:var(--muted);}
   .pn li b{color:var(--ink);}
   table{border-collapse:collapse;width:100%;font-size:11.2px;}
   th,td{text-align:left;padding:3px 5px;border-bottom:1px solid var(--rule);}
@@ -237,23 +237,24 @@
 <div class="panels">
 
   <div class="pn hi">
-    <h3>Method — how every number was obtained</h3>
+    <h3>Method &amp; evaluation</h3>
     <ul>
-      <li><b>Pre-registered.</b> Each protocol, candidate set and decision rule written to <code>docs/DECISIONS.md</code> before the run that tested it. Over 70 numbered entries.</li>
-      <li><b>Paired patient bootstrap.</b> Intervals computed over patients, never over time windows — readings from one patient are not independent.</li>
-      <li><b>Untouched holdout.</b> Final claims confirmed on patients never used for any choice; the runner refuses a second run.</li>
-      <li><b>Null results published</b> at full size rather than dropped.</li>
+      <li><b>Pre-registered.</b> Protocol, candidate set and decision rule written to <code>docs/DECISIONS.md</code> before the run that tested it. Over 70 entries.</li>
+      <li><b>Patient-grouped CV</b> with repeats, an inner validation split for every choice, and a reserved holdout the runner refuses to reuse.</li>
+      <li><b>Baselines it must beat:</b> persistence, per-patient autoregression, ridge, a GRU.</li>
+      <li><b>Paired patient bootstrap</b> intervals — over patients, never over time windows.</li>
+      <li><b>Also scored:</b> coverage, event AUROC, alert burden, plausibility, 87 matched breakfasts; stressed by transfer, injected faults and a synthetic Indian cohort. <b>Null results published</b> at full size.</li>
     </ul>
   </div>
 
   <div class="pn">
-    <h3>Evaluation protocol</h3>
+    <h3>AI / ML models and training</h3>
     <ul>
-      <li><b>Patient-grouped CV</b> with repeats, an inner validation split for every choice, and a reserved holdout.</li>
-      <li><b>Baselines it must beat:</b> persistence, ridge regression, a GRU sequence model.</li>
-      <li><b>Horizons</b> +30, +60, +120 min, scored on mean absolute error.</li>
-      <li><b>Also scored:</b> interval coverage, event AUROC, alert burden, plausibility checks, 87 matched breakfasts.</li>
-      <li><b>Stress:</b> cross-cohort transfer, injected sensor faults, four hybrid variants, a synthetic Indian cohort.</li>
+      <li><b>Inputs → target.</b> Causal features per anchor: CGM lags, rolling statistics, least-squares slope and acceleration, time-of-day sin/cos, meal macros, heart rate and activity, static profile. Target is the <i>change</i> from the current value.</li>
+      <li><b>Served forecaster.</b> LightGBM, one head per horizon, trained with an absolute-error loss to match the metric it is scored on. 16 candidates searched, best three averaged, on inner-validation patients only.</li>
+      <li><b>Sequence model.</b> PyTorch GRU over the causal window with FiLM static conditioning; also the backbone of the physics-informed hybrid.</li>
+      <li><b>Constrained what-if.</b> A second LightGBM with monotonicity constraints: less carbohydrate can never predict a higher peak, by construction.</li>
+      <li><b>Uncertainty.</b> Split-conformal and CV+ intervals; Platt and isotonic probability calibration.</li>
     </ul>
   </div>
 
