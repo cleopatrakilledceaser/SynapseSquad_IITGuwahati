@@ -132,17 +132,17 @@
 <div class="bx key" style="left:0;top:187px;width:228px;height:127px">
   <span class="tag t-real">Real · open</span>
   <h4>CGM · 145 patients</h4>
-  <p>CGMacros (45 adults, PhysioNet) and Shanghai T2DM (100 patients, figshare). Glucose every 5 minutes over 10–14 day wears.</p>
+  <p>CGMacros (45 adults, PhysioNet) and Shanghai T2DM (100 patients, figshare). Removing this stream hurts the forecast most of all.</p>
 </div>
 <div class="bx" style="left:0;top:328px;width:228px;height:127px">
   <span class="tag t-real">Real + simulated</span>
   <h4>Wearable</h4>
-  <p>Fitbit heart rate and activity (METs) from CGMacros. Sleep stages, HRV and step count from the simulator, labelled as such.</p>
+  <p>Fitbit heart rate and activity; sleep, HRV and steps simulated. At +60 min: <b>+0.04 mg/dL, CI includes zero</b> — reported, not hidden.</p>
 </div>
 <div class="bx" style="left:0;top:469px;width:228px;height:127px">
   <span class="tag t-real">Real + presets</span>
   <h4>Meals</h4>
-  <p>Logged carbohydrate, protein, fat and fibre, plus 16 Indian meal presets with composition from IFCT-2017.</p>
+  <p>Logged macronutrients, plus 16 Indian presets from IFCT-2017. Meals are the <b>largest single gain</b>.</p>
 </div>
 
 <!-- C2 -->
@@ -163,7 +163,7 @@
 </div>
 <div class="bx" style="left:492px;top:158px;width:218px;height:102px">
   <h4>Mechanistic twin</h4>
-  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter for the state.</p>
+  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter state. Also supplies the features used by the hybrids.</p>
 </div>
 <div class="bx key" style="left:492px;top:270px;width:218px;height:102px">
   <h4>Hybrid physics + ML</h4>
@@ -171,11 +171,11 @@
 </div>
 <div class="bx" style="left:492px;top:382px;width:218px;height:102px">
   <h4>Personalisation</h4>
-  <p>Fine-tuning or a recursive-least-squares correction on the patient's own first days.</p>
+  <p>Fine-tuning or recursive least squares on the patient's own days: about 1 mg/dL better after 3 to 5 days.</p>
 </div>
 <div class="bx" style="left:492px;top:494px;width:218px;height:102px">
   <h4>Federated training</h4>
-  <p>FedAvg and FedProx across simulated clinics, with a privacy noise sweep.</p>
+  <p>FedAvg and FedProx across simulated clinics. Five-clinic and two-site layouts, plus a privacy noise sweep.</p>
 </div>
 
 <!-- C4 calibrate -->
@@ -185,25 +185,25 @@
 </div>
 <div class="bx key" style="left:744px;top:187px;width:196px;height:127px">
   <h4>Event probabilities</h4>
-  <p>Platt and isotonic calibration for crossing 180, 140 and 70 mg/dL. Probabilities, never bare alarm labels.</p>
+  <p>Platt and isotonic calibration for crossing 180, 140 and 70 mg/dL. Calibrated means 40% happens about 40% of the time.</p>
 </div>
 <div class="bx" style="left:744px;top:328px;width:196px;height:127px">
   <h4>Robustness &amp; quality</h4>
-  <p>Sensor faults injected and features recomputed. Causal quality score: completeness, recency, plausibility.</p>
+  <p>Faults injected, causal features recomputed, scored on the same anchors. Quality score: completeness, recency, plausibility, rate of change.</p>
 </div>
 <div class="bx" style="left:744px;top:469px;width:196px;height:127px">
   <h4>Alerts &amp; explainability</h4>
-  <p>Alert-burden curves per false alarm a day. SHAP attribution explains each forecast.</p>
+  <p>Alert-burden curves let a clinic trade sensitivity against false alarms explicitly. SHAP attribution over the fused feature set explains each forecast.</p>
 </div>
 
 <!-- C5 outputs -->
 <div class="bx" style="left:974px;top:46px;width:196px;height:127px">
   <h4>Forecast + band</h4>
-  <p>Trajectory to +120 min with its 80% interval and one plain-language sentence a clinician can read instead of the chart.</p>
+  <p>Trajectory to +120 min with its 80% interval and one plain sentence. The band widens with the horizon — that widening is the content.</p>
 </div>
 <div class="bx" style="left:974px;top:187px;width:196px;height:127px">
   <h4>Adverse-event risk</h4>
-  <p>Calibrated chance of hyperglycaemia or hypoglycaemia inside the window, with the alert threshold the clinic chose.</p>
+  <p>Calibrated chance of hyperglycaemia or hypoglycaemia inside the window, at the threshold the clinic chose. Thresholds follow the 2019 consensus.</p>
 </div>
 <div class="bx" style="left:974px;top:328px;width:196px;height:127px">
   <h4>What-if answers</h4>
