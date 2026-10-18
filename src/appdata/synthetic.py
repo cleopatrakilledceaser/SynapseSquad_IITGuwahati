@@ -31,6 +31,24 @@ def pick_patient(params: pd.DataFrame, rule: str) -> str:
     return str(params.loc[(params["Gb"] - med).abs().idxmin(), "patient_id"])
 
 
+def anchor_rows(
+    g: pd.DataFrame,
+    meals: pd.DataFrame,
+    fcfg: dict[str, Any],
+    n_h: int,
+    hba1c: float,
+    fasting: float,
+    step: int = 5,
+) -> pd.DataFrame:
+    """Model-input rows at every step of a simulated 5-min grid; static profile as given."""
+    f = period_features(g, meals, step, n_h, fcfg)
+    f["static_hba1c_pct"] = hba1c
+    f["static_fasting_glucose_mgdl"] = fasting
+    f["cgm_now"] = g["glucose"].to_numpy()
+    rows = pd.concat([g[["patient_id", "period_id", "t", "days_since_start"]], f], axis=1)
+    return rows.loc[:, ~rows.columns.duplicated()]
+
+
 def build(
     cfg: dict[str, Any], fcfg: dict[str, Any], clip: tuple[float, float], n_h: int
 ) -> dict[str, Any]:
@@ -79,12 +97,9 @@ def build(
     ).reset_index(drop=True)
     meals["kcal"] = 4 * meals["carbs_g"] + 4 * meals["protein_g"] + 9 * meals["fat_g"]
     meals["food_grams_total"] = np.nan
-    f = period_features(g, meals, 5, n_h, fcfg)
-    f["static_hba1c_pct"] = sc["static_hba1c_pct"]
-    f["static_fasting_glucose_mgdl"] = sc["static_fasting_glucose_mgdl"]
-    f["cgm_now"] = g["glucose"].to_numpy()
-    rows = pd.concat([g[["patient_id", "period_id", "t", "days_since_start"]], f], axis=1)
-    rows = rows.loc[:, ~rows.columns.duplicated()]
+    rows = anchor_rows(
+        g, meals, fcfg, n_h, sc["static_hba1c_pct"], sc["static_fasting_glucose_mgdl"]
+    )
     stride = 15 // 5
     rows = rows.iloc[::stride].reset_index(drop=True)
     gb = float(prm.loc[prm.patient_id == pid, "Gb"].iloc[0])

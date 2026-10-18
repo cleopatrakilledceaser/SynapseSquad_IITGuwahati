@@ -81,13 +81,23 @@ def tir(g: np.ndarray) -> dict[str, float]:
     }
 
 
-def build(n_show: int, seed: int) -> dict[str, Any]:
+def simulate() -> tuple[dict[str, pd.DataFrame], pd.DataFrame, dict[str, Any]]:
+    """The D-067 SIMULATED cohort (grid, meals, sleep), its static + EHR table and export config."""
     icfg, mc = load_config("india"), load_config("mech")
     e = icfg["export"]
     c = ic.generate(icfg, mc, icfg["strengths"][e["strength"]], "exp", e["seed"],
                     int(e["n_patients"] * 1.25), e["days"], sleep_mult=e["sleep_mult"])  # fmt: skip
     c = ex.plausible(c, e["n_patients"], icfg)
-    static = ex.with_history(c["static"], e["seed"], icfg["ehr"])
+    return c, ex.with_history(c["static"], e["seed"], icfg["ehr"]), e
+
+
+def web_id(pid: str) -> str:
+    """Console id of a simulated patient ('S-007')."""
+    return "S-" + pid.rsplit("_", 1)[1]
+
+
+def build(n_show: int, seed: int) -> dict[str, Any]:
+    c, static, e = simulate()
     pids = list(static["patient_id"])
     rng = np.random.default_rng(seed)
     per: dict[str, dict[str, Any]] = {}
@@ -155,7 +165,7 @@ def build(n_show: int, seed: int) -> dict[str, Any]:
         rec = {k: (v.item() if hasattr(v, "item") else v) for k, v in s.to_dict().items()
                if k not in ("patient_id", "dataset")}  # fmt: skip
         out_p.append({
-            "id": "S-" + pid.rsplit("_", 1)[1], "record": rec,
+            "id": web_id(pid), "record": rec,
             "now": t_now.isoformat(), "hist": np.round(g[i - 287 : i + 1], 1).tolist(),
             "future": np.round(g[i + 1 : i + 25], 1).tolist(), "fc": fc, "ev": ev,
             "meals": [{"m": int((r.t - (t_now - pd.Timedelta(hours=24))).total_seconds() / 60),
