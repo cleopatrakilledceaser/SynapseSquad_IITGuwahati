@@ -32,6 +32,7 @@ STEP = 5  # minutes per grid step
 
 
 def cdf(z: float) -> float:
+    """Standard normal CDF."""
     return 0.5 * (1.0 + erf(z / sqrt(2.0)))
 
 
@@ -50,6 +51,7 @@ def feats(g: np.ndarray, carbs: np.ndarray, act: np.ndarray, i: int) -> np.ndarr
 
 
 def ridge(x: np.ndarray, y: np.ndarray, lam: float = 5.0) -> np.ndarray:
+    """Ridge regression weights with standardised inputs and an intercept."""
     mu, sd = x.mean(0), x.std(0) + 1e-9
     z = np.c_[(x - mu) / sd, np.ones(len(x))]
     w = np.linalg.solve(z.T @ z + lam * np.eye(z.shape[1]), z.T @ y)
@@ -57,6 +59,7 @@ def ridge(x: np.ndarray, y: np.ndarray, lam: float = 5.0) -> np.ndarray:
 
 
 def apply(m: np.ndarray, x: np.ndarray) -> np.ndarray:
+    """Apply ridge weights from ``ridge`` to new rows."""
     k = (len(m) - 1) // 3
     mu, sd, w = m[:k], m[k : 2 * k], m[2 * k :]
     return np.c_[(x - mu) / sd, np.ones(len(x))] @ w
@@ -67,10 +70,14 @@ def agp(g: np.ndarray) -> dict[str, list[float]]:
     d = g[: (len(g) // 288) * 288].reshape(-1, 288)
     d = d.reshape(d.shape[0], 96, 3).mean(2)
     q = np.percentile(d, [5, 25, 50, 75, 95], axis=0)
-    return {k: np.round(v, 1).tolist() for k, v in zip(("p5", "p25", "p50", "p75", "p95"), q, strict=True)}
+    return {
+        k: np.round(v, 1).tolist()
+        for k, v in zip(("p5", "p25", "p50", "p75", "p95"), q, strict=True)
+    }
 
 
 def tir(g: np.ndarray) -> dict[str, float]:
+    """Share of readings in each glucose zone, in percent."""
     n = len(g)
     return {
         "lt54": round(100 * (g < 54).sum() / n, 1),
@@ -97,6 +104,7 @@ def web_id(pid: str) -> str:
 
 
 def build(n_show: int, seed: int) -> dict[str, Any]:
+    """Build the console payload for ``n_show`` simulated T2D patients."""
     c, static, e = simulate()
     pids = list(static["patient_id"])
     rng = np.random.default_rng(seed)
@@ -108,7 +116,9 @@ def build(n_show: int, seed: int) -> dict[str, Any]:
         mt = c["meals"][c["meals"].patient_id == pid]
         t0 = gdf["t"].iloc[0]
         idx = ((mt["t"] - t0).dt.total_seconds() / 60 / STEP).round().astype(int).to_numpy()
-        np.add.at(carbs, idx[(idx >= 0) & (idx < n)], mt["carbs_g"].to_numpy()[(idx >= 0) & (idx < n)])
+        np.add.at(
+            carbs, idx[(idx >= 0) & (idx < n)], mt["carbs_g"].to_numpy()[(idx >= 0) & (idx < n)]
+        )
         per[pid] = {"g": gdf["glucose"].to_numpy(float), "carbs": carbs,
                     "act": gdf["activity_intensity"].to_numpy(float), "hr": gdf["hr"].to_numpy(float),
                     "steps": gdf["steps"].to_numpy(float), "t0": t0, "meals": mt}  # fmt: skip
@@ -158,10 +168,16 @@ def build(n_show: int, seed: int) -> dict[str, Any]:
         ev["hi250_120"] = round(1 - cdf((250 - fc["120"]["p"]) / sd(120)), 3)
         ev["lo70_60"] = round(cdf((70 - fc["60"]["p"]) / sd(60)), 3)
         t_now = p["t0"] + pd.Timedelta(minutes=i * STEP)
-        ml = p["meals"][(p["meals"]["t"] > t_now - pd.Timedelta(hours=26)) & (p["meals"]["t"] <= t_now + pd.Timedelta(hours=2))]
+        ml = p["meals"][
+            (p["meals"]["t"] > t_now - pd.Timedelta(hours=26))
+            & (p["meals"]["t"] <= t_now + pd.Timedelta(hours=2))
+        ]
         nights = c["sleep"][c["sleep"].patient_id == pid].reset_index(drop=True)
         daily_steps = [int(p["steps"][d * 288 : (d + 1) * 288].sum()) for d in range(n // 288)]
-        rest_hr = [round(float(np.percentile(p["hr"][d * 288 : (d + 1) * 288], 5)), 1) for d in range(n // 288)]
+        rest_hr = [
+            round(float(np.percentile(p["hr"][d * 288 : (d + 1) * 288], 5)), 1)
+            for d in range(n // 288)
+        ]
         rec = {k: (v.item() if hasattr(v, "item") else v) for k, v in s.to_dict().items()
                if k not in ("patient_id", "dataset")}  # fmt: skip
         out_p.append({
@@ -180,7 +196,9 @@ def build(n_show: int, seed: int) -> dict[str, Any]:
             "steps_daily": daily_steps, "rest_hr": rest_hr,
         })  # fmt: skip
     return {
-        "SYNTHETIC": True, "forecast_source": "dev", "horizons": HZ,
+        "SYNTHETIC": True,
+        "forecast_source": "dev",
+        "horizons": HZ,
         "residual_sd": {str(h): round(res_sd[h], 1) for h in HZ},
         "cohort": {"n_total": len(pids), "days": e["days"], "seed": e["seed"]},
         "patients": out_p,
@@ -188,6 +206,7 @@ def build(n_show: int, seed: int) -> dict[str, Any]:
 
 
 def main() -> None:
+    """Write web/data.json."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=120)
     ap.add_argument("--seed", type=int, default=7)

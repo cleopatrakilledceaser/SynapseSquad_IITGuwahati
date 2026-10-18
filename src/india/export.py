@@ -23,7 +23,9 @@ SENSOR_RANGE = (40.0, 400.0)  # Dexcom reporting range (configs/data.yaml)
 MAX_PATIENT_MEAN = 300.0  # mg/dL; a profile above this needs urgent care, not a routine clinic list
 
 
-def plausible(c: dict[str, pd.DataFrame], n_keep: int, icfg: dict[str, Any]) -> dict[str, pd.DataFrame]:
+def plausible(
+    c: dict[str, pd.DataFrame], n_keep: int, icfg: dict[str, Any]
+) -> dict[str, pd.DataFrame]:
     """Apply the CGM reporting range and keep the first ``n_keep`` patients with a plausible mean.
 
     HbA1c and diabetes status are recomputed from the sensor-range glucose so the profile stays
@@ -39,7 +41,9 @@ def plausible(c: dict[str, pd.DataFrame], n_keep: int, icfg: dict[str, Any]) -> 
     st = out["static"].set_index("patient_id")
     a1c = (means[keep] - s["eag_intercept"]) / s["eag_slope"]
     st["hba1c_pct"] = a1c
-    st["diabetes_status"] = pd.cut(a1c, s["hba1c_bins"], labels=s["hba1c_labels"], right=False).astype(str)
+    st["diabetes_status"] = pd.cut(
+        a1c, s["hba1c_bins"], labels=s["hba1c_labels"], right=False
+    ).astype(str)
     out["static"] = st.reset_index()
     return out
 

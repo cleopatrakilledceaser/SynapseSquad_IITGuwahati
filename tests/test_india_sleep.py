@@ -171,7 +171,9 @@ def test_plausible_clips_sensor_range_and_drops_extreme_patients():
         pd.DataFrame({"patient_id": "a", "t": t, "glucose": [120.0, 130.0, 20.0, 450.0]}),
         pd.DataFrame({"patient_id": "b", "t": t, "glucose": [600.0] * 4}),
     ])  # fmt: skip
-    st = pd.DataFrame({"patient_id": ["a", "b"], "hba1c_pct": [6.0, 6.0], "diabetes_status": ["t2d"] * 2})
+    st = pd.DataFrame(
+        {"patient_id": ["a", "b"], "hba1c_pct": [6.0, 6.0], "diabetes_status": ["t2d"] * 2}
+    )
     c = {"grid": grid, "static": st, "meals": pd.DataFrame({"patient_id": ["a", "b"]}),
          "sleep": pd.DataFrame({"patient_id": ["a", "b"]}), "params": pd.DataFrame({"patient_id": ["a", "b"]})}  # fmt: skip
     out = ex.plausible(c, 10, icfg)
