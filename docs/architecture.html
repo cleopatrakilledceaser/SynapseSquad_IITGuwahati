@@ -181,7 +181,7 @@
 <!-- C4 calibrate -->
 <div class="bx key" style="left:744px;top:46px;width:196px;height:127px">
   <h4>80% intervals</h4>
-  <p>Split-conformal and CV+. Coverage 80.8% (CGMacros) and 79.5% (Shanghai) at +60 min, per subgroup as well as pooled.</p>
+  <p>Split-conformal and CV+. Served coverage 80.5% in both cohorts at +60 min, per subgroup as well as pooled.</p>
 </div>
 <div class="bx key" style="left:744px;top:187px;width:196px;height:127px">
   <h4>Event probabilities</h4>
@@ -222,7 +222,7 @@
      context, visit summary, and an evidence section carrying every cohort-level result.</p>
   <p style="margin-top:9px">Role-gated access — clinician and care coordinator see different fields — with a session
      access log. Dark and light themes, mg/dL ⇄ mmol/L, readable at tablet width. The demo runs on 120
-     <b style="color:#fff">simulated</b> patients, models applied zero-shot.</p>
+     <b style="color:#fff">simulated</b> patients with a three-day local calibration.</p>
 </div>
 <div class="bx fill" style="left:1204px;top:328px;width:296px;height:268px">
   <h4>Streamlit application &nbsp;<span class="mono" style="color:#C9B6F5">make app</span></h4>
@@ -261,15 +261,15 @@
   </div>
 
   <div class="pn">
-    <h3>Measured results</h3>
+    <h3>Measured results — served model</h3>
     <table>
       <tr><th>Metric</th><th style="text-align:right">Value</th></tr>
-      <tr><td>MAE at +30 min</td><td class="n">11.6</td></tr>
-      <tr><td>MAE at +60 min</td><td class="n">16.8</td></tr>
-      <tr><td>MAE at +120 min</td><td class="n">21.2</td></tr>
-      <tr><td>AUROC, above 180</td><td class="n">0.82</td></tr>
-      <tr><td>AUROC, below 70</td><td class="n">0.81</td></tr>
-      <tr><td>Interval coverage</td><td class="n">80.8%</td></tr>
+      <tr><td>MAE +30 min</td><td class="n">10.88</td></tr>
+      <tr><td>MAE +60 min</td><td class="n">15.70</td></tr>
+      <tr><td>MAE +120 min</td><td class="n">19.96</td></tr>
+      <tr><td>AUROC &gt;180, +60</td><td class="n">0.89</td></tr>
+      <tr><td>AUROC &lt;70, +60</td><td class="n">0.91</td></tr>
+      <tr><td>80 % coverage</td><td class="n">80.5%</td></tr>
       <tr><td>Transfer gap</td><td class="n">3.4</td></tr>
     </table>
   </div>
