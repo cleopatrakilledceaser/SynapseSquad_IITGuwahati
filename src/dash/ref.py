@@ -128,6 +128,8 @@ def robustness_table(stats: Mapping[str, Any]) -> pd.DataFrame:
             "Data-quality score": (f"{c['dq_mean']:.2f}" if c.get("dq_mean") is not None else NA),
             "Mean error": ci_text(c.get("mae_60"), c.get("mae_ci_60"), 1, " mg/dL"),
         })  # fmt: skip
+    if not rows:
+        return pd.DataFrame(columns=["Fault", "80% interval coverage", "Data-quality score", "Mean error"])
     order = {"No fault": 0}
     return pd.DataFrame(rows).sort_values(
         "Fault", key=lambda s: s.map(lambda x: order.get(x, 1)), kind="stable"

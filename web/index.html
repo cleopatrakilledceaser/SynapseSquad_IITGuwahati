@@ -146,6 +146,24 @@ table.t td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
 .log span:first-child { white-space: nowrap; }
 .foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12.5px; max-width: 980px; }
 .loading { padding: 60px 0; text-align: center; color: var(--muted); }
+.shell.solo { grid-template-columns: minmax(0, 1fr); }
+.shell.solo .rail { display: none; }
+.nav { margin-left: 8px; }
+.figs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.fig img { width: 100%; height: auto; display: block; border-radius: 9px; background: #fff; border: 1px solid var(--line); }
+.fig h3 { margin-bottom: 8px; }
+.fig p { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; padding: 10px 14px; font-size: 13px; }
+.stack { display: grid; gap: 14px; }
+.ctl { display: grid; gap: 12px; }
+.ctl label { display: grid; gap: 5px; font-size: 12.5px; color: var(--muted); }
+.ctl select, .ctl input[type="range"] { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; font: inherit; }
+.ctl input[type="range"] { padding: 0; accent-color: var(--accent); height: 28px; }
+.ctl .chk { display: flex; gap: 9px; align-items: flex-start; color: var(--fg); }
+.ctl .chk input { margin-top: 3px; accent-color: var(--accent); }
+.bullets { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.delta { font-family: var(--f-mono); }
+.delta.up { color: var(--z-high); } .delta.down { color: var(--z-in); }
 @media (max-width: 980px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; } .list { max-height: 300px; min-height: 0; }
@@ -163,7 +181,8 @@ table.t td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
 "use strict";
 const MG = 18.016;
 const S = { data: null, pid: null, tab: "now", sort: "attention", q: "", unit: "mgdl", role: "clinician",
-            win: 360, replay: false, log: [] };
+            win: 360, replay: false, log: [], view: "patients", etab: "results", ph: "60", ev: null,
+            wi: { win: 0, src: "logged", preset: 0, carbs: 60, walk: false, model: "mono" } };
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const unitLabel = () => (S.unit === "mgdl" ? "mg/dL" : "mmol/L");
@@ -427,7 +446,7 @@ function reportView(p) {
   return `<div class="card"><h3>Ambulatory glucose profile</h3><p class="sub">${p.days} days of data, 100% sensor coverage (simulated). Line = median, dark band = middle half of days, light band = 5th to 95th percentile.</p>` +
     `<div class="grid4" style="margin-bottom:14px">${kp("Mean glucose", gv(p.mean) + " <small>" + unitLabel() + "</small>", "")}${kp("Glucose management indicator", p.gmi.toFixed(1) + "%", "Estimated from the mean")}${kp("Variability (CV)", p.cv.toFixed(1) + "%", p.cv <= 36 ? "At or below the 36% target" : "Above the 36% target")}${kp("Days of data", p.days, "Consensus asks for 14")}</div>` +
     `<div class="chartbox" data-c="agp"></div></div>` +
-    `<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);align-items:start"><div class="card"><h3>Time in ranges</h3><p class="sub">Share of all readings.</p>${tirBar(p)}</div><div class="card"><h3>Against consensus targets</h3><p class="sub">International consensus on CGM metrics, 2019.</p>${targetRows(p)}</div></div>`;
+    `<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);align-items:start"><div class="card"><h3>Time in ranges</h3><p class="sub">Share of all readings.</p>${tirBar(p)}</div><div class="card"><h3>Against consensus targets</h3><p class="sub">International consensus on CGM metrics, 2019.</p>${targetRows(p)}</div></div>` + qualityCard(p);
 }
 
 function recordView(p) {
@@ -470,42 +489,235 @@ function accessView() {
     `<div class="card"><h3>Access log</h3><p class="sub">Every open and tab view in this session, newest first.</p><div class="log">${log}</div></div>`;
 }
 
-const TABS = [["now", "Now and next"], ["report", "Glucose report"], ["record", "Health record"], ["sleep", "Sleep and wearables"], ["access", "Access"]];
+/* ---------------------------------------------------------------- shared helpers */
+const WHATIF_NOTE = "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted about half the observed rise; treat sizes as lower bounds.";
+const NA_EV = `<div class="locked">The evidence file (evidence.json) was not loaded, so this section is empty. It is produced by <span class="num">make web-evidence</span>.</div>`;
+function tbl(t, opts = {}) {
+  if (!t || !t.rows || !t.rows.length) return `<div class="locked">Not available.</div>`;
+  return `<div class="scroll"><table class="t"><thead><tr>${t.cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>` +
+    t.rows.map((r) => `<tr>${r.map((c, i) => `<td class="${i && /^[-+−\d]/.test(c) ? "num" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>`;
+}
+const card = (h, sub, body) => `<div class="card"><h3>${h}</h3>${sub ? `<p class="sub">${sub}</p>` : ""}${body}</div>`;
+const figCard = (f) => `<div class="card fig"><h3>${esc(f.title)}</h3><img loading="lazy" src="${esc(f.file)}" alt="${esc(f.title)}"><p>${esc(f.caption)}</p></div>`;
+const figs = (ev, names) => `<div class="figs">${ev.figures.filter((f) => names.some((n) => f.file.endsWith("/" + n + ".png"))).map(figCard).join("")}</div>`;
+
+/* ---------------------------------------------------------------- evidence (cohort level) */
+function curveChart(series, W) {
+  const H = 260, m = { l: 48, r: 14, t: 14, b: 40 }, names = Object.keys(series);
+  const pts = names.flatMap((n) => series[n]);
+  if (!pts.length) return "";
+  const ks = [...new Set(pts.map((q) => q.k))].sort((a, b) => a - b);
+  const lo = Math.min(...pts.map((q) => q.lo ?? q.mae)) - 0.5, hi = Math.max(...pts.map((q) => q.hi ?? q.mae)) + 0.5;
+  const x = sc(Math.min(...ks), Math.max(...ks), m.l + 10, W - m.r - 10), y = sc(lo, hi, H - m.b, m.t);
+  const cols = ["var(--faint)", "var(--accent)"];
+  let s = "";
+  for (let v = Math.ceil(lo); v <= hi; v += Math.max(1, Math.round((hi - lo) / 5)))
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-dasharray="2 5"/><text x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" class="num">${v}</text>`;
+  ks.forEach((k) => { s += `<text x="${x(k)}" y="${H - 20}" text-anchor="middle" font-size="11" fill="var(--muted)" class="num">${k}</text>`; });
+  s += `<text x="${(m.l + W - m.r) / 2}" y="${H - 4}" text-anchor="middle" font-size="11.5" fill="var(--muted)">Days of the patient's own data used</text>`;
+  names.forEach((n, i) => {
+    const c = cols[i % 2], q = series[n];
+    s += `<path d="${q.map((d, j) => (j ? "L" : "M") + x(d.k).toFixed(1) + " " + y(d.mae).toFixed(1)).join("")}" fill="none" stroke="${c}" stroke-width="2.2"/>`;
+    q.forEach((d) => { if (d.lo != null) s += `<line x1="${x(d.k)}" x2="${x(d.k)}" y1="${y(d.lo)}" y2="${y(d.hi)}" stroke="${c}" stroke-opacity=".55" stroke-width="1.6"/>`; s += `<circle cx="${x(d.k)}" cy="${y(d.mae)}" r="3.5" fill="${c}"><title>${esc(n)}, ${d.k} days: ${d.mae.toFixed(2)} mg/dL</title></circle>`; });
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Error against days of personal data">${s}</svg>` +
+    `<div class="legend">${names.map((n, i) => `<span><i style="background:${cols[i % 2]}"></i>${esc(n)}</span>`).join("")}</div>`;
+}
+
+const ETABS = [["results", "Results"], ["tiers", "Input tiers"], ["safety", "Data quality and safety"], ["personal", "Personalization"], ["whatifev", "What-if checks"], ["twin", "Twin"], ["india", "India readiness"], ["sleepev", "Sleep study"], ["limits", "Limitations"]];
+function evidenceBody() {
+  const ev = S.ev; if (!ev) return NA_EV;
+  const bl = (a) => `<ul class="bullets">${a.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
+  switch (S.etab) {
+    case "results":
+      return `<div class="callout">Results on patients the models never saw, from two small open cohorts (CGMacros, 45 adults; Shanghai T2DM, 100 adults). Intervals are 95% intervals over patients, not over rows.</div>` +
+        figs(ev, ["fusion_ablation", "unc_coverage", "unc_alarm_froc", "whatif_matched_meals"]) +
+        card("Alerts at about two false alarms a day", "How many high and low episodes each alert system catches.", tbl(ev.alarms)) +
+        card("How well the event probabilities rank risk", "Area under the ROC curve of the calibrated probability at +60 minutes.", bl(ev.auroc.length ? ev.auroc : ["Not available."])) +
+        card("Interval coverage", "", `<p style="margin:0">${esc(ev.coverage)}</p>`);
+    case "tiers":
+      return card("Accuracy when inputs are missing", "Mean absolute error in mg/dL with 95% intervals, from the tests on 45 CGMacros patients.", tbl(ev.tiers)) +
+        `<div class="callout">Fingerstick values in these tests are real sensor readings taken at fixed clock times (4 or 2 a day), so the fingerstick rows are optimistic. Without a CGM the models are worse than carrying the last CGM value forward at +30 and +60 minutes, and the clinical profile alone does not rescue them.</div>`;
+    case "safety":
+      return card("When a forecast is called uncertain", "", `<p style="margin:0">A forecast is labelled uncertain, and the alert is replaced by a warning, when the interval is much wider than usual, when the data-quality score is low, or when the last sensor reading is old. This is a design rule, not a validated threshold.</p>`) +
+        card("What the quality score cannot see", "", `<p style="margin:0 0 10px">The score detects missing data, not wrong data: a sensor that reads too high or drifts is not detected. In the fault tests, an offset of 20 mg/dL or a drift of 20 mg/dL per day left the score near 0.99 while the 80% intervals covered far fewer than 80% of true values.</p>${tbl(ev.robustness)}<p class="sub" style="margin:10px 0 0">Split-conformal intervals, +60 minutes, CGMacros test patients. Coverage under faults is the main risk of the system.</p>`);
+    case "personal": {
+      const hz = ev.personalization.horizons, h = S.ph || "60", g = hz[h] || { series: {}, gain: {} }, hs = ev.personalization.head_start;
+      const gains = Object.entries(g.gain).map(([k, v]) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)} mg/dL after ${k} day${k === "1" ? "" : "s"}`).join(", ");
+      return `<div class="seg" role="group" aria-label="Horizon">${["30", "60", "120"].map((k) => `<button data-ph="${k}" aria-pressed="${k === h}">+${k} min</button>`).join("")}</div>` +
+        card("Learning from a patient's first days", `Mean absolute error at +${h} minutes with 95% intervals over patients.`, `<div class="chartbox" id="curve"></div>`) +
+        card("What it means", "", `<p style="margin:0 0 8px">${gains ? `Fine-tuning on the patient's own first days changed the error by ${gains} (negative means lower error). ` : ""}About 1 mg/dL after 3 to 5 days is the realistic size of the gain. Heart rate and activity data add nothing measurable.</p>` +
+          (hs.change_mgdl != null ? `<p style="margin:0">The clinical profile did not give the models a head start: with no patient data, adding it changed the error by ${hs.change_mgdl >= 0 ? "+" : "−"}${Math.abs(hs.change_mgdl).toFixed(2)} mg/dL${hs.ci ? ` (95% interval ${hs.ci[0].toFixed(2)} to ${hs.ci[1].toFixed(2)})` : ""}. Positive means worse.</p>` : ""));
+    }
+    case "whatifev":
+      return `<div class="callout">${esc(WHATIF_NOTE)}</div>` +
+        figs(ev, ["whatif_plausibility"]) +
+        card("Plausibility checks", "Pass rates on patients the models never saw. A check a model passes by construction says nothing about the data.", tbl(ev.plausibility)) +
+        card("Predicted rise per gram of carbohydrate", "Median predicted peak rise against the range reported in the literature.", tbl(ev.dose)) +
+        card("Matched real breakfasts", "Does the predicted peak difference follow the observed one?", tbl(ev.matched)) +
+        card("What this tool cannot tell you", "", bl(ev.limits_whatif));
+    case "twin":
+      return card("What the digital twin can and cannot tell you", "", `<p style="margin:0 0 10px">The twin is a small physiological model fitted to a patient's first days of data. Only one of its parameters can be read from the data reliably: the basal glucose, the level the twin settles at without meals.</p>` +
+        `<p style="margin:0 0 10px">Its other parameters (insulin sensitivity, glucose effectiveness, absorption rate, meal fraction and secretion) are not shown because they cannot be identified from this data. In a repeat-fit test the basal glucose agreed between two halves of a patient's record (correlation 0.62); the others did not (0.14 to 0.24). The twin also adds little to the machine-learning forecast, about 0.5 mg/dL after three days of data.</p>` +
+        `<p style="margin:0">The console therefore shows no twin parameters for the simulated patients. The Streamlit app shows the basal glucose for the real demonstration patients.</p>`);
+    case "india":
+      return `<div class="callout">Simulated Indian patients are generated by a mechanistic simulator with assumed parameters. They are used to stress-test the model and to demonstrate the console, never as evidence of clinical performance.</div>` +
+        ["transfer", "stress", "federated"].map((k) => { const t = ev.india[k]; return card(esc(t.title), esc(t.sub), tbl(t) + `<p style="margin:10px 0 0;color:var(--muted)">${esc(t.note)}</p>`); }).join("") +
+        figs(ev, ["transfer_matrix", "federated_mae", "federated_privacy"]);
+    case "sleepev": {
+      const t = ev.sleep;
+      return card(esc(t.title), esc(t.sub), tbl(t) + `<p style="margin:10px 0 0;color:var(--muted)">${esc(t.note)}</p>`);
+    }
+    case "limits":
+      return card("Limitations", "Read these before any claim about clinical use.", bl(ev.limitations)) +
+        `<div class="callout">Research prototype, not a medical device. No prospective or clinical validation was done. No real patient data is used or shown.</div>`;
+  }
+  return "";
+}
+function evidenceView() {
+  $("#shell").classList.add("solo");
+  $("#main").innerHTML = `<div class="phead"><h1>Evidence<small>what was tested, and where it falls short</small></h1></div>` +
+    `<div class="tabs" role="tablist">${ETABS.map(([k, l]) => `<button role="tab" data-etab="${k}" aria-selected="${S.etab === k}">${l}</button>`).join("")}</div>` +
+    `<div class="stack">${evidenceBody()}</div>` + footHtml();
+  const cb = $("#curve");
+  if (cb && S.ev) cb.innerHTML = curveChart(S.ev.personalization.horizons[S.ph || "60"].series, Math.max(300, cb.clientWidth));
+}
+
+/* ---------------------------------------------------------------- what-if lab (patient level) */
+function interp1(xs, ys, v) {
+  if (v <= xs[0]) return ys[0]; if (v >= xs[xs.length - 1]) return ys[ys.length - 1];
+  let i = 1; while (xs[i] < v) i++;
+  return ys[i - 1] + ((v - xs[i - 1]) / (xs[i] - xs[i - 1])) * (ys[i] - ys[i - 1]);
+}
+function whatifResult(p) {
+  const wi = p.whatif; if (!wi || !wi.windows.length) return null;
+  const w = wi.windows[Math.min(S.wi.win, wi.windows.length - 1)], mdl = w.models[S.wi.model] || w.models.mono, meta = S.data.whatif_meta;
+  const walk = S.wi.walk ? 1 : 0, out = { w, base: mdl.base, now: {} };
+  for (const h of ["30", "60", "120"]) {
+    out.now[h] = S.wi.src === "logged" ? mdl.base[h] :
+      S.wi.src === "preset" ? mdl.presets[S.wi.preset].pred[h][walk] : interp1(meta.carbs_grid, mdl.pred[h][walk], S.wi.carbs);
+  }
+  if (S.wi.src === "logged" && walk) out.now = { ...mdl.logged_walk };
+  return out;
+}
+function whatifChart(p, r, W) {
+  const w = r.w, t = w.m - 1440, i0 = Math.round((288 - 1) + t / 5), H = 270, m = { l: 48, r: 14, t: 14, b: 30 };
+  const hist = []; for (let k = -36; k <= 0; k++) hist.push([k * 5, p.hist[i0 + k]]);
+  const act = []; for (let k = 1; k <= 24; k++) if (i0 + k <= 287) act.push([k * 5, p.hist[i0 + k]]);
+  const g0 = p.hist[i0], all = [...hist.map((q) => q[1]), ...act.map((q) => q[1]), ...Object.values(r.base), ...Object.values(r.now)];
+  const ymin = Math.max(30, Math.floor((Math.min(54, ...all) - 8) / 10) * 10), ymax = Math.min(420, Math.ceil((Math.max(250, ...all) + 8) / 10) * 10);
+  const x = sc(-180, 120, m.l, W - m.r), y = sc(ymin, ymax, H - m.b, m.t);
+  let s = `<rect x="${m.l}" y="${y(180)}" width="${W - m.l - m.r}" height="${y(70) - y(180)}" fill="var(--band)"/>`;
+  for (const tk of pickTicks(TICKS(), y, ymin, ymax)) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(tk)}" y2="${y(tk)}" stroke="var(--grid)" stroke-dasharray="2 5"/><text x="${m.l - 8}" y="${y(tk) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" class="num">${gv(tk)}</text>`;
+  for (let tt = -180; tt <= 120; tt += W < 520 ? 120 : 60) s += `<text x="${x(tt)}" y="${H - 9}" text-anchor="middle" font-size="11" fill="var(--muted)" class="num">${clock(p, t + tt)}</text>`;
+  const path = (a, ext) => a.map((q, i) => (i ? "L" : "M") + x(q[0]).toFixed(1) + " " + y(q[1]).toFixed(1)).join("");
+  s += `<path d="${path(hist)}" fill="none" stroke="var(--fg)" stroke-width="2"/>`;
+  s += `<path d="${path([[0, g0], ...act])}" fill="none" stroke="var(--z-high)" stroke-width="2" stroke-opacity=".8"/>`;
+  const line = (o, col, dash) => `<path d="M${x(0)} ${y(g0)}${["30", "60", "120"].map((h) => "L" + x(+h).toFixed(1) + " " + y(o[h]).toFixed(1)).join("")}" fill="none" stroke="${col}" stroke-width="2.4" ${dash ? 'stroke-dasharray="6 5"' : ""}/>` +
+    ["30", "60", "120"].map((h) => `<circle cx="${x(+h)}" cy="${y(o[h])}" r="4" fill="${col}"/>`).join("");
+  s += line(r.base, "var(--faint)", false) + line(r.now, "var(--accent)", true);
+  s += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-opacity=".5"/><text x="${x(0) - 6}" y="${m.t + 12}" text-anchor="end" font-size="12" fill="var(--fg)" font-weight="600">Meal ${clock(p, t)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Baseline and what-if forecast">${s}</svg>`;
+}
+function whatifView(p) {
+  const meta = S.data.whatif_meta;
+  if (!p.whatif || !meta) return `<div class="card"><h3>What-if lab</h3><div class="locked">What-if results for this patient are not in the data file yet. They are produced by the trained model on a laptop (<span class="num">make web-data</span> with the real forecaster) and saved into <span class="num">data.json</span>.</div></div><div class="callout">${esc(WHATIF_NOTE)}</div>`;
+  const wins = p.whatif.windows;
+  if (!wins.length) return `<div class="card"><h3>What-if lab</h3><div class="locked">This patient has no logged meal in the last day that can be replaced.</div></div><div class="callout">${esc(WHATIF_NOTE)}</div>`;
+  const w = wins[Math.min(S.wi.win, wins.length - 1)], r = whatifResult(p);
+  const logged = w.base_macros;
+  const ctl = `<div class="ctl">` +
+    `<label>Meal window<select data-wi="win">${wins.map((q, i) => `<option value="${i}" ${i === S.wi.win ? "selected" : ""}>${esc(q.label)}</option>`).join("")}</select></label>` +
+    `<label>Meal<select data-wi="src"><option value="logged" ${S.wi.src === "logged" ? "selected" : ""}>Logged meal (${Math.round(logged.carbs)} g carbohydrate)</option><option value="preset" ${S.wi.src === "preset" ? "selected" : ""}>Indian meal preset</option><option value="carbs" ${S.wi.src === "carbs" ? "selected" : ""}>Choose carbohydrate</option></select></label>` +
+    (S.wi.src === "preset" ? `<label>Preset<select data-wi="preset">${meta.presets.map((q, i) => `<option value="${i}" ${i === S.wi.preset ? "selected" : ""}>${esc(q.label)} (${esc(q.portion)})</option>`).join("")}</select></label>` +
+      `<div class="sub" style="margin:0">${Math.round(meta.presets[S.wi.preset].macros.carbs_g)} g carbohydrate, ${Math.round(meta.presets[S.wi.preset].macros.protein_g)} g protein, ${Math.round(meta.presets[S.wi.preset].macros.fat_g)} g fat, ${Math.round(meta.presets[S.wi.preset].macros.fiber_g)} g fibre per portion. Our own assumed recipe with IFCT 2017 values, not dietary advice.</div>` : "") +
+    (S.wi.src === "carbs" ? `<label>Carbohydrate: <b class="num">${S.wi.carbs} g</b><input type="range" min="${meta.carbs_grid[0]}" max="${meta.carbs_grid[meta.carbs_grid.length - 1]}" step="5" value="${S.wi.carbs}" data-wi="carbs"></label>` : "") +
+    `<label class="chk"><input type="checkbox" data-wi="walk" ${S.wi.walk ? "checked" : ""}><span>Add a 30-minute walk, starting 15 minutes after the meal</span></label>` +
+    `<label>Model<select data-wi="model">${Object.entries(meta.models).map(([k, l]) => `<option value="${k}" ${k === S.wi.model ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label></div>`;
+  const rows = ["30", "60", "120"].map((h) => { const d = r.now[h] - r.base[h]; return `<tr><td>+${h} min</td><td class="num">${gv(r.base[h])}</td><td class="num">${gv(r.now[h])}</td><td class="delta ${d > 0.5 ? "up" : d < -0.5 ? "down" : ""}">${d >= 0 ? "+" : "−"}${S.unit === "mgdl" ? Math.abs(d).toFixed(0) : (Math.abs(d) / MG).toFixed(1)}</td></tr>`; }).join("");
+  const res = `<div class="chartbox" id="wichart"></div><div class="legend"><span><i style="background:var(--fg)"></i>Glucose before the meal</span><span><i style="background:var(--z-high)"></i>What the simulated patient did</span><span><i style="background:var(--faint)"></i>Baseline: logged meal, no walk</span><span><i style="background:var(--accent)"></i>What-if</span></div>` +
+    `<div class="scroll" style="margin-top:10px"><table class="t"><thead><tr><th>Horizon</th><th>Baseline (${unitLabel()})</th><th>What-if (${unitLabel()})</th><th>Change</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Replace a logged meal with another one, optionally add a walk, and see how the forecast changes. The patient and the meal are simulated; the numbers are model estimates.</span></div>` +
+    `<div class="grid2" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start"><div class="card"><h3>Scenario</h3>${ctl}</div><div class="card"><h3>Forecast from the meal</h3>${res}</div></div>` +
+    `<div class="callout">${esc(WHATIF_NOTE)}</div>` +
+    `<div class="card"><h3>What this tool cannot tell you</h3><ul class="bullets">${(S.ev ? S.ev.limits_whatif : []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul><p class="sub" style="margin:10px 0 0">Twin variants of the what-if lab are in the Streamlit app. Plausibility checks are under Evidence.</p></div>`;
+}
+
+/* ---------------------------------------------------------------- visit summary and data quality (patient level) */
+function qualityCard(p) {
+  const h = p.hist, valid = h.filter((v) => v != null && isFinite(v)), out = valid.filter((v) => v < 40 || v > 400).length;
+  let jump = 0; for (let i = 1; i < h.length; i++) jump = Math.max(jump, Math.abs(h[i] - h[i - 1]));
+  const rows = [["Completeness, last 24 hours", `${(100 * valid.length / 288).toFixed(0)}% of readings present`], ["Age of the last reading", "0 minutes (simulated, always current)"],
+    ["Readings outside 40 to 400 mg/dL", out ? `${out} readings` : "None"], ["Largest 5-minute change", `${gv(jump)} ${unitLabel()}`]];
+  return `<div class="card"><h3>Sensor data quality</h3><p class="sub">Basic checks on this patient's last 24 hours.</p><table class="t"><tbody>${rows.map((r) => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join("")}</tbody></table>` +
+    `<p class="sub" style="margin:10px 0 0">These checks detect missing and impossible values, not a sensor that reads too high or drifts. See Evidence, Data quality and safety.</p></div>`;
+}
+function summaryView(p) {
+  const r = p.record, l = level(p), now = p.hist[287];
+  const dx = [["hypertension", "Hypertension"], ["dyslipidaemia", "Dyslipidaemia"], ["ckd_stage3plus", "Kidney disease, stage 3+"], ["retinopathy", "Retinopathy"], ["neuropathy", "Neuropathy"], ["coronary_disease", "Coronary disease"]].filter(([k]) => r[k]).map((q) => q[1]);
+  const coord = S.role !== "clinician";
+  const fc = ["30", "60", "120"].map((h) => `<tr><td>+${h} min (${clock(p, +h)})</td><td class="num">${gv(p.fc[h].p)}</td><td class="num">${gv(p.fc[h].lo)} to ${gv(p.fc[h].hi)}</td></tr>`).join("");
+  const T = p.tir;
+  return `<div class="card"><h3>Visit summary</h3><p class="sub">One page for the clinician. Simulated patient ${p.id}. This view mirrors the PDF in the Streamlit app (Export page); the console cannot save files.</p>` +
+    `<div class="grid2" style="grid-template-columns:repeat(2,minmax(0,1fr));align-items:start"><div class="stack">` +
+    `<div><b>${p.id}</b>, ${r.age_years.toFixed(0)} years, ${r.sex === "F" ? "female" : "male"}. Type 2 diabetes for ${r.diabetes_duration_years} years. HbA1c ${r.hba1c_pct.toFixed(1)}%, BMI ${r.bmi.toFixed(1)}, eGFR ${r.egfr_ml_min.toFixed(0)} mL/min.</div>` +
+    `<div>${coord ? '<span class="chip mute">Diagnoses hidden for this role</span>' : (dx.length ? "Recorded: " + dx.join(", ") + "." : "No further diagnoses recorded.")}</div>` +
+    `<div class="kpi"><div class="h">Glucose now</div><div class="v">${gv(now)} <small>${unitLabel()}</small></div><div class="t">${trendWord(p)} · <span class="chip ${l}">${LEVEL_TEXT[l]}</span></div></div></div>` +
+    `<div class="stack"><table class="t"><thead><tr><th>Forecast</th><th>Estimate</th><th>80% range</th></tr></thead><tbody>${fc}</tbody></table>` +
+    `<div>Chance above ${gv(180)} ${unitLabel()} in 60 min: <b class="num">${pct(p.ev.hi180_60)}</b>. Above ${gv(250)} in 120 min: <b class="num">${pct(p.ev.hi250_120)}</b>. Below ${gv(70)} in 60 min: <b class="num">${pct(p.ev.lo70_60)}</b>.</div></div></div>` +
+    `<hr style="border:0;border-top:1px solid var(--line-soft);margin:14px 0">` +
+    `<div class="grid4"><div class="kpi"><div class="h">Mean glucose</div><div class="v">${gv(p.mean)}</div><div class="t">${unitLabel()}, ${p.days} days</div></div><div class="kpi"><div class="h">Time in range 70 to 180</div><div class="v">${T.b70_180.toFixed(0)}%</div><div class="t">target above 70%</div></div>` +
+    `<div class="kpi"><div class="h">Time above 250</div><div class="v">${T.gt250.toFixed(0)}%</div><div class="t">target below 5%</div></div><div class="kpi"><div class="h">Variability (CV)</div><div class="v">${p.cv.toFixed(0)}%</div><div class="t">target 36% or less</div></div></div></div>` +
+    `<div class="callout">Decision support for a clinician. Not a diagnosis and not a treatment recommendation. ${S.data.forecast_source === "dev" ? "Forecasts on this page come from a development placeholder model." : ""}</div>`;
+}
+
+const TABS = [["now", "Now and next"], ["whatif", "What-if lab"], ["report", "Glucose report"], ["record", "Health record"], ["sleep", "Sleep and wearables"], ["summary", "Visit summary"], ["access", "Access"]];
+function footHtml() {
+  if (S.view === "evidence") return `<div class="foot">Research prototype, not a medical device. This is decision support for a clinician: it is not a diagnosis and it does not prescribe treatment. ` +
+    `Results on this page come from two small open datasets of real, de-identified adults and from simulated cohorts where labelled; no prospective or clinical validation was done.</div>`;
+  return `<div class="foot">Research prototype, not a medical device. This is decision support for a clinician: it is not a diagnosis and it does not prescribe treatment. ` +
+    `Every patient on this page is simulated. Forecasts come from ${S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data"}; the dashboard does not recompute them for new patients.</div>`;
+}
 function mainView() {
   const p = cur();
-  const body = { now: nowView, report: reportView, record: recordView, sleep: sleepView, access: accessView }[S.tab](p);
+  const body = { now: nowView, whatif: whatifView, report: reportView, record: recordView, sleep: sleepView, summary: summaryView, access: accessView }[S.tab](p);
+  $("#shell").classList.remove("solo");
   $("#main").innerHTML = headView(p) +
-    `<div class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join("")}</div>` + body +
-    `<div class="foot">Research prototype, not a medical device. This is decision support for a clinician: it is not a diagnosis and it does not prescribe treatment. ` +
-    `Every patient on this page is simulated. Forecasts come from ${S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data"}; the dashboard does not recompute them for new patients.</div>`;
+    `<div class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join("")}</div>` + body + footHtml();
   drawCharts();
 }
+function render() { if (S.view === "evidence") evidenceView(); else mainView(); }
 function drawCharts() {
   const p = cur();
   const hero = $("#hero");
   if (hero) { const c = heroChart(p, Math.max(300, hero.clientWidth)); hero.innerHTML = c.svg + '<div class="tip" style="display:none"></div>'; attachHover(hero, c, p); }
+  const wc = $("#wichart"), wr = wc && whatifResult(p);
+  if (wc && wr) wc.innerHTML = whatifChart(p, wr, Math.max(300, wc.clientWidth));
   document.querySelectorAll("[data-c]").forEach((box) => {
     const w = Math.max(280, box.clientWidth), k = box.dataset.c;
     box.innerHTML = k === "agp" ? agpChart(p, w) : sleepCharts(p, w)[k];
   });
 }
-let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.pid) drawCharts(); }, 120); });
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.view === "evidence") evidenceView(); else if (S.pid) drawCharts(); }, 120); });
 
 function shell() {
   const dev = S.data.forecast_source === "dev";
   $("#app").className = "";
   $("#app").innerHTML =
-    `<div class="top"><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M5 20c3 0 3-9 6-9s3 11 6 11 3-8 5-8 2 4 5 4" fill="none" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>GlucoTwin<small>Clinic console</small></div><div class="grow"></div>` +
+    `<div class="top"><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M5 20c3 0 3-9 6-9s3 11 6 11 3-8 5-8 2 4 5 4" fill="none" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>GlucoTwin<small>Clinic console</small></div><div class="seg nav" role="group" aria-label="Section"><button data-view="patients" aria-pressed="${S.view === "patients"}">Patients</button><button data-view="evidence" aria-pressed="${S.view === "evidence"}">Evidence</button></div><div class="grow"></div>` +
     `<div class="seg" role="group" aria-label="Glucose units"><button data-unit="mgdl" aria-pressed="true">mg/dL</button><button data-unit="mmol" aria-pressed="false">mmol/L</button></div></div>` +
     `<div class="notice"><span class="tag">Simulated patients</span>${dev ? '<span class="tag warn">Development forecast</span>' : ""}<span>${S.data.patients.length} virtual adults with type 2 diabetes, ${S.data.cohort.days} days of data each. No real person is shown.</span></div>` +
-    `<div class="shell"><aside class="rail"><div class="rail-head"><h2>Patients <span id="count"></span></h2>` +
+    `<div class="shell" id="shell"><aside class="rail"><div class="rail-head"><h2>Patients <span id="count"></span></h2>` +
     `<input class="search" id="q" type="search" placeholder="Find by ID, age or sex" aria-label="Find a patient"><div class="sorts" role="group" aria-label="Sort patients">` +
     [["attention", "Attention first"], ["glucose", "Glucose now"], ["hba1c", "HbA1c"], ["id", "ID"]].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${S.sort === k}">${l}</button>`).join("") +
     `</div></div><div class="list" id="list"></div></aside><main class="main" id="main"></main></div>`;
 }
 
 function select(id, why) {
-  S.pid = id; S.replay = false; logAction(why || `Opened ${id}`);
+  S.pid = id; S.replay = false; S.view = "patients"; S.wi.win = 0; S.wi.walk = false; S.wi.src = "logged";
+  document.querySelectorAll("[data-view]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.view === "patients"));
+  const wins = (cur().whatif || { windows: [] }).windows; if (wins.length) S.wi.carbs = Math.round(wins[0].base_macros.carbs / 5) * 5;
+  logAction(why || `Opened ${id}`);
   listView(); mainView();
 }
 
@@ -515,14 +727,24 @@ function bind() {
     if (b.dataset.id) select(b.dataset.id);
     else if (b.dataset.tab) { S.tab = b.dataset.tab; logAction(`Viewed ${TABS.find((t) => t[0] === S.tab)[1]} for ${S.pid}`); mainView(); }
     else if (b.dataset.sort) { S.sort = b.dataset.sort; document.querySelectorAll("[data-sort]").forEach((x) => x.setAttribute("aria-pressed", x === b)); listView(); }
-    else if (b.dataset.unit) { S.unit = b.dataset.unit; document.querySelectorAll("[data-unit]").forEach((x) => x.setAttribute("aria-pressed", x === b)); listView(); mainView(); }
+    else if (b.dataset.unit) { S.unit = b.dataset.unit; document.querySelectorAll("[data-unit]").forEach((x) => x.setAttribute("aria-pressed", x === b)); listView(); render(); }
     else if (b.dataset.win) { S.win = +b.dataset.win; mainView(); }
+    else if (b.dataset.view) { S.view = b.dataset.view; document.querySelectorAll("[data-view]").forEach((x) => x.setAttribute("aria-pressed", x === b)); if (S.view === "evidence") logAction("Opened Evidence"); render(); }
+    else if (b.dataset.etab) { S.etab = b.dataset.etab; evidenceView(); }
+    else if (b.dataset.ph) { S.ph = b.dataset.ph; evidenceView(); }
     else if (b.dataset.role) { S.role = b.dataset.role; logAction(`Switched role to ${b.textContent}`); mainView(); }
     else if (b.id === "replay") { S.replay = !S.replay; if (S.replay) logAction(`Compared forecast with simulated outcome for ${S.pid}`); mainView(); }
   });
-  document.addEventListener("input", (e) => { if (e.target.id === "q") { S.q = e.target.value; listView(); } });
+  document.addEventListener("input", (e) => { if (e.target.id === "q") { S.q = e.target.value; listView(); } else if (e.target.dataset.wi === "carbs") { S.wi.carbs = +e.target.value; mainView(); } });
+  document.addEventListener("change", (e) => {
+    const k = e.target.dataset && e.target.dataset.wi; if (!k || k === "carbs") return;
+    S.wi[k] = k === "walk" ? e.target.checked : k === "src" || k === "model" ? e.target.value : +e.target.value;
+    if (k === "win") S.wi.carbs = Math.round(cur().whatif.windows[S.wi.win].base_macros.carbs / 5) * 5;
+    logAction(`Changed the what-if for ${S.pid}`); mainView();
+  });
 }
 
+fetch("evidence.json").then((r) => (r.ok ? r.json() : null)).then((e) => { S.ev = e; if (S.view === "evidence" && S.data) evidenceView(); }).catch(() => {});
 fetch("data.json").then((r) => r.json()).then((d) => {
   S.data = d; shell(); bind();
   const first = d.patients.slice().sort((a, b) => attention(b) - attention(a))[0];

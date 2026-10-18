@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: web-data web-evidence federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -122,3 +122,6 @@ smoke:
 
 web-data:
 	python -m src.web.build_data
+
+web-evidence:
+	python -m src.web.evidence
