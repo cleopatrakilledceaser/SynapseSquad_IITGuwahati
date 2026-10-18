@@ -1,9 +1,9 @@
 {
   "name": "patient_fusion",
-  "timestamp_utc": "2026-10-16T09:03:06.448643+00:00",
-  "git_hash": "4dd4365ffa474d0b4716f9329de9d1061b61c26f-dirty",
+  "timestamp_utc": "2026-10-18T17:59:22.420802+00:00",
+  "git_hash": "b9608bc4579f787896a7e95732756bc21eb5abf2-dirty",
   "seed": 42,
-  "data_hash": "ed1c6424a1e4de55ca178168c36b916fc6ee7af90c87350314fb2cca84f77dd0",
+  "data_hash": "d0a63ac3af89b33b470f2ba58c8bb727966e6dbc87a7ae67d7dbf11ade92e8e7",
   "config": {
     "first_day_h": [
       0,
