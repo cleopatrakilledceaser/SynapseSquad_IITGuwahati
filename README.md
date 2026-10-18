@@ -97,7 +97,7 @@ Where a result is negative or neutral, it is reported as found.
   0.93 mg/dL at +60 (CI −1.18 to −0.67); in the 3 hours after a meal by 1.57.
 - **Wearable heart rate and activity add almost nothing on their own** (+0.04 at +60, CI
   includes 0). We report this rather than hide it. Section 9.5 tests whether sleep, HRV and
-  steps would be detectable.
+  steps would be detectable (on simulated data, they are not).
 - **Static EHR helps only when the patient has no history.** With 3 days of the patient's own
   data its effect is 0.3 mg/dL or less.
 
@@ -180,12 +180,29 @@ accuracy survives only at ε above 23,000, which is no guarantee. The honest cla
 minimisation: records stay at the clinic. Patient-level DP-SGD and secure aggregation are
 future work.
 
-### 9.5 Sleep, HRV and step count
+### 9.5 Sleep, HRV and step count (SIMULATED)
 
-The competition names these signals, but CGMacros contains no sleep or HRV. We therefore tested,
-on a simulated cohort where sleep affects insulin sensitivity by construction, whether such
-signals would be detectable at all, with a false-positive control (multiplier 0).
-**[SLEEP RESULT: fill from reports/metrics/india_sleep_power.json after the run]**
+The competition names these signals, but CGMacros contains no sleep, HRV or step data. We therefore
+asked a different question: *if sleep affected insulin sensitivity, could a model detect it in 10
+days of data?* On a simulated cohort of 100 patients (67,000 scored windows per condition), sleep
+shortens each night and lowers insulin sensitivity from 06:00 the next day. A multiplier m scales
+the effect (m = 0 is a false-positive control; m = 1 is literature scale). We compare nested
+models: A (CGM, time of day, meals), B (A plus heart rate and activity) and C (B plus sleep, HRV
+and steps). Change in MAE from adding the sleep channel (C minus B), mg/dL, 95 % CI:
+
+| m | Mean change in log insulin sensitivity | +30 min | +60 min | +120 min |
+|---|---|---|---|---|
+| 0 (control) | 0.000 | −0.03 [−0.09, +0.01] | +0.09 [+0.02, +0.17] | +0.18 [+0.06, +0.30] |
+| 1 | −0.016 | +0.02 [−0.00, +0.04] | −0.04 [−0.12, +0.04] | +0.12 [−0.01, +0.25] |
+| 3 | −0.048 | +0.01 [−0.01, +0.02] | +0.03 [−0.00, +0.07] | +0.15 [+0.04, +0.26] |
+| 5 | −0.080 | +0.02 [−0.00, +0.04] | +0.07 [−0.01, +0.15] | +0.11 [−0.01, +0.24] |
+
+**Result: no detectable gain, even at five times the literature effect.** The control behaves
+correctly (no false gain; five useless features cost a little accuracy). Heart rate and activity
+add nothing either (B minus A within ±0.12). So the dashboard shows sleep, HRV and steps as
+context for the clinician, not as drivers of the forecast. This is a result from simulation; it
+says the effect is small relative to meal-driven variation over 10 days, not that sleep does not
+matter. The pipeline accepts these channels as soon as a real cohort provides them.
 
 ## 10. Dashboard
 
