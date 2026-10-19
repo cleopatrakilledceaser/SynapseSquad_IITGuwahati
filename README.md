@@ -15,7 +15,7 @@ no install, no sign-in. 120 simulated patients.
   monotone-constrained model and a fitted physiological twin.
 - Built and tested on **two real open cohorts (145 patients, two countries)** plus a synthetic
   Indian cohort, with **federated training** so records never leave the clinic.
-- Every protocol was **pre-registered before the run that tested it** — over 70 numbered decisions
+- Every protocol was **pre-registered before the run that tested it** — 72 numbered decisions
   in [docs/DECISIONS.md](docs/DECISIONS.md) — and every comparison carries a patient-level
   confidence interval.
 
@@ -307,7 +307,22 @@ maker and the system never recommends a dose or a drug.
 
 **[VIDEO LINK — unlisted YouTube, to be added]**
 
-A timed walkthrough of the live console, the Streamlit application and the evidence behind both.
+An 18-minute walkthrough: the live console, the Streamlit application, and the evidence behind
+both. The full narration script, with per-section timings, is in
+[docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md).
+
+| | Section | Covers |
+|---|---|---|
+| 0:00 | Opening | What the system does and who it is for |
+| 1:12 | What the brief asked for | The four requirements, addressed directly |
+| 2:13 | The data | CGMacros, Shanghai T2DM, and what is simulated |
+| 3:34 | Architecture | Harmonisation, causal features, patient-grouped splits |
+| 5:10 | Live demo — clinician console | Triage, forecast with band, what-if lab, governance |
+| 8:36 | Live demo — Streamlit application | Twin state, input tiers, data quality, evidence |
+| 9:18 | Results | Accuracy, ablation, model families, intervals, events, transfer, privacy, sleep |
+| 14:15 | How the work was done | The decision log and reproducibility |
+| 15:34 | Limits, and what comes next | Each limit paired with the work that closes it |
+| 17:16 | Close | What the project establishes |
 
 ## 12. Open-source licence
 
@@ -322,6 +337,33 @@ evaluation protocol, AI/ML models, measured results, privacy design and scope.
 ## 14. Presentation
 
 **[PRESENTATION LINK — docs/GlucoTwin_presentation.pdf, to be added]**
+
+The twenty slides are in this repository as images, rendered at 3600 × 2027 from HTML and inline
+SVG so that every figure is regenerated from `reports/metrics/*.json` rather than redrawn by hand.
+Each slide cites the decision and the metrics file it came from in its own footer.
+
+| # | Slide | File |
+|---|---|---|
+| 1 | GlucoTwin — title | [`docs/slide01_title.png`](docs/slide01_title.png) |
+| 2 | The problem: the data exists, but no one can read it | [`docs/slide02_problem.png`](docs/slide02_problem.png) |
+| 3 | Why a digital twin, and not another dashboard | [`docs/slide03_why_twin.png`](docs/slide03_why_twin.png) |
+| 4 | The data: four streams, two real cohorts, nothing private | [`docs/slide04_data.png`](docs/slide04_data.png) |
+| 5 | How the system works, end to end | [`docs/slide05_architecture.png`](docs/slide05_architecture.png) |
+| 6 | The clinician console | [`docs/slide06_console.png`](docs/slide06_console.png) |
+| 7 | The what-if lab | [`docs/slide07_whatif.png`](docs/slide07_whatif.png) |
+| 8 | How accurate is the forecast? | [`docs/slide08_accuracy.png`](docs/slide08_accuracy.png) |
+| 9 | What is each data stream actually worth? | [`docs/slide09_ablation.png`](docs/slide09_ablation.png) |
+| 10 | Four model families. The simplest one won. | [`docs/slide10_models.png`](docs/slide10_models.png) |
+| 11 | Can you trust the interval? | [`docs/slide11_intervals.png`](docs/slide11_intervals.png) |
+| 12 | Warning before it happens | [`docs/slide12_events.png`](docs/slide12_events.png) |
+| 13 | What is a patient's own history worth? | [`docs/slide13_personalisation.png`](docs/slide13_personalisation.png) |
+| 14 | Taking the model to a new country | [`docs/slide14_transfer.png`](docs/slide14_transfer.png) |
+| 15 | Learning across clinics without moving patient data | [`docs/slide15_federated.png`](docs/slide15_federated.png) |
+| 16 | Would a sleep tracker improve the forecast? | [`docs/slide16_wearables.png`](docs/slide16_wearables.png) |
+| 17 | Every choice, written down before the run | [`docs/slide17_decisionlog.png`](docs/slide17_decisionlog.png) |
+| 18 | What we built, measured, and did not ship | [`docs/slide18_tried.png`](docs/slide18_tried.png) |
+| 19 | What the evidence covers, and what comes next | [`docs/slide19_limits.png`](docs/slide19_limits.png) |
+| 20 | What this project establishes | [`docs/slide20_establishes.png`](docs/slide20_establishes.png) |
 
 ## 15. Limitations and responsible AI
 
