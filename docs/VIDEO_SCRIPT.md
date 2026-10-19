@@ -258,8 +258,9 @@ and match the README and the slides. Nothing here is pending.
 > A minute on method, because I think it is the real contribution.
 >
 > A model can always be made to look good by picking the comparison once you have seen the answer.
-> So every such choice was recorded first, in a plain-text decision log: seventy-two numbered
-> entries saying what would be done, why, and what would count as it having worked.
+> So every such choice was recorded first, in a plain-text decision log: seventy-four numbered
+> entries, seventy-two of them written before the work they govern, each saying what would be done,
+> why, and what would count as it having worked.
 >
 > Here is one. It fixed the adoption rule and a seventy-five per cent coverage floor before the
 > tuned model was ever scored, so shipping it could not be decided by looking at the result.

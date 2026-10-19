@@ -15,7 +15,7 @@ no install, no sign-in. 120 simulated patients.
   monotone-constrained model and a fitted physiological twin.
 - Built and tested on **two real open cohorts (145 patients, two countries)** plus a synthetic
   Indian cohort, with **federated training** so records never leave the clinic.
-- Every protocol was **pre-registered before the run that tested it** — over 70 numbered decisions
+- Every protocol was **pre-registered before the run that tested it** — 72 numbered decisions
   in [docs/DECISIONS.md](docs/DECISIONS.md) — and every comparison carries a patient-level
   confidence interval.
 

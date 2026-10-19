@@ -1611,3 +1611,59 @@ Part 7, final test patients (pass rate old -> new; `unc` / `mono`): identity, ca
 Console (web-real, 120 SIMULATED patients, D-070 protocol unchanged): calibrated MAE 11.7/17.2/22.8 -> 10.7/16.0/20.5, calibrated minus persistence at +60 min -0.60 [-1.89, +0.56] -> -1.78 [-2.91, -0.78], so the D-070 decision rule is now met and the generated `forecast_note` says the calibrated forecast is better than persistence at all three horizons. Calibrated band coverage by patient (mean) 80.5/81.0/80.7 %. The >250 bar stays dropped.
 
 Departures from the request: no 250 mg/dL calibrator (Part 6 has none); the `mono` search excludes the two absolute-error candidates (LightGBM limit, amendment above); the tuned search had been validated on other feature sets (D-065), the served A0 result is the one above. Sizes: app/demo grew to 24.8 MB (design target < 25 MB), because each horizon now ships three boosters. Text that quotes the old console numbers (D-070a, README 9.4d) is not edited here.
+
+## D-073: publish the console as a public static site on GitHub Pages (RECORD, written after the change)
+
+**This entry is a record, not a specification.** The change was made before it was written up, so it
+does not carry the pre-registration guarantee that D-001 to D-072 carry. It is recorded here because
+the decision log should contain every choice that affects what a reviewer sees, including the ones
+made after the research was finished.
+
+Why: the brief asks for a clinician-facing dashboard. A reviewer should be able to look at it without
+installing Python, fetching the open cohorts or running `make`. The Streamlit application (D-069)
+needs all three. A static build of the web console needs none of them, so the console becomes the
+front door and the application stays the full working surface behind it.
+
+What: the repository was made public after a secret scan, and renamed to
+`SynapseSquad_IITGuwahati`. `make web-pages` (`src/web/pages.py`) wraps the artifact-fragment
+`web/index.html` into a standalone document with an explicit UTF-8 charset — without it the served
+page mojibakes on the em dashes and the μ in mg/dL. The result is committed to the `gh-pages`
+branch together with `data.json`, `evidence.json`, the figures and a `.nojekyll` marker.
+
+What is published, and what is not. The published bundle is the **120 simulated patients only**
+(D-067, D-068), generated with seed 301 over 14 days; `data.json` carries `SYNTHETIC: true` at its
+root. No row of CGMacros or Shanghai T2DM is in the `gh-pages` tree, and this was checked by listing
+it. The forecasts are the served tuned model (D-072a) with the per-patient three-day offset of
+D-070, and `forecast_note` states that in the file itself. The SIMULATED badge and the
+decision-support disclaimer are on every screen.
+
+Consistency rule: the console and the Streamlit application read the same bundle, so the two cannot
+disagree on a number. When a metrics file changes, both are rebuilt from it rather than edited.
+
+Checked after publishing: the live site serves the D-072a figures, not the status-quo ones, and the
+page renders with no mojibake in a private browser window.
+
+## D-074: every figure in the submission artefacts is regenerated, never transcribed (RECORD, standing rule)
+
+**This entry is a record of a rule now in force, not a pre-registered experiment.** The slides and
+the video script were produced after the research, so no result in this project depends on it. Its
+purpose is to stop the submission drifting away from the repository.
+
+Why: a deck and a narration script are the two places where numbers are most likely to go stale. A
+metric is re-run, the JSON changes, and a slide built by hand keeps the old figure. That failure is
+silent, and it would undermine every claim in §9 and in D-072.
+
+What: the twenty slides are authored as HTML with inline SVG and rendered through headless Chromium
+to PNG at 3600 × 2027 (240 dpi on a 13.33-inch slide), committed to `docs/`. Each slide carries a
+source footer naming the decision IDs and the `reports/metrics/*.json` files its figures come from;
+README §14 lists all twenty with links. The video script
+([docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md)) quotes only numbers that appear in this README, and
+its section timings are computed from its own word counts rather than estimated.
+
+The rule, in force from here: **if a metrics file changes, every slide whose footer cites it must be
+re-rendered, and the script line that quotes it must be re-read, before the deck or the video is
+submitted.** Nothing in either artefact is edited by hand to match a new number.
+
+Scope, stated plainly: this rule governs presentation only. It confers no additional validity on any
+result. The guarantees that matter for the results themselves are the patient-grouped splits, the
+causal-feature rule, and the pre-registration of D-001 to D-072.
