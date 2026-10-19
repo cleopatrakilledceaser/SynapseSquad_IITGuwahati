@@ -1,366 +1,332 @@
 # GlucoTwin — demo video script
 
-**Target length: 20–21 minutes.** The organisers require a minimum of 20 minutes, so do not rush;
-the timings below leave a small margin.
+**Target length: 18 minutes 20 seconds.** The organisers require **15 to 20 minutes**, so this
+sits mid-range with margin at both ends. Do not rush to fill twenty — the requirement is a range,
+not a floor. If the live demo runs slow and you drift past nineteen minutes, the two blocks safe to
+drop are the Streamlit tour and the "which model" paragraph in Results.
 
 **How to use this.** `[SCREEN]` says what should be visible. `[SAY]` is narration — read it, don't
-improvise. Speaking rate assumed ≈130 words per minute. Pause for a beat at each section break.
+improvise. The section timings are computed from the word counts at **132 words per minute**, which
+is an unhurried presenting pace. Pause for a beat at each section break; the timings allow for it.
+
+**All figures in this script are final.** They are read off the served tuned forecaster (D-072a)
+and match the README and the slides. Nothing here is pending.
 
 **Before recording**
 - Close every other window. Hide bookmarks. Set display scaling so text is readable at 1080p.
-- Have open and pre-loaded, in this tab order: (1) the web console, (2) the Streamlit app
-  (`make app`), (3) the GitHub repository, (4) `docs/architecture.pdf`.
+- Have open and pre-loaded, in this tab order: (1) the slide deck, (2) the web console,
+  (3) the Streamlit app (`make app`), (4) the GitHub repository.
 - Pick **one** patient and use that same patient throughout. Choose one whose forecast shows a
   clear rise, so the what-if lab has something to change.
 - Record at 1080p. Audio matters more than video: use a headset mic, not the laptop mic.
 - Do a 30-second test recording first and listen back before committing to the full take.
 
-> **Numbers flagged `[VERIFY]` must be re-read off the final README after the tuned-forecaster run
-> (D-072) completes.** Do not record until they are confirmed.
+---
+
+## 0:00 – 1:12 · Opening
+
+`[SCREEN]` Slide 1 — title.
+
+`[SAY]`
+> Type 2 diabetes is managed in appointments weeks or months apart. In that appointment a
+> clinician sees an HbA1c, a few lab values, and whatever the patient remembers. Meanwhile the
+> patient has generated three thousand glucose readings, a continuous record of their heart rate
+> and movement, and every meal they ate — and nobody has time to read any of it.
+>
+> GlucoTwin is a patient-specific digital twin for type 2 diabetes. It fuses the static health
+> record with the dynamic streams — continuous glucose, heart rate, activity, sleep and meals — and
+> produces three things a clinician can act on. Where glucose is heading in the next two hours,
+> with an honest statement of uncertainty. The calibrated probability of going above 180 or below
+> 70. And the answer to "what if" — what happens if this patient eats less rice, or walks for half
+> an hour after lunch.
+>
+> I'll show the system working, then the evidence behind it, then what it cannot do.
 
 ---
 
-## 0:00 – 1:30 · Opening (no slides, just you)
+## 1:12 – 2:13 · What the brief asked for
 
-`[SCREEN]` Title slide: project name, your name, IIT Guwahati.
-
-`[SAY]`
-> Type 2 diabetes is managed in appointments that are weeks or months apart. In that appointment a
-> clinician sees an HbA1c, a handful of lab values, and whatever the patient remembers. Meanwhile
-> the patient has generated something like three thousand glucose readings, a continuous record of
-> their heart rate and their movement, and every meal they ate — and nobody has the time to read any
-> of it.
->
-> That is the gap this project addresses. GlucoTwin is a patient-specific digital twin for type 2
-> diabetes. It takes the static electronic health record — demographics, diagnoses, medications,
-> labs — and fuses it with the dynamic streams: continuous glucose, heart rate, activity, sleep and
-> meals. From that it produces three things a clinician can act on. Where glucose is heading in the
-> next two hours, with an honest statement of uncertainty. The calibrated probability of an adverse
-> event — going above 180 or dropping below 70. And the answer to "what if" — what happens if this
-> patient eats less rice, or walks for half an hour after lunch.
->
-> I'm going to show you the system working, then the evidence behind it, and then I'm going to be
-> straight with you about what it cannot do. I'd rather you hear the limitations from me than find
-> them yourself.
-
----
-
-## 1:30 – 3:00 · What the brief asked for, and how this meets it
-
-`[SCREEN]` A slide listing the four requirements with ticks.
+`[SCREEN]` Slides 2 and 3.
 
 `[SAY]`
-> The brief asked for four things, and I want to address them directly before anything else.
+> The brief asked for four things. One condition — type 2 diabetes only, and every design decision
+> is made for that population. A static health record fused with dynamic wearable data — I'll show
+> where each stream comes from and how much each contributes, including the ones that contribute
+> very little, because that is also a result. A working model that predicts an adverse event — the
+> system forecasts at thirty, sixty and a hundred and twenty minutes and converts that into a
+> calibrated probability. Calibrated is the important word: when it says forty per cent, that
+> happens about forty per cent of the time. And a clinician-facing dashboard — there are two, and
+> you'll see both.
 >
-> One condition. This is type 2 diabetes, only. Every design decision is made for that population.
->
-> A static electronic health record fused with dynamic wearable data. The static record carries
-> demographics, diagnoses, medications, labs and genetic markers. The dynamic side carries
-> continuous glucose, heart rate variability, sleep stages and step count. I'll show you exactly
-> where each stream comes from and exactly how much each one contributes — including the ones that
-> contribute very little, because that result is also a result.
->
-> A working model that predicts an adverse event. The system forecasts glucose at thirty, sixty and
-> a hundred and twenty minutes, and it converts that into a calibrated probability of crossing the
-> hyperglycaemia and hypoglycaemia thresholds. Calibrated is the important word: when it says forty
-> per cent, that event happens about forty per cent of the time.
->
-> And a clinician-facing dashboard. There are two working interfaces, and you'll see both.
->
-> Everything runs on anonymised open or synthetic data. No real patient record is in this
+> Everything runs on open or clearly-labelled synthetic data. No real patient record is in this
 > repository, and none ever was.
 
 ---
 
-## 3:00 – 5:30 · The data
+## 2:13 – 3:34 · The data
 
-`[SCREEN]` README section 8 — the data table. Scroll slowly.
+`[SCREEN]` Slide 4.
 
 `[SAY]`
-> Three data sources, and I'll be precise about which is real and which is simulated, because that
-> distinction runs through the whole project.
+> Three sources, and I'll be precise about which is real and which is simulated.
 >
-> The first is CGMacros, from PhysioNet. Forty-five adults, real continuous glucose, real Fitbit
-> heart rate and activity, meal macronutrients, and labs. This is the main development cohort.
+> CGMacros, from PhysioNet — forty-five adults with real continuous glucose, real Fitbit heart
+> rate and activity, meal macronutrients and labs. The main development cohort.
 >
-> The second is the Shanghai type 1 and type 2 diabetes dataset, from figshare. A hundred type 2
-> patients with glucose, meals and labs. This is a genuinely separate population — different
-> country, different diet, different clinical practice — and it is what lets me test whether a model
-> trained in one place survives being moved somewhere else.
+> The Shanghai type 2 dataset, from figshare — a hundred patients with glucose, meals and labs. A
+> genuinely separate population: different country, different diet, different clinical practice.
+> Every headline number in this video is reported in both.
 >
-> The third is a synthetic cohort generated by a simulator in this repository. It produces glucose,
-> heart rate, steps, sleep stages and heart rate variability, with Indian meals whose carbohydrate
-> content comes from the Indian Food Composition Tables of 2017, and with insulin sensitivity
-> lowered to reflect what's reported for South Asian populations.
+> And a synthetic cohort from a simulator in this repository: glucose, heart rate, steps, sleep
+> stages and heart rate variability, with Indian meals whose carbohydrate comes from the Indian
+> Food Composition Tables of 2017, and insulin sensitivity lowered using published clamp data.
 >
-> Why generate data at all? Two reasons. First, because the brief explicitly permits it, and it lets
-> me demonstrate the full fusion pipeline including sleep and heart rate variability. Second, and
-> more importantly — there is no open dataset anywhere that pairs real continuous glucose with real
-> sleep staging and heart rate variability in type 2 patients. That dataset does not exist. I'll
-> come back to what I did about that.
+> Why generate data at all? Because no open dataset anywhere pairs real continuous glucose with
+> real sleep staging in type 2 patients. That dataset does not exist — and what I did about it
+> turned into one of the more interesting results here.
 >
-> Everything simulated is labelled SIMULATED, everywhere it appears — in the code, in the
-> dashboards, in the README, and in the figures. You will never have to guess which is which.
+> Everything simulated is labelled SIMULATED everywhere it appears — code, dashboards, README and
+> figures. You will never have to guess which is which.
 
 ---
 
-## 5:30 – 8:00 · Architecture
+## 3:34 – 5:10 · Architecture
 
-`[SCREEN]` `docs/architecture.pdf`, full screen. Move the cursor along each band as you describe it.
+`[SCREEN]` Slide 5, then `docs/architecture.pdf` full screen.
 
 `[SAY]`
-> This is the whole system on one page. Follow it top to bottom.
+> This is the whole system on one page.
 >
-> At the top, the four input streams I just described.
+> At the top, the four input streams. Below that, harmonisation — every cohort on one five-minute
+> timeline with a shared schema. Two rules matter more than they look. Every feature is causal:
+> none may use information from after the moment of prediction, enforced in code and covered by
+> tests. And the splits are patient-grouped — training, validation, calibration and holdout
+> patients never overlap. Those two are the difference between a real result and a leak.
 >
-> Below that, harmonisation. Every cohort is resampled onto one common five-minute timeline with a
-> shared schema. Two things happen here that matter more than they look. Every feature is causal —
-> no feature is allowed to use any information from after the moment of prediction, and that is
-> enforced in code and covered by tests. And the splits are patient-grouped: the patients used for
-> training, for validation, for calibration and for the final holdout never overlap. A patient's
-> data is never on both sides of an evaluation. Those two rules are the difference between a real
-> result and an impressive-looking leak.
+> Then the model layer. The served forecaster is a tuned gradient-boosted model predicting the
+> change from the current value, trained on absolute error — the metric it is scored on. Alongside
+> it sits a mechanistic twin: a glucose–insulin differential equation system fitted per patient,
+> integrated with Runge–Kutta, with an extended Kalman filter tracking the state. That is what
+> makes this a twin rather than just a forecaster — a physiological state you can intervene on.
 >
-> Then the model layer. The main forecaster is a gradient-boosted model predicting the change from
-> the current glucose value at each horizon. Alongside it sits a mechanistic twin — a minimal
-> glucose–insulin differential equation system fitted to each patient, integrated with Runge–Kutta,
-> with an extended Kalman filter tracking the state. That twin is what makes this a twin rather than
-> just a forecaster: it carries a physiological state you can intervene on. There's a personalisation
-> layer that adapts the population model to the individual patient, and a federated learning
-> simulation I'll come back to when I talk about privacy.
->
-> Below that, calibration — and this is the layer I'd point to if you asked me what separates this
-> from a weekend project. A raw model output is a number with no stated reliability. This layer turns
-> it into an eighty per cent prediction interval using conformal methods, and into calibrated event
-> probabilities. Measured coverage is eighty point eight per cent on CGMacros and seventy-nine point
-> five on Shanghai, against an eighty per cent target. `[VERIFY]`
->
-> Then the clinical outputs, and finally the two interfaces. Let's go and look at them.
+> Below that, calibration — the layer I'd point to if you asked what separates this from a weekend
+> project. A raw model output is a number with no stated reliability; this turns it into an eighty
+> per cent interval and a calibrated event probability. Then the clinical outputs, and the two
+> interfaces. Let's look at them.
 
 ---
 
-## 8:00 – 12:00 · Live demo — the clinician console
+## 5:10 – 8:36 · Live demo — the clinician console
 
-`[SCREEN]` The web console, patient list.
+`[SCREEN]` The live web console, patient list.
 
 `[SAY]`
-> This is the console. It opens on the patient list, because that's how a clinic day actually
-> starts — not with one patient, but with the question of which patient needs attention first.
+> This is the console, live in a browser — no install, no sign-in. It opens on the patient list,
+> because that is how a clinic day actually starts: not with one patient, but with the question of
+> which one needs attention first. Rows are ordered by the calibrated chance of a dangerous high.
+
+`[SCREEN]` Open your chosen patient — the "Now and next" tab.
+
+`[SAY]`
+> Here is one patient. Recent history on the left, the forecast at thirty, sixty and a hundred and
+> twenty minutes with the eighty per cent band around it. The band widens with the horizon, which
+> is what honesty looks like — the model is less sure about two hours from now, and says so.
 >
-> Each row shows the patient, their recent control, and a triage indicator. The list is sorted so
-> that the patients who need looking at are at the top.
+> Underneath, one plain sentence, and the calibrated probability of crossing the thresholds. Note
+> what it does not do: it does not tell the clinician to do anything, and it does not suggest a
+> dose. The clinician remains the decision maker, and that is written into the project rules.
 
-`[SCREEN]` Open your chosen patient — the "Now" tab.
+`[SCREEN]` The What-if lab. Replace a logged meal with an Indian preset, then toggle the walk.
 
 `[SAY]`
-> Here's one patient. The chart shows recent glucose history on the left, and on the right the
-> forecast at thirty, sixty and a hundred and twenty minutes, with the eighty per cent band around
-> it. The band widens as the horizon lengthens, which is exactly what honesty looks like — the model
-> is less sure about two hours from now than about thirty minutes from now, and it says so.
+> This is the what-if lab, and it is what makes the twin useful rather than just informative.
+> Historical data can never answer this, because the alternative never happened — only a model you
+> can intervene on can.
 >
-> Underneath, one plain sentence stating what's likely to happen, and the calibrated probability of
-> crossing the thresholds. Note what this does not do: it does not tell the clinician to do
-> anything. It does not suggest a dose. The clinician remains the decision maker — that's a
-> deliberate design decision and it's written into the project rules.
-
-`[SCREEN]` The What-if tab. Change the carbohydrate amount on a logged meal. Then toggle the walk.
-
-`[SAY]`
-> This is the what-if lab, and it's the part that makes the twin useful rather than just
-> informative. Here's a meal this patient actually ate. I can ask: what if it had been forty grams
-> of carbohydrate less? The forecast updates. What if they'd walked for thirty minutes afterwards?
-> It updates again.
+> Here is a meal this patient actually ate. I replace it with one of sixteen Indian presets, so the
+> question is asked in plates and katoris rather than grams, and add a thirty-minute walk. The
+> forecast updates both times.
 >
-> There are Indian meal presets here too, so a clinician can ask a question in the terms the patient
-> actually thinks in — not "sixty grams of carbohydrate" but "one plate of this instead of that."
+> One thing is guaranteed rather than hoped for: the served model carries a monotonicity
+> constraint, so less carbohydrate can never predict a higher peak. That check passes a hundred per
+> cent of the time; the unconstrained version passes twenty-seven.
 >
-> And look at what's printed directly beneath the result. The limits of this answer, next to the
-> answer. It cannot know about insulin doses, illness or stress. The carbohydrate effect it shows is
-> understated relative to what we measured in real matched meals, so treat the size of any change as
-> a lower bound. That text is not buried in documentation — it is on screen, beside the number,
-> every single time.
+> And look at what is printed directly beneath the result — the limits of the answer, next to the
+> answer. It cannot know insulin doses, illness or stress. On eighty-seven matched real breakfasts
+> the models predict about nineteen of the thirty-five milligrams per decilitre observed, so every
+> magnitude is shown as a lower bound. That is on screen beside the number, every time.
 
-`[SCREEN]` The Report tab — AGP, time in range, GMI.
-
-`[SAY]`
-> The glucose report follows the 2019 international consensus: the ambulatory glucose profile, time
-> in range against the standard thresholds, and the glucose management indicator. This is
-> deliberately conventional. A clinician should not have to learn a new vocabulary to read it.
-
-`[SCREEN]` Health record tab, then Sleep and activity.
+`[SCREEN]` Glucose report, health record, sleep and wearables, visit summary, access.
 
 `[SAY]`
-> The health record tab is the static stream — demographics, diagnoses, medications, kidney
-> function, genetic markers. And here is sleep, heart rate variability and step count, presented as
-> clinical context rather than as forecast inputs. I'll explain that choice when I get to the
-> results, because it was driven by a measurement, not a preference.
-
-`[SCREEN]` Visit summary tab, then the Access tab.
-
-`[SAY]`
-> The visit summary condenses everything into something that can be read in the two minutes a
-> clinician actually has.
+> The glucose report follows the 2019 international consensus — ambulatory glucose profile, time
+> in range, glucose management indicator. Deliberately conventional; a clinician should not have to
+> learn a new vocabulary to read it. The health record tab is the static stream. Here is sleep,
+> heart rate variability and step count — shown as clinical context rather than forecast inputs,
+> and I'll explain that choice in the results, because it was driven by a measurement.
 >
-> And this is the access view. Access is role-gated — a clinician and a care coordinator see
-> different things — and every access is logged. This is a concept demonstration of the governance
-> layer, not a production authentication system, and I want to be clear about that distinction.
+> The visit summary fits the two minutes a clinician actually has. Access is role-gated and every
+> access is logged — a demonstration of the governance layer, not a production authentication
+> system. And a second view, Evidence, carries every cohort-level result with nine figures, so a
+> reviewer can check a claim without leaving the page.
 
 ---
 
-## 12:00 – 14:00 · Live demo — the Streamlit application
+## 8:36 – 9:18 · Live demo — the Streamlit application
 
 `[SCREEN]` Streamlit app. Move through pages as named.
 
 `[SAY]`
-> The console is the front door. The full working application is this, and it carries the pages a
-> developer or a reviewer needs.
+> The console is the front door. The full application carries the pages a developer or reviewer
+> needs, and reads the same bundle, so the two can never disagree on a number.
 >
-> Twin state shows the fitted physiological state of the mechanistic model — what the twin currently
-> believes about this patient's insulin sensitivity and glucose dynamics.
->
-> Personalization shows how the model improves as it sees more of this patient's own data. The gain
-> is real but modest — about one milligram per decilitre after three to five days. `[VERIFY]` I'd
-> rather show you a small honest number than a large unverifiable one.
->
-> Input tiers answers "what if this clinic doesn't have all the data?" — it shows performance when
-> you have glucose alone, glucose plus meals, and the full set. That matters for deployment in a
-> setting that doesn't have everything.
->
-> Data quality flags gaps and problems in the incoming streams, because a forecast built on a broken
-> sensor feed should be labelled as such.
->
-> Evidence collects every result in the project in one place. And there's a PDF export, so a
-> clinician can put something in the patient's file.
+> Twin state shows the fitted physiological state of the mechanistic model. Personalisation shows
+> how the model improves as it sees more of this patient. Input tiers answers "what if this clinic
+> doesn't have all the data". Data quality flags gaps in the streams. Evidence collects every
+> result in one place, and a PDF export puts something in the patient's file.
 
 ---
 
-## 14:00 – 17:30 · Results
+## 9:18 – 14:15 · Results
 
-`[SCREEN]` README section 9. Scroll through the tables as you cite them.
+`[SCREEN]` Slides 8 through 16, in order.
 
 `[SAY]`
-> Now the evidence. Every number here has a confidence interval computed by bootstrapping over
-> patients — not over time windows, which would be far too optimistic because readings from the same
-> patient are not independent.
+> Every number has a confidence interval bootstrapped over patients, not over time windows — two
+> readings from one person are not two independent facts.
 >
-> Forecasting accuracy. Mean absolute error of eleven point six milligrams per decilitre at thirty
-> minutes, sixteen point eight at sixty, twenty-one point two at a hundred and twenty. `[VERIFY]`
+> Accuracy. Ten point nine milligrams per decilitre at thirty minutes, fifteen point seven at
+> sixty, twenty at two hours. Nineteen per cent better than repeating the last reading, which is
+> the clinical default, and it replicates at fifteen point five in the second cohort. On the Clarke
+> Error Grid, ninety-nine point six per cent of forecasts land in zones A or B.
 >
-> Which inputs matter? Adding meals to glucose gives a clear improvement. Adding the wearable heart
-> rate and activity channels gives — and I want to say this plainly — point zero four milligrams per
-> decilitre at sixty minutes, with a confidence interval that includes zero. `[VERIFY]` That is
-> nothing. In a competition about wearable fusion, the honest finding is that on this data, for this
-> task, heart rate and activity add essentially nothing beyond what glucose and meals already tell
-> you. I report it because it's true, and because I think a result that contradicts the expected
-> story is worth more than one that confirms it.
+> Which inputs matter? I removed each group of features and retrained. Meals are worth nine tenths
+> of a milligram per decilitre across the day, and two point zero in the run-up to a high, where
+> the clinician is actually deciding. Wearables are worth nought point one two. Four of seven
+> feature groups are worth nothing distinguishable from zero. I report that because a result that
+> contradicts the expected story is worth more than one that confirms it.
 >
-> Adverse events. The area under the ROC curve for predicting a crossing above 180 is zero point
-> eight two on Shanghai and zero point seven six on CGMacros. `[VERIFY]` Below 70, zero point eight
-> one. And critically — these are calibrated probabilities, not just rankings.
+> Which model? Four families built and scored: tuned gradient boosting, a mechanistic twin, a GRU
+> sequence model, and a physics-constrained hybrid. The sequence model came out indistinguishable
+> from boosting; the physics hybrid came out three and a half milligrams per decilitre worse. So
+> the simplest one is served, and the twin is kept as an independent engine cross-checking every
+> what-if. Thirty-seven configurations in all, each in the repository beside the number that ruled
+> it out.
 >
-> Uncertainty. Eighty per cent intervals achieve eighty point eight and seventy-nine point five per
-> cent coverage. `[VERIFY]` Coverage is not identical across every patient subgroup, and that's
-> stated in the limitations.
+> Uncertainty. An eighty per cent band is only honest if it contains the truth eighty per cent of
+> the time, so I built four conformal methods and judged them on that alone. Three fail somewhere:
+> two drop to seventy-eight and seventy-six per cent in the second cohort, and the adaptive method
+> hits its target by returning an infinite interval up to forty-four per cent of the time —
+> technically perfect, useless at the bedside. The one I serve holds everywhere, at both the eighty
+> and ninety-five per cent levels.
 >
-> Transfer between populations. Take a model trained on one cohort and apply it to the other. It
-> lands roughly level with simply assuming glucose stays where it is, and three point four
-> milligrams per decilitre behind a model trained locally. `[VERIFY]` But give it three days of the
-> new patient's own data to calibrate on, and much of that gap closes. That is a practical finding:
-> you do not need to retrain from scratch to deploy somewhere new, you need a few days of local
-> data. The console uses exactly that recipe.
+> Adverse events. Two hours ahead — the competition's own case — the area under the ROC curve for
+> crossing above 180 is zero point eight two on Shanghai, zero point seven seven on CGMacros, and
+> probabilities are calibrated to within two and a half points. At the alert load a clinic carries
+> today, the model catches eighty-three per cent of episodes against fifty-nine for the alert they
+> run now.
 >
-> The synthetic Indian cohort. With insulin sensitivity lowered and Indian meal compositions, the
-> model with three days of calibration beats the baseline in every setting tested. `[VERIFY]` This
-> is a simulation — it tests the design, it does not demonstrate clinical performance in India. But
-> it's a great deal better than not testing at all.
+> Personalisation — the part that makes this a twin. Seven days of one patient's own data takes
+> the error from sixteen point one to fourteen point nine, still improving at the end of the week,
+> and a second method pays from the first reading. Training on that patient alone reaches eighteen
+> point three — worse than not personalising at all.
 >
-> Federated learning. Records are split across simulated clinics and never leave them; only model
-> updates are shared. Federated averaging matches pooled central training — the difference is
-> around a tenth of a milligram per decilitre with intervals including zero — and beats a single
-> small clinic working alone by about two. `[VERIFY]` That matters for India's DPDP Act: it means
-> clinics can collaborate on a model without any clinic's records leaving the building.
+> Deployment. Moving a model to the other country costs three point four milligrams per decilitre,
+> and three days of local data closes much of that — the recipe the console uses. Federated
+> training, where records never leave the building, costs nine hundredths of a milligram against
+> pooling everything centrally.
 >
-> And sleep. This is the result I'd most like you to remember. I simulated three hundred patients
-> over thirty days — seven hundred and seventy-seven thousand scored windows — with sleep affecting
-> insulin sensitivity at the strength the published literature reports. The sleep channel is
-> detectable, and it is worth about zero point zero six milligrams per decilitre. `[VERIFY]` Half of
-> one per cent of the forecast error.
+> And sleep — the result I would most like you to remember. No real data can answer this, so I
+> simulated nine thousand patient-days, with sleep affecting insulin sensitivity at the strength
+> the literature reports and then at five times that. Adding sleep and heart rate variability
+> changes the forecast by at most nine hundredths of a milligram per decilitre. The effect is
+> unmistakably in the data — inflating it moves mean glucose and time above 180 — the model just
+> does not need the channel to see it, because glucose is downstream of sleep. By the time a
+> reading exists, last night is already inside it.
 >
-> Turn that around and it becomes a statement about the field rather than about this project: if
-> sleep affects glucose as strongly as the literature says it does, you need on the order of nine
-> thousand patient-days before that effect becomes visible in forecast accuracy at all. Studies
-> smaller than that reporting large wearable gains are very probably reporting noise. That is why
-> this system presents sleep, heart rate variability and steps as clinical context — which is what a
-> doctor actually uses them for — instead of pretending they sharpen a two-hour forecast.
+> Turn that around and it is a statement about the field: a study designed to find this effect has
+> to be larger than nine thousand patient-days — larger than any open CGM cohort in existence. That
+> is a sample-size number anyone attempting this can use, and I have not found it published.
 
 ---
 
-## 17:30 – 19:00 · How the work was done
+## 14:15 – 15:34 · How the work was done
 
-`[SCREEN]` `docs/DECISIONS.md`. Scroll to show the volume of entries.
+`[SCREEN]` Slide 17, then `docs/DECISIONS.md`. Scroll to show the volume of entries.
 
 `[SAY]`
-> I want to spend a minute on method, because I think it's the real contribution.
+> A minute on method, because I think it is the real contribution.
 >
-> This file contains over seventy numbered decisions. Each one was written **before** the run that
-> tested it — the protocol, the candidate set, the decision rule, and what would count as a failure.
-> Written down first, so it can't be adjusted afterwards to fit whatever came out.
+> A model can always be made to look good by picking the comparison once you have seen the answer.
+> So every such choice was recorded first, in a plain-text decision log: seventy-two numbered
+> entries saying what would be done, why, and what would count as it having worked.
 >
-> Here's a concrete example. This decision pre-registered a test of a tuned version of the
-> forecaster, including the rule for whether to adopt it, and reserved a set of patients that had
-> never been used for any choice anywhere in the project. The rule was met, so the tuned model is
-> what the dashboard now serves.
+> Here is one. It fixed the adoption rule and a seventy-five per cent coverage floor before the
+> tuned model was ever scored, so shipping it could not be decided by looking at the result.
+> Coverage came back at eighty point three or better everywhere. And here is one where a check fell
+> outside its pre-registered range — recorded anyway, with the departure written up.
 >
-> And here's one where the rule was **not** met. The result is recorded anyway, with the departure
-> written up. Nothing is quietly dropped. If you go through this file you can reconstruct every
-> choice I made and check whether I moved the goalposts. I don't think you'll find that I did.
->
-> Everything regenerates from source with a single command per stage. Continuous integration runs
-> linting, formatting and the test suite on every push. There's a Docker image and a datasheet and a
-> model card.
+> Every result file carries the commit, the data hash and the seed that produced it — thirty-three
+> out of thirty-three. Two hundred and twelve unit tests run from one command. Every figure in the
+> deck is regenerated from those files rather than redrawn, so the slides and the repository cannot
+> drift apart.
 
 ---
 
-## 19:00 – 20:30 · Limitations, and what comes next
+## 15:34 – 17:16 · Limits, and what comes next
 
-`[SCREEN]` README section 15.
+`[SCREEN]` Slide 19.
 
 `[SAY]`
-> The limitations, stated by me rather than discovered by you.
+> The limits, stated by me rather than discovered by you, each paired with the work that closes
+> it.
 >
-> A hundred and forty-five real patients across two cohorts. That is small, and none of them are in
-> India. There is no open Indian continuous glucose dataset — I looked hard. The synthetic Indian
-> cohort is my answer to that, and a simulation is not a population.
+> A hundred and forty-five real patients across two cohorts. That is small, and none are in India;
+> there is no open Indian CGM dataset and I looked hard. What closes it is a fifty to a hundred
+> patient study in an Indian clinic, and the three-day calibration recipe is already measured.
 >
-> The Indian, sleep and federated results are simulations. They test design, not clinical
-> performance.
+> The Indian, sleep and federated results are simulations — they test design, not clinical
+> performance. Running the federated protocol across two real sites closes that; the code is
+> written and the privacy accounting is in place.
 >
-> The what-if carbohydrate effect is understated against real matched meals, so those magnitudes are
-> lower bounds, and the interface says so each time.
+> The what-if magnitudes are lower bounds, and the interface says so every time. The quality score
+> does not catch sensor bias — a drift detector closes that. Interval coverage is not uniform
+> across subgroups — group-conditional conformal prediction closes that, and it is code, not data.
+> And the hypoglycaemia evidence is thin: eight CGMacros patients ever went below seventy.
 >
-> The data quality score does not detect sensor bias or drift.
+> And the one that matters most: this has not been prospectively validated. It is decision support,
+> not a medical device, and nothing here substitutes for a planned study and a regulatory path.
 >
-> The hypoglycaemia evidence is thinner than the hyperglycaemia evidence, because only eight
-> patients in CGMacros ever went below seventy.
+> What I am looking for is one Indian diabetes clinic willing to run CGM and a meal log for a
+> month, and a second site to federate with. That is the whole ask.
+
+---
+
+## 17:16 – 18:19 · Close
+
+`[SCREEN]` Slide 20.
+
+`[SAY]`
+> Six findings, each measured on held-out patients in two independent cohorts, each carrying a
+> confidence interval, each reproducible from the repository.
 >
-> And the big one: this has not been prospectively validated. It is decision support. It is not a
-> medical device, it does not recommend a dose or a drug, and it should not be used to treat anyone
-> today.
+> A forecast that holds in two countries. Uncertainty that keeps its promise at two confidence
+> levels. Calibrated risk instead of alarms, catching eighty-three per cent of episodes at the
+> alert load a clinic already carries. A twin that measurably adapts to one person over seven days.
+> A counterfactual engine with a guarantee that is enforced rather than hoped for. And a route to
+> deployment in India where the entire cost of never moving a patient record is nine hundredths of
+> a milligram per decilitre.
 >
-> What would make it stronger. Access to AI-READI, which is the only open dataset pairing real
-> continuous glucose with real sleep staging and heart rate variability in type 2 patients — that
-> request is in. A prospective pilot in a clinic. And a federated deployment across real sites,
-> which the simulation says should work and only a deployment can prove.
->
-> That's GlucoTwin. The code, the data documentation, every decision and every number is in the
-> repository — including the results that didn't go my way. Thank you for watching.
+> The console is live right now. The code, the documentation, every decision and every number is in
+> the repository — including the results that did not go my way. Thank you for watching.
 
 ---
 
 ## After recording
 
 - Watch it back once, start to finish, at normal speed.
-- Confirm total length is **over 20 minutes**.
+- Confirm total length is **between 15 and 20 minutes**. If it lands under 15, slow down rather
+  than adding material.
 - Upload as unlisted on YouTube, then paste the link into README section 11, replacing
   `[VIDEO LINK]`.
 - Check the link works in a private browser window before submitting.
