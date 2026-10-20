@@ -336,7 +336,7 @@ evaluation protocol, AI/ML models, measured results, privacy design and scope.
 
 ## 14. Presentation
 
-**[PRESENTATION LINK — docs/GlucoTwin_presentation.pdf, to be added]**
+**[PRESENTATION LINK — https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing]**
 
 The twenty slides are in this repository as images, rendered at 3600 × 2027 from HTML and inline
 SVG so that every figure is regenerated from `reports/metrics/*.json` rather than redrawn by hand.
