@@ -305,7 +305,7 @@ maker and the system never recommends a dose or a drug.
 
 ## 11. Demo video
 
-**[VIDEO LINK — unlisted YouTube, to be added]**
+**[VIDEO LINK — https://drive.google.com/file/d/1YjyfhFT6rcIV6HiqQKcVzY41-ewbUZoW/view?usp=sharing]**
 
 A 22-minute walkthrough: the live console, the Streamlit application, and the evidence behind
 both. The full narration script, with per-section timings, is in
