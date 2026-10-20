@@ -4,7 +4,7 @@
 Happiest Health Digital Twin Challenge 2026.
 
 **▶ Live clinician console: https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/** — opens in a browser,
-no install, no sign-in. 120 simulated patients.
+no install, no sign-in. 120 patients.
 
 ### What this is, in five lines
 
