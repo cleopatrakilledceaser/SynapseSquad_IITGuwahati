@@ -307,22 +307,22 @@ maker and the system never recommends a dose or a drug.
 
 **[VIDEO LINK — unlisted YouTube, to be added]**
 
-An 18-minute walkthrough: the live console, the Streamlit application, and the evidence behind
+A 22-minute walkthrough: the live console, the Streamlit application, and the evidence behind
 both. The full narration script, with per-section timings, is in
 [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md).
 
 | | Section | Covers |
 |---|---|---|
 | 0:00 | Opening | What the system does and who it is for |
-| 1:12 | What the brief asked for | The four requirements, addressed directly |
-| 2:13 | The data | CGMacros, Shanghai T2DM, and what is simulated |
-| 3:34 | Architecture | Harmonisation, causal features, patient-grouped splits |
-| 5:10 | Live demo — clinician console | Triage, forecast with band, what-if lab, governance |
-| 8:36 | Live demo — Streamlit application | Twin state, input tiers, data quality, evidence |
-| 9:18 | Results | Accuracy, ablation, model families, intervals, events, transfer, privacy, sleep |
-| 14:15 | How the work was done | The decision log and reproducibility |
-| 15:34 | Limits, and what comes next | Each limit paired with the work that closes it |
-| 17:16 | Close | What the project establishes |
+| 1:44 | What the brief asked for | The four requirements and the two data streams, addressed directly |
+| 3:30 | The data | CGMacros, Shanghai T2DM, and what is simulated |
+| 5:10 | Architecture | Harmonisation, causal features, patient-grouped splits |
+| 6:46 | Live demo — the clinician console | Triage, forecast with band, what-if lab, governance |
+| 10:29 | Live demo — the Streamlit application | Twin state, input tiers, data quality, evidence, PDF export |
+| 11:10 | Results | Accuracy, ablation, model families, intervals, events, transfer, privacy, sleep |
+| 16:36 | How the work was done | The decision log and reproducibility |
+| 18:34 | Limits, and what comes next | Each limit paired with the work that closes it |
+| 20:47 | Close | What the project establishes |
 
 ## 12. Open-source licence
 

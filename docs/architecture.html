@@ -241,7 +241,7 @@
   <div class="pn hi">
     <h3>Method &amp; evaluation</h3>
     <ul>
-      <li><b>Pre-registered.</b> Protocol, candidates and decision rule written to <code>docs/DECISIONS.md</code> before the run. 70+ entries.</li>
+      <li><b>Pre-registered.</b> Protocol, candidates and decision rule written to <code>docs/DECISIONS.md</code> before the run. 72 of the 74 entries.</li>
       <li><b>Patient-grouped CV</b> with repeats, an inner validation split for every choice, and a reserved holdout the runner refuses to reuse.</li>
       <li><b>Baselines it must beat:</b> persistence, per-patient autoregression, ridge, a GRU.</li>
       <li><b>Paired patient bootstrap</b> intervals — over patients, never over time windows.</li>
@@ -290,7 +290,7 @@
       <li>Python 3.11 · LightGBM · PyTorch · SHAP · Streamlit. Runs on a laptop CPU; no GPU required.</li>
       <li>One <code>make</code> target per stage; everything regenerates from source. CI runs ruff, black, pytest and a smoke run. Docker image, datasheet and model card included.</li>
       <li>One condition: <b>type 2 diabetes</b>. Decision support only — not a medical device.</li>
-      <li>India, sleep and federated results are <b>simulations</b>: they test design, not clinical performance (sleep: ≈0.06 mg/dL, <b>≈9,000 patient-days to detect</b>). Not prospectively validated.</li>
+      <li>India, sleep and federated results are <b>simulations</b>: they test design, not clinical performance (sleep: at most 0.09 mg/dL over <b>9,000 patient-days</b>). Not prospectively validated.</li>
     </ul>
   </div>
 

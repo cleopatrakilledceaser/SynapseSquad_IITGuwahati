@@ -1,9 +1,9 @@
 # GlucoTwin — demo video script
 
-**Target length: 18 minutes 20 seconds.** The organisers require **15 to 20 minutes**, so this
-sits mid-range with margin at both ends. Do not rush to fill twenty — the requirement is a range,
-not a floor. If the live demo runs slow and you drift past nineteen minutes, the two blocks safe to
-drop are the Streamlit tour and the "which model" paragraph in Results.
+**Target length: 21 to 22 minutes. The organisers require a MINIMUM of 20 minutes.**
+Twenty is a floor, not a target, so this script is written to land comfortably above it. Do not
+rush. If you finish under twenty minutes, go back and re-record — an under-length video risks the
+submission regardless of how good the work is.
 
 **How to use this.** `[SCREEN]` says what should be visible. `[SAY]` is narration — read it, don't
 improvise. The section timings are computed from the word counts at **132 words per minute**, which
@@ -11,6 +11,10 @@ is an unhurried presenting pace. Pause for a beat at each section break; the tim
 
 **All figures in this script are final.** They are read off the served tuned forecaster (D-072a)
 and match the README and the slides. Nothing here is pending.
+
+**Format.** The organisers allow the video to be recorded as a narrated PowerPoint presentation or
+uploaded as an unlisted YouTube video. This script assumes you narrate over the deck and cut to the
+live console and the Streamlit app for the two demo sections.
 
 **Before recording**
 - Close every other window. Hide bookmarks. Set display scaling so text is readable at 1080p.
@@ -23,7 +27,7 @@ and match the README and the slides. Nothing here is pending.
 
 ---
 
-## 0:00 – 1:12 · Opening
+## 0:00 – 1:44 · Opening
 
 `[SCREEN]` Slide 1 — title.
 
@@ -40,11 +44,17 @@ and match the README and the slides. Nothing here is pending.
 > 70. And the answer to "what if" — what happens if this patient eats less rice, or walks for half
 > an hour after lunch.
 >
-> I'll show the system working, then the evidence behind it, then what it cannot do.
+> I'll show you the system working, then the evidence behind it, and then I'm going to be straight
+> with you about what it cannot do. I would rather you heard the limitations from me than found
+> them yourself.
+>
+> One thing to say at the outset about scope. The brief asks for one chronic condition, and this is
+> type 2 diabetes only. Every design decision in the project was made for that population, and
+> nothing here is a general-purpose health model wearing a diabetes label.
 
 ---
 
-## 1:12 – 2:13 · What the brief asked for
+## 1:44 – 3:30 · What the brief asked for
 
 `[SCREEN]` Slides 2 and 3.
 
@@ -60,10 +70,18 @@ and match the README and the slides. Nothing here is pending.
 >
 > Everything runs on open or clearly-labelled synthetic data. No real patient record is in this
 > repository, and none ever was.
+>
+> The brief also names the two streams it wants fused, so let me be explicit. The static stream is a
+> simulated electronic health record: demographics, past diagnoses, lab results, medications and
+> genetic markers, in a schema compatible with Synthea. The dynamic stream is time series from
+> consumer wearables and sensors: heart rate variability, continuous glucose, sleep stages and step
+> count. All four of the dynamic channels the brief lists are present. And the worked example the
+> brief gives — predicting a glucose spike two hours in advance — is exactly the +120 minute
+> forecast and the adverse-event probability you are about to see.
 
 ---
 
-## 2:13 – 3:34 · The data
+## 3:30 – 5:10 · The data
 
 `[SCREEN]` Slide 4.
 
@@ -81,16 +99,18 @@ and match the README and the slides. Nothing here is pending.
 > stages and heart rate variability, with Indian meals whose carbohydrate comes from the Indian
 > Food Composition Tables of 2017, and insulin sensitivity lowered using published clamp data.
 >
-> Why generate data at all? Because no open dataset anywhere pairs real continuous glucose with
-> real sleep staging in type 2 patients. That dataset does not exist — and what I did about it
-> turned into one of the more interesting results here.
+> Why generate data at all? Two reasons. The brief explicitly permits synthetic data and names
+> tools like Synthea for the record side, so it is within the sandbox rules. And more importantly:
+> no open dataset anywhere pairs real continuous glucose with real sleep staging and heart rate
+> variability in type 2 patients. That dataset does not exist. I looked hard. What I did about it
+> turned into one of the more interesting results in the project, and I will come back to it.
 >
 > Everything simulated is labelled SIMULATED everywhere it appears — code, dashboards, README and
 > figures. You will never have to guess which is which.
 
 ---
 
-## 3:34 – 5:10 · Architecture
+## 5:10 – 6:46 · Architecture
 
 `[SCREEN]` Slide 5, then `docs/architecture.pdf` full screen.
 
@@ -116,7 +136,7 @@ and match the README and the slides. Nothing here is pending.
 
 ---
 
-## 5:10 – 8:36 · Live demo — the clinician console
+## 6:46 – 10:29 · Live demo — the clinician console
 
 `[SCREEN]` The live web console, patient list.
 
@@ -159,11 +179,15 @@ and match the README and the slides. Nothing here is pending.
 `[SCREEN]` Glucose report, health record, sleep and wearables, visit summary, access.
 
 `[SAY]`
-> The glucose report follows the 2019 international consensus — ambulatory glucose profile, time
-> in range, glucose management indicator. Deliberately conventional; a clinician should not have to
-> learn a new vocabulary to read it. The health record tab is the static stream. Here is sleep,
-> heart rate variability and step count — shown as clinical context rather than forecast inputs,
-> and I'll explain that choice in the results, because it was driven by a measurement.
+> The glucose report follows the 2019 international consensus — the ambulatory glucose profile,
+> time in range against the standard thresholds, and the glucose management indicator. This is
+> deliberately conventional. A clinician should not have to learn a new vocabulary to read it.
+>
+> The health record tab is the static stream in full: demographics, diagnoses, medications, kidney
+> function and genetic markers — the simulated EHR the brief asks for. And here is sleep, heart
+> rate variability and step count, presented as clinical context rather than as forecast inputs.
+> That is a deliberate choice and it was driven by a measurement, not a preference. I will show you
+> the measurement in the results.
 >
 > The visit summary fits the two minutes a clinician actually has. Access is role-gated and every
 > access is logged — a demonstration of the governance layer, not a production authentication
@@ -172,7 +196,7 @@ and match the README and the slides. Nothing here is pending.
 
 ---
 
-## 8:36 – 9:18 · Live demo — the Streamlit application
+## 10:29 – 11:10 · Live demo — the Streamlit application
 
 `[SCREEN]` Streamlit app. Move through pages as named.
 
@@ -187,7 +211,7 @@ and match the README and the slides. Nothing here is pending.
 
 ---
 
-## 9:18 – 14:15 · Results
+## 11:10 – 16:36 · Results
 
 `[SCREEN]` Slides 8 through 16, in order.
 
@@ -199,6 +223,11 @@ and match the README and the slides. Nothing here is pending.
 > sixty, twenty at two hours. Nineteen per cent better than repeating the last reading, which is
 > the clinical default, and it replicates at fifteen point five in the second cohort. On the Clarke
 > Error Grid, ninety-nine point six per cent of forecasts land in zones A or B.
+>
+> Error and interval coverage are reported per subgroup — by HbA1c band, age and sex — as well as
+> pooled, so a model that works on average but fails for one group cannot hide inside a single
+> number. Robustness is tested rather than assumed: sensor faults are injected into the test data
+> and every causal feature recomputed, and a data-quality score travels with each forecast.
 >
 > Which inputs matter? I removed each group of features and retrained. Meals are worth nine tenths
 > of a milligram per decilitre across the day, and two point zero in the run-up to a high, where
@@ -250,7 +279,7 @@ and match the README and the slides. Nothing here is pending.
 
 ---
 
-## 14:15 – 15:34 · How the work was done
+## 16:36 – 18:34 · How the work was done
 
 `[SCREEN]` Slide 17, then `docs/DECISIONS.md`. Scroll to show the volume of entries.
 
@@ -271,10 +300,16 @@ and match the README and the slides. Nothing here is pending.
 > out of thirty-three. Two hundred and twelve unit tests run from one command. Every figure in the
 > deck is regenerated from those files rather than redrawn, so the slides and the repository cannot
 > drift apart.
+>
+> Everything regenerates from source with a single command per stage. Continuous integration runs
+> linting, formatting and the full test suite on every push, and it is green. There is a Docker
+> image, a datasheet describing the data, and a model card describing the model and its intended
+> use. If you want to check any number in this video, the repository tells you which file it came
+> from and which decision governed the run that produced it.
 
 ---
 
-## 15:34 – 17:16 · Limits, and what comes next
+## 18:34 – 20:47 · Limits, and what comes next
 
 `[SCREEN]` Slide 19.
 
@@ -298,12 +333,18 @@ and match the README and the slides. Nothing here is pending.
 > And the one that matters most: this has not been prospectively validated. It is decision support,
 > not a medical device, and nothing here substitutes for a planned study and a regulatory path.
 >
+> What would make this stronger, in order. Access to AI-READI, which as far as I can find is the
+> only dataset pairing real continuous glucose with real sleep staging and heart rate variability
+> in type 2 patients — that request is in. A prospective pilot in a clinic. And a federated
+> deployment across real sites, which the simulation says should work and only a deployment can
+> prove.
+>
 > What I am looking for is one Indian diabetes clinic willing to run CGM and a meal log for a
 > month, and a second site to federate with. That is the whole ask.
 
 ---
 
-## 17:16 – 18:19 · Close
+## 20:47 – 21:49 · Close
 
 `[SCREEN]` Slide 20.
 
@@ -326,8 +367,8 @@ and match the README and the slides. Nothing here is pending.
 ## After recording
 
 - Watch it back once, start to finish, at normal speed.
-- Confirm total length is **between 15 and 20 minutes**. If it lands under 15, slow down rather
-  than adding material.
+- Confirm total length is **over 20 minutes** — that is a hard requirement, not a target. If it
+  lands under, re-record rather than submitting short.
 - Upload as unlisted on YouTube, then paste the link into README section 11, replacing
   `[VIDEO LINK]`.
 - Check the link works in a private browser window before submitting.
