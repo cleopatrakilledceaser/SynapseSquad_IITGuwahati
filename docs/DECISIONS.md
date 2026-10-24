@@ -1657,7 +1657,7 @@ What: the twenty slides are authored as HTML with inline SVG and rendered throug
 to PNG at 3600 × 2027 (240 dpi on a 13.33-inch slide), committed to `docs/`. Each slide carries a
 source footer naming the decision IDs and the `reports/metrics/*.json` files its figures come from;
 README §14 lists all twenty with links. The video script
-([docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md)) quotes only numbers that appear in this README, and
+(kept with the recording, not in the repository) quotes only numbers that appear in this README, and
 its section timings are computed from its own word counts rather than estimated.
 
 The rule, in force from here: **if a metrics file changes, every slide whose footer cites it must be
@@ -1667,3 +1667,31 @@ submitted.** Nothing in either artefact is edited by hand to match a new number.
 Scope, stated plainly: this rule governs presentation only. It confers no additional validity on any
 result. The guarantees that matter for the results themselves are the patient-grouped splits, the
 causal-feature rule, and the pre-registration of D-001 to D-072.
+
+## D-075: the mechanistic twin runs live in the web console (RECORD)
+
+**This entry is a record, written after the work. It changes no reported result and no served model.**
+
+Why: an external review pointed out that the public console played back precomputed outputs, so a
+judge could not see the twin's state evolve as data arrives — the property that separates a twin from
+a forecaster.
+
+What: `src/web/twin_live.py` fits the Part 4 twin for each of the 120 console patients exactly as in
+Part 4 at k = 3 (MAP on the first 3 days, population prior averaged over the five CGMacros folds,
+activity off, EKF q_scale 16 and r 25 — the stored choice in every fold) and writes `web/twin.json`.
+The console's new **Live twin** tab ports `src/mech/model.py` (deriv, clip, RK4, Jacobian, EKF) to
+JavaScript and runs it in the browser: play or scrub through 24 h, see the state (gut carbohydrate,
+glucose appearance, insulin-action clearance, glucose), the innovation of each reading, and a 2-h
+forecast; add a meal or a walk at any moment. The walk uses the D-056 one-sided kernel with the
+population alpha giving the D-052 ASSUMED 20 % reduction, labelled as assumed.
+
+Checks: `tests/twin_parity.mjs` compares the browser code with Python on 12 patients, 1,728 forecasts,
+using the exact rounded inputs the browser receives: max |mean difference| 5e-7 mg/dL (threshold
+1e-6), run in CI. Fitted vs true basal glucose over the 120 simulated patients: median |error|
+1.5 mg/dL, r = 0.985. Twin accuracy on the simulated cohort (every 30 min from day 3): 7.4 / 9.9 /
+15.1 mg/dL against persistence 11.5 / 17.8 / 26.6. Stated beside it on the page: the simulator uses
+the same equations, so this is optimistic; on real patients the twin is 12.7 / 18.1 / 23.2.
+
+Also corrected in this change: README §7, the model card and the architecture diagram had listed heart
+rate and activity among the served model's inputs. The served model (configs/hybrid.yaml, A0) uses
+CGM, time of day, HbA1c and fasting glucose, and on CGMacros meal macros and post-meal activity.

@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: web-data web-evidence web-real federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: web-twin twin-parity web-data web-evidence web-real federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -125,6 +125,12 @@ web-data:
 
 web-evidence:
 	python -m src.web.evidence
+
+web-twin:  ## fit the live twin for the console patients -> web/twin.json + tests/fixtures/twin_parity.json
+	python -W ignore -u -m src.web.twin_live
+
+twin-parity:  ## browser twin vs Python reference (needs node)
+	node tests/twin_parity.mjs
 
 web-pages:  ## wrap web/index.html into a standalone site in web/_site (for GitHub Pages)
 	python -m src.web.pages

@@ -4,20 +4,42 @@
 Happiest Health Digital Twin Challenge 2026.
 
 **▶ Live clinician console: https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/** — opens in a browser,
-no install, no sign-in. 120 patients.
+no install, no sign-in. 120 simulated patients.
 
 ### What this is, in five lines
 
-- A **type 2 diabetes digital twin**: the static health record fused with CGM, wearable and meal streams.
-- Forecasts glucose at **+30 / +60 / +120 min** with calibrated 80 % intervals, and the calibrated
-  **probability of an adverse event** (above 180 mg/dL, below 70 mg/dL).
-- Answers **"what if"** — a different meal, fewer carbohydrates, a post-meal walk — through a
-  monotone-constrained model and a fitted physiological twin.
-- Built and tested on **two real open cohorts (145 patients, two countries)** plus a synthetic
-  Indian cohort, with **federated training** so records never leave the clinic.
-- Every protocol was **pre-registered before the run that tested it** — 72 numbered decisions
-  in [docs/DECISIONS.md](docs/DECISIONS.md) — and every comparison carries a patient-level
+- A **type 2 diabetes digital twin**: a per-patient glucose–insulin model whose state is corrected
+  by every CGM reading, working beside a machine-learning forecaster, fed by the health record,
+  CGM, meals and a wearable.
+- Forecasts glucose at **+30 / +60 / +120 min** with 80 % intervals that keep their promise
+  (80.5 % measured), and the calibrated **probability of a high or a low** up to two hours ahead.
+- Answers **"what if"** — less rice, an idli instead of a dosa, a walk after dinner — with the
+  physiological twin, which sizes meal effects inside the published range, beside a monotone ML
+  model that guarantees the direction.
+- Built and tested on **two real open cohorts (145 people, two countries)**, always split by
+  patient, plus a labelled synthetic Indian cohort; **federated training** keeps records in the clinic.
+- **72 of the 74 decisions were written down before the run that tested them**
+  ([docs/DECISIONS.md](docs/DECISIONS.md)), and every comparison carries a patient-level
   confidence interval.
+
+### Why this is a digital twin, not only a forecaster
+
+A forecaster predicts the next reading. A twin also holds a model of the patient that updates as
+data arrives and can be asked what a change would do. GlucoTwin runs two engines and uses each
+where it measured best. Every number below is from real patients (CGMacros) unless marked.
+
+| A twin must… | How GlucoTwin does it | Measured |
+|---|---|---|
+| Hold a model of *this* patient | Glucose–insulin ODE (gut absorption, glucose, insulin action, activity), fitted to the patient's first 3 days, starting from a prior set by the health record | Before any of the patient's own data, the record-based prior lowers the twin's error by **1.4 / 2.6 / 3.6 mg/dL** at +30 / +60 / +120 min |
+| Personalise only what the data can identify | Identifiability tested parameter by parameter | Basal glucose is reproducible between two 3-day windows (**r = 0.62**) and recovered almost exactly in simulation (**r = 0.998**). The five other parameters are not reproducible (r = 0.14–0.24), so they stay at population values and only basal glucose is shown to the clinician |
+| Update with every reading | Extended Kalman filter: each CGM value corrects the whole physiological state (carbohydrate still in the gut, insulin action, glucose) | Re-estimated every 5 minutes; the console's **live twin** runs this filter in the browser |
+| Size an intervention correctly | The twin plays a meal or a walk forward | Carbohydrate response **0.33 mg/dL per gram**, inside the 0.3–1.3 range pre-registered from the literature (ML models: 0.19–0.20). On pairs of real breakfasts eaten by the same person, the twin predicts **27.5 of an observed 33.5 mg/dL** difference at +60 min (44 pairs); the ML models predict 18.6 of 35.3 (87 pairs) |
+| Improve the forecast | Twin state passed to LightGBM as features | **0.55 mg/dL lower error** at +60 min with 3 days of data (95 % CI 0.01 to 1.09) |
+
+**Division of labour.** The served two-hour forecast is the tuned LightGBM, the most accurate
+model measured. The size of an intervention comes from the twin. The monotone ML model guarantees
+that less carbohydrate never predicts a higher peak. Adding the twin features to the served
+forecaster is the next step.
 
 > **Research prototype, not a medical device.** Outputs are decision support for a clinician.
 > They are not a diagnosis and do not prescribe treatment. Open data and clearly labelled
@@ -73,8 +95,8 @@ Everything runs on a laptop CPU.
 
 | Layer | What it is |
 |---|---|
-| Fusion forecaster (served) | Tuned LightGBM on causal features: recent CGM and its slope, time of day, meals, heart rate and activity, and the static EHR profile. Predicts the *change* from the current value at +30 / +60 / +120 min. Trained with an absolute-error loss to match the metric it is scored on; 16 candidates searched and the best three averaged, chosen on inner-validation patients only (D-072a). |
-| Mechanistic twin | A minimal glucose-insulin ODE fitted per patient (RK4 integration, extended Kalman filter for the state). It is used for what-if simulation and as a feature source. |
+| Fusion forecaster (served) | Tuned LightGBM on causal features: recent CGM and its slope, time of day, HbA1c and fasting glucose from the record, and — where the cohort records them (CGMacros) — meal macros and post-meal activity from the wearable. Heart rate was tested and left out (+0.04 mg/dL, CI includes 0). Predicts the *change* from the current value at +30 / +60 / +120 min. Trained with an absolute-error loss to match the metric it is scored on; 16 candidates searched and the best three averaged, chosen on inner-validation patients only (D-072a). |
+| Mechanistic twin | A minimal glucose-insulin ODE fitted per patient (RK4 integration, extended Kalman filter for the state, record-based prior). It is the patient state, the engine that sizes what-if effects, and a feature source (−0.55 mg/dL at +60). |
 | Personalisation | The population model plus fine-tuning or a recursive-least-squares correction on the patient's own days. |
 | Uncertainty | Split-conformal and CV+ intervals (80 % target), Platt/isotonic calibration of event probabilities. |
 | What-if engine | Counterfactual edits to meals and activity, played through a LightGBM with a monotonicity constraint in carbohydrate — so less carbohydrate can never predict a higher peak — and through the fitted twin. |
@@ -113,11 +135,18 @@ Every simulated number is labelled SIMULATED.
 
 - **Meals are the signal that matters.** Adding meals to CGM and wearable data lowers MAE by
   0.93 mg/dL at +60 (CI −1.18 to −0.67); in the 3 hours after a meal by 1.57.
-- **Wearable heart rate and activity add almost nothing on their own** (+0.04 at +60, CI
-  includes 0). We report this rather than hide it. Section 9.5 tests whether sleep, HRV and
-  steps would be detectable (on simulated data, they are not).
-- **Static EHR helps only when the patient has no history.** With 3 days of the patient's own
-  data its effect is 0.3 mg/dL or less.
+- **Each stream earns its place in the fused model.** Remove one stream from the full model
+  and error at +60 rises: meals +0.92 mg/dL (CI 0.66 to 1.20), HbA1c and fasting glucose +0.61
+  (0.07 to 1.30), wearable heart rate and activity +0.12 (0.04 to 0.22). The fused model beats
+  CGM alone by 0.68 mg/dL (0.30 to 1.04).
+- **The record's biggest job is the cold start.** Next to an hour of CGM, short-term glucose
+  is dominated by recent glucose: in Shanghai, where the record is the only extra stream, it does
+  not lower +60 error. Before the patient has any history, it gives the twin a 1.4–3.6 mg/dL
+  head start, and it drives triage. Heart rate added to CGM on its own moves error by +0.04
+  (CI includes 0). Section 9.5 tests whether sleep, HRV and steps would be detectable.
+- **In clinical error-grid terms** (development fusion model, CGMacros, +60 min): **99.1 %** of
+  forecasts fall in Clarke zones A+B (82.0 % in zone A), MARD 11.8 %. Shanghai, CGM model:
+  98.6 % A+B, MARD 12.2 %.
 - **The tuned forecaster is the model both dashboards serve (Part 10, D-072a).** Training with an
   absolute-error loss — the metric the model is scored on — and a wider hyperparameter search
   chosen only on inner-validation patients, then re-running calibration and the what-if models for
@@ -175,9 +204,11 @@ for — and the fitted mechanistic twin. Both are scored against physiological p
 (carbohydrate monotonicity, activity direction, identity, causality, bounds, dose–response) and
 against **87 matched real breakfasts**.
 
-On those 87 matched pairs the models predict 18.6 to 19.2 mg/dL of the 35.3 mg/dL observed rise at
-+60 min, so the interface
-presents every magnitude as a **lower bound**, printed beside the result rather than buried
+On those 87 matched pairs the ML models predict 18.6 to 19.2 mg/dL of the 35.3 mg/dL observed
+difference at +60 min. The twin, on the 44 pairs it covers, predicts 27.5 of 33.5 mg/dL, and its
+carbohydrate response (0.33 mg/dL per gram) is inside the literature range where the ML models'
+(0.19–0.20) is below it. So the ML models are used for direction and ranking, the twin for size,
+and the interface prints ML magnitudes as a **lower bound** beside the result
 (details in [docs/RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md)).
 
 ### 9.4 India readiness (Part 8)
@@ -288,12 +319,23 @@ Two interfaces, both reading the same bundle so they never disagree on a number.
 
 **Web console** — live at **https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/** (source in `web/`).
 A single-page clinician console. A patient list ordered by who needs
-attention, then per patient: the forecast with its 80 % band, the what-if lab, the glucose report
+attention, then per patient: the forecast with its 80 % band, the **live twin**, the what-if lab, the glucose report
 (AGP, time in range, GMI), the health record, sleep and activity context, a visit summary, and an
 evidence section carrying every cohort-level result. Access is role-gated — a clinician and a care
 coordinator see different fields — with a session access log. Dark and light themes, a mg/dL ⇄
 mmol/L switch, readable at tablet width. The demo runs on 120 **simulated** patients with the
 models applied zero-shot.
+
+What is live and what is precomputed, plainly:
+
+| Part of the console | How it is produced |
+|---|---|
+| **Live twin** tab | **Runs in your browser.** The patient's fitted glucose–insulin model and its Kalman filter (a line-for-line port of `src/mech/model.py`) assimilate the CGM readings one by one. Press play or drag the slider to watch the state change; add a meal or a walk at any moment and the twin plays it forward. The browser reproduces the Python reference to within 10⁻⁶ mg/dL on 1,728 forecasts (`node tests/twin_parity.mjs`, run in CI). Across the 120 simulated patients the twin's fitted basal glucose lands a median 1.5 mg/dL from the simulator's true value (r = 0.985). |
+| Forecast, event probabilities, what-if lab | Computed in advance by the served LightGBM (`make web-real`), because the model is trained on licensed open data that is not redistributed. The Streamlit app runs the same model live on a local machine. |
+
+On simulated patients the twin forecasts closely (7.4 / 9.9 / 15.1 mg/dL at +30 / +60 / +120 min)
+because the simulator uses the same equations; on real patients it is 12.7 / 18.1 / 23.2, which is why
+the served forecast is LightGBM and the twin carries the state and sizes interventions.
 
 **Streamlit application** (`make app`) — the full working app in Happiest Health purple, with ten
 pages: Overview, Live twin, Glucose report (AGP, time in range, GMI), What-if lab, Twin state,
@@ -305,11 +347,10 @@ maker and the system never recommends a dose or a drug.
 
 ## 11. Demo video
 
-**[VIDEO LINK — https://drive.google.com/file/d/1YjyfhFT6rcIV6HiqQKcVzY41-ewbUZoW/view?usp=sharing]**
+**▶ [Watch the demo video](https://drive.google.com/file/d/1YjyfhFT6rcIV6HiqQKcVzY41-ewbUZoW/view?usp=sharing)**
 
 A 22-minute walkthrough: the live console, the Streamlit application, and the evidence behind
-both. The full narration script, with per-section timings, is in
-[docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md).
+both.
 
 | | Section | Covers |
 |---|---|---|
@@ -336,7 +377,7 @@ evaluation protocol, AI/ML models, measured results, privacy design and scope.
 
 ## 14. Presentation
 
-**[PRESENTATION LINK — https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing]**
+**▶ [Open the presentation (PDF)](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing)**
 
 The twenty slides are in this repository as images, rendered at 3600 × 2027 from HTML and inline
 SVG so that every figure is regenerated from `reports/metrics/*.json` rather than redrawn by hand.
@@ -370,7 +411,8 @@ Each slide cites the decision and the metrics file it came from in its own foote
 - 45 + 100 real patients: small cohorts, adults, two countries, none in India.
 - The India, wearable-sleep and federated results are **simulations**; they test design, not clinical
   performance.
-- The what-if carbohydrate effect is under-estimated; magnitudes are lower bounds.
+- The ML what-if models under-estimate the carbohydrate effect (about half on matched
+  breakfasts); their magnitudes are shown as lower bounds, beside the twin's.
 - Sensor bias and drift are not detected by the quality score: a +20 mg/dL bias drops 80 %
   interval coverage to about 65 %. This is stated on the Data quality page.
 - Interval coverage is not uniform across subgroups (73 % on T2D rows against 87 % on healthy

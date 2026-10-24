@@ -152,7 +152,7 @@
   <p style="margin-top:10px"><b>Causal features only.</b> No feature may use information from after the prediction instant — enforced in code and covered by tests.</p>
   <p style="margin-top:10px"><b>Patient-grouped splits.</b> Training, inner-validation, calibration and holdout patients never overlap, so no patient appears on both sides of an evaluation.</p>
   <p style="margin-top:10px"><b>Gap and quality handling.</b> Sensor gaps flagged rather than silently interpolated; a per-window quality score travels with the forecast.</p>
-  <p style="margin-top:10px"><b>Fused feature set.</b> Recent CGM history and its slope · time of day · meal macronutrients · heart rate and activity · the static profile.</p>
+  <p style="margin-top:10px"><b>Served feature set.</b> Recent CGM history and its slope · time of day · meal macronutrients · post-meal activity · HbA1c and fasting glucose.</p>
   <p class="mono" style="margin-top:10px">src/data · src/features</p>
 </div>
 
@@ -167,7 +167,7 @@
 </div>
 <div class="bx key" style="left:492px;top:270px;width:218px;height:102px">
   <h4>Hybrid physics + ML</h4>
-  <p>Twin-derived features fed to the forecaster, and a GRU trained with an ODE-consistency loss.</p>
+  <p>Twin state added to LightGBM: 0.55 mg/dL lower error at +60 min. A GRU trained with an ODE-consistency loss.</p>
 </div>
 <div class="bx" style="left:492px;top:382px;width:218px;height:102px">
   <h4>Personalisation</h4>
@@ -252,7 +252,7 @@
   <div class="pn">
     <h3>AI / ML models and training</h3>
     <ul>
-      <li><b>Inputs → target.</b> Causal features per anchor: CGM lags, rolling statistics, least-squares slope and acceleration, time-of-day sin/cos, meal macros, heart rate and activity, static profile. Target is the <i>change</i> from the current value.</li>
+      <li><b>Inputs → target.</b> Causal features per anchor: CGM lags, rolling statistics, least-squares slope and acceleration, time-of-day sin/cos, meal macros, post-meal activity, HbA1c, fasting glucose (heart rate tested, not served). Target is the <i>change</i> from the current value.</li>
       <li><b>Served forecaster.</b> LightGBM, one head per horizon, trained with an absolute-error loss to match the metric it is scored on. 16 candidates, best three averaged, on inner-validation patients only.</li>
       <li><b>Sequence model.</b> PyTorch GRU over the causal window with FiLM static conditioning; also the backbone of the physics-informed hybrid.</li>
       <li><b>Constrained what-if.</b> A second LightGBM with monotonicity constraints: less carbohydrate can never predict a higher peak, by construction.</li>

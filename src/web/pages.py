@@ -47,7 +47,7 @@ def build() -> Path:
     (OUT / "figures").mkdir(parents=True, exist_ok=True)
     (OUT / "index.html").write_text(HEAD + fragment + TAIL, "utf-8")
     (OUT / ".nojekyll").write_text("", "utf-8")
-    for name in ("data.json", "evidence.json"):
+    for name in ("data.json", "evidence.json", "twin.json"):
         src = WEB / name
         if src.exists():
             shutil.copy(src, OUT / name)

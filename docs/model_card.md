@@ -13,7 +13,7 @@ Research prototype for the Happiest Health Digital Twin Challenge 2026. Not a me
 ## Models
 | Component | Description |
 |---|---|
-| Forecaster | LightGBM, one model per horizon, trained on the change from the current glucose. Inputs: CGM history (causal), time of day, meals, heart rate and activity, static EHR fields. |
+| Forecaster | LightGBM, one model per horizon, trained on the change from the current glucose. Inputs (served model): CGM history (causal), time of day, HbA1c and fasting glucose, plus meal macros and post-meal activity from the wearable where the cohort records them (CGMacros). Heart rate, lipids, insulin, demographics and (Shanghai) medications were tested one stream at a time and left out. |
 | Mechanistic twin | Glucose-insulin ODE fitted per patient; EKF state estimate. Only basal glucose (Gb) is stable per patient; other parameters are NOT shown as patient characteristics. |
 | Intervals | Split-conformal and CV+ (80 % target) |
 | What-if | Monotone-in-carbohydrate LightGBM plus the twin, labelled model-based |

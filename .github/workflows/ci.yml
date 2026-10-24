@@ -29,3 +29,5 @@ jobs:
           exit $code
       - name: Smoke (synthetic toy fixture)
         run: make smoke PY=python
+      - name: Live twin parity (browser vs Python)
+        run: node tests/twin_parity.mjs

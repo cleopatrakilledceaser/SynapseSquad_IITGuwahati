@@ -37,6 +37,7 @@ logs/
 app/demo/
 reports/screens/
 web/data.json
+web/twin.json
 web/evidence.json
 web/figures/
 
