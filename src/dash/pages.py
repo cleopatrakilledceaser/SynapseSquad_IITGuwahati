@@ -25,7 +25,7 @@ LIMITS_TEXT = [
     "for the change you enter.",
     "It does not know about insulin or other medication doses, illness, stress or sleep.",
     "Carbohydrate effects are understated by the learned models (about half of the observed rise "
-    "in matched real breakfasts); treat the size of any change as a lower bound.",
+    "in matched real breakfasts); treat the size of any change as a likely under-estimate.",
     "A walk can only be added 15 min after a meal for 30 min, the one setting that was tested.",
     "The twin is a simplified physiological model; its walk effect is learned from the data or "
     "assumed (D-052), and the two can differ.",

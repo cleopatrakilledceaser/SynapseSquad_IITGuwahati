@@ -577,7 +577,7 @@ function accessView() {
 }
 
 /* ---------------------------------------------------------------- shared helpers */
-const WHATIF_NOTE = "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted about half the observed rise; treat sizes as lower bounds.";
+const WHATIF_NOTE = "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted about half the observed average rise; treat sizes as likely under-estimates.";
 const noteOf = () => (S.data.forecast_note ? esc(S.data.forecast_note.trim().replace(/\.$/, "")) : S.data.forecast_source === "dev" ? "a development placeholder model" : "a model trained on open data");
 const NA_EV = `<div class="locked">The evidence file (evidence.json) was not loaded, so this section is empty. It is produced by <span class="num">make web-evidence</span>.</div>`;
 function tbl(t, opts = {}) {
@@ -728,7 +728,7 @@ function whatifView(p) {
   const rows = ["30", "60", "120"].map((h) => { const d = r.now[h] - r.base[h]; return `<tr><td>+${h} min</td><td class="num">${gv(r.base[h])}</td><td class="num">${gv(r.now[h])}</td><td class="delta ${d > 0.5 ? "up" : d < -0.5 ? "down" : ""}">${d >= 0 ? "+" : "−"}${S.unit === "mgdl" ? Math.abs(d).toFixed(0) : (Math.abs(d) / MG).toFixed(1)}</td></tr>`; }).join("");
   const res = `<div class="chartbox" id="wichart"></div><div class="legend"><span><i style="background:var(--fg)"></i>Glucose before the meal</span><span><i style="background:var(--z-high)"></i>What the simulated patient did</span><span><i style="background:var(--faint)"></i>Baseline: logged meal, no walk</span><span><i style="background:var(--accent)"></i>What-if</span></div>` +
     `<div class="scroll" style="margin-top:10px"><table class="t"><thead><tr><th>Horizon</th><th>Baseline (${unitLabel()})</th><th>What-if (${unitLabel()})</th><th>Change</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Replace a logged meal with another one, optionally add a walk, and see how the forecast changes. This tab uses the machine-learning model: trust its direction and ranking; its sizes are lower bounds. For physiologically sized effects, open <b>Live twin</b>. The patient and the meal are simulated.</span></div>` +
+  return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Replace a logged meal with another one, optionally add a walk, and see how the forecast changes. This tab uses the machine-learning model: trust its direction and ranking; its sizes are likely under-estimates. For physiologically sized effects, open <b>Live twin</b>. The patient and the meal are simulated.</span></div>` +
     `<div class="grid2" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start"><div class="card"><h3>Scenario</h3>${ctl}</div><div class="card"><h3>Forecast from the meal</h3>${res}</div></div>` +
     `<div class="callout">${esc(WHATIF_NOTE)}</div>` +
     ([].concat(meta.notes || []).length ? `<div class="card"><h3>About these results</h3><ul class="bullets">${[].concat(meta.notes).map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>` : "") +
@@ -865,7 +865,21 @@ const TWIN = (() => {
     return { y, carbs, slow, act: new Array(n).fill(0) };
   }
   function model(meta) { return { dt: meta.dt_min, nsub: meta.n_sub, b: meta.bounds, qd: meta.qd, r: meta.r_obs, p0: meta.p0 }; }
-  return { filter, rollout, ekfForecast, arrays, model, init, deriv };
+  /* A what-if from a filtered state: eat `carbs` g now (slowing ratio `slow`), and/or walk with the
+     assumed effect (D-056 one-sided kernel, population alpha). Same path the page uses. */
+  function scenario(st, th, M, sc, walk, steps) {
+    const carbs = new Array(steps + 1).fill(0), act = new Array(steps).fill(0), s0 = { ...st, x: st.x.slice() };
+    if (sc.carbs > 0) s0.x[0] += sc.carbs;
+    let thx = th;
+    if (sc.walk) {
+      thx = th.slice(); thx[6] = walk.alpha; thx[12] = 1;
+      const a = Math.round(walk.start_after_meal_min / M.dt), b = a + Math.round(walk.duration_min / M.dt);
+      for (let j = a; j < b && j < steps; j++) act[j] = walk.intensity;
+    }
+    return rollout(s0, thx, steps, M, { slow: sc.carbs > 0 ? sc.slow : null, act, carbs });
+  }
+  const slowOf = (m) => (m.fat_g + 0.5 * m.protein_g + m.fiber_g) / (m.carbs_g + 1);
+  return { filter, rollout, ekfForecast, arrays, model, init, deriv, scenario, slowOf };
 })();
 /* TWIN-CORE-END */
 
@@ -890,21 +904,8 @@ function twinForecast(o, i) {
   const base = TWIN.rollout(st, o.tp.theta, TWIN_H, o.M);
   let alt = null;
   if (TW.carbs > 0 || TW.walk) {
-    const meta = TW.data.meta, w = meta.walk, carbs = new Array(TWIN_H + 1).fill(0), act = new Array(TWIN_H).fill(0);
-    const s0 = { ...st, x: st.x.slice() };
-    let slowR = null;
-    if (TW.carbs > 0) {
-      s0.x[0] += TW.carbs;
-      const pr = TW.preset >= 0 ? S.data.whatif_meta.presets[TW.preset].macros : null;
-      slowR = pr ? (pr.fat_g + 0.5 * pr.protein_g + pr.fiber_g) / (pr.carbs_g + 1) : 0.5;
-    }
-    let th = o.tp.theta;
-    if (TW.walk) {
-      th = th.slice(); th[6] = w.alpha; th[12] = 1;
-      const a = Math.round(w.start_after_meal_min / 5), b = a + Math.round(w.duration_min / 5);
-      for (let j = a; j < b && j < TWIN_H; j++) act[j] = w.intensity;
-    }
-    alt = TWIN.rollout(s0, th, TWIN_H, o.M, { slow: slowR, act, carbs });
+    const pr = TW.preset >= 0 ? S.data.whatif_meta.presets[TW.preset].macros : null;
+    alt = TWIN.scenario(st, o.tp.theta, o.M, { carbs: TW.carbs, slow: pr ? TWIN.slowOf(pr) : 0.5, walk: TW.walk }, TW.data.meta.walk, TWIN_H);
   }
   return { base, alt };
 }
@@ -966,7 +967,7 @@ function twinBody(p) {
     `<details class="card tw-how"><summary><b>How the live twin works, and how far to trust it</b></summary><ul class="bullets">` +
     `<li>Six states: carbohydrate in two gut compartments, glucose, an insulin surrogate, insulin action and activity. Six parameters were fitted to this patient's first ${meta.k_days} days, starting from a population prior built on 45 real CGMacros patients (Part 4).</li>` +
     `<li>Only basal glucose is personalised with confidence. On real patients it is the one parameter reproducible between two 3-day windows (r = 0.62). Across these ${gbi.n} simulated patients the fitted value lands a median <b class="num">${gbi.median_abs_err_mgdl} mg/dL</b> from the truth (r = ${gbi.corr_fit_true}).</li>` +
-    `<li>The browser code reproduces the Python reference to within a millionth of a mg/dL on 1,728 forecasts (tests/twin_parity.mjs). Filtering this patient's 50 hours took <b class="num">${o.ms.toFixed(0)} ms</b> on your device.</li>` +
+    `<li>The browser code reproduces the Python reference to within a millionth of a mg/dL on 1,872 forecasts and on the meal and walk what-ifs, including sensor gaps (tests/twin_parity.mjs, run on every change). Filtering this patient's 50 hours took <b class="num">${o.ms.toFixed(0)} ms</b> on your device.</li>` +
     `<li>On these simulated patients the twin forecast is close (mean error ${acc["30"].twin_mae} / ${acc["60"].twin_mae} / ${acc["120"].twin_mae} mg/dL at +30 / +60 / +120 min) because the simulator is built from the same equations. On real patients it is ${real["30"]} / ${real["60"]} / ${real["120"]} mg/dL, behind the machine-learning forecaster. That is why the forecast on the Now tab comes from LightGBM, and the twin carries the patient state and sizes changes.</li>` +
     `<li>The walk uses an assumed effect from the literature (a 20 % smaller 3-hour rise), not one learned from data. Meal effects come from the fitted model. Decision support only.</li></ul></details>`;
 }

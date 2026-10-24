@@ -8,7 +8,9 @@
    value" and needs local training or calibration (see README 9.4).
 4. **Synthetic data trains nothing.** Adding simulated patients to training never helped, so the
    synthetic cohort is used only for stress tests and demonstration.
-5. **What-if sizes are lower bounds.** A pre-registered dose-response test failed.
+5. **What-if sizes are estimates.** The ML models under-estimate the average carbohydrate effect (a
+   pre-registered dose-response test failed for them; the twin passed). Neither engine predicts
+   individual meals well, and the walk effect is assumed.
 6. **Sensor faults.** Bias and drift are not detected by the data-quality score.
 7. **Hypoglycaemia** evidence is limited.
 8. **Federated learning is simulated** on open-cohort patients grouped into clinics. Formal

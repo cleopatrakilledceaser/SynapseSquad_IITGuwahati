@@ -127,7 +127,7 @@
 <div class="bx" style="left:0;top:46px;width:228px;height:127px">
   <span class="tag t-sim">Static EHR</span>
   <h4>Health record</h4>
-  <p>Age, sex, BMI, HbA1c, fasting glucose, eGFR, diagnoses, medications, genetic markers. Synthea-ready.</p>
+  <p>Real: age, sex, BMI, HbA1c, fasting glucose, lipids, medications. Simulated cohort adds diagnoses, eGFR, genetic markers.</p>
 </div>
 <div class="bx key" style="left:0;top:187px;width:228px;height:127px">
   <span class="tag t-real">Real · open</span>
@@ -163,7 +163,7 @@
 </div>
 <div class="bx" style="left:492px;top:158px;width:218px;height:102px">
   <h4>Mechanistic twin</h4>
-  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter state. Also supplies the features used by the hybrids.</p>
+  <p>A per-patient glucose–insulin ODE. RK4 integration, extended Kalman filter state. Runs live in the console; sizes what-if changes.</p>
 </div>
 <div class="bx key" style="left:492px;top:270px;width:218px;height:102px">
   <h4>Hybrid physics + ML</h4>
@@ -181,7 +181,7 @@
 <!-- C4 calibrate -->
 <div class="bx key" style="left:744px;top:46px;width:196px;height:127px">
   <h4>80% intervals</h4>
-  <p>Split-conformal and CV+. Served coverage 80.5% in both cohorts at +60 min, per subgroup as well as pooled.</p>
+  <p>Split-conformal and CV+. Served: 80.5% in each cohort at +60 min; 73.8% for CGMacros T2D, reported.</p>
 </div>
 <div class="bx key" style="left:744px;top:187px;width:196px;height:127px">
   <h4>Event probabilities</h4>
@@ -220,7 +220,7 @@
   <p style="margin-top:7px">A single-page clinician console. Patient list with triage ordering, then per patient: forecast,
      what-if lab, glucose report (AGP, time in range, GMI per the 2019 consensus), health record, sleep and activity
      context, visit summary, and an evidence section carrying every cohort-level result.</p>
-  <p style="margin-top:9px">Role-gated access — clinician and care coordinator see different fields — with a session
+  <p style="margin-top:9px">Role views — clinician and care coordinator see different fields — with a session
      access log. Dark and light themes, mg/dL ⇄ mmol/L, readable at tablet width. The demo runs on 120
      <b style="color:#fff">simulated</b> patients with a three-day local calibration.</p>
 </div>
@@ -241,7 +241,7 @@
   <div class="pn hi">
     <h3>Method &amp; evaluation</h3>
     <ul>
-      <li><b>Pre-registered.</b> Protocol, candidates and decision rule written to <code>docs/DECISIONS.md</code> before the run. 72 of the 74 entries.</li>
+      <li><b>Pre-registered.</b> Protocol, candidates and decision rule written to <code>docs/DECISIONS.md</code> before the run: 71 of the 75 entries.</li>
       <li><b>Patient-grouped CV</b> with repeats, an inner validation split for every choice, and a reserved holdout the runner refuses to reuse.</li>
       <li><b>Baselines it must beat:</b> persistence, per-patient autoregression, ridge, a GRU.</li>
       <li><b>Paired patient bootstrap</b> intervals — over patients, never over time windows.</li>
@@ -261,7 +261,7 @@
   </div>
 
   <div class="pn">
-    <h3>Measured results — served model</h3>
+    <h3>Served model · MAE CGMacros, AUROC Shanghai</h3>
     <table>
       <tr><th>Metric</th><th style="text-align:right">Value</th></tr>
       <tr><td>MAE +30 min</td><td class="n">10.88</td></tr>
@@ -280,7 +280,7 @@
       <li>Anonymised open or synthetic data only; no real patient record is in the repository.</li>
       <li><b>Federated:</b> FedAvg matches pooled training (difference 0.09–0.12 mg/dL, intervals include zero) and beats a lone small clinic by ≈2 mg/dL.</li>
       <li>Data minimisation by design: only model updates are exchanged. No formal differential-privacy guarantee is claimed at this clinic count.</li>
-      <li>Role-gated access with a session log; mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
+      <li>Role views with a session log (display, not authentication); mapped to India's <b>DPDP Act</b> in <code>docs/limitations.md</code>.</li>
     </ul>
   </div>
 

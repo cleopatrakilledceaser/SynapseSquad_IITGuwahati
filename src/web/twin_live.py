@@ -29,12 +29,23 @@ import pandas as pd
 
 from src.mech.fit import Prior, fit_patient
 from src.mech.inputs import Record, meal_arrays
-from src.mech.model import FIT_PARAMS, STATES, bounds_array, ekf_forecast, theta_from_log
+from src.mech.model import (
+    FIT_PARAMS,
+    IG,
+    STATES,
+    bounds_array,
+    clip_state,
+    ekf_forecast,
+    initial_state,
+    step_jacobian,
+    theta_from_log,
+)
 from src.utils.config import PROJECT_ROOT, load_config
 from src.web.build_data import simulate, web_id
 from src.whatif.twin import calibrate_alpha
 
 OUT = PROJECT_ROOT / "web" / "twin.json"
+EXAMPLE = PROJECT_ROOT / "reports" / "metrics" / "twin_example_s151.json"
 PARITY = PROJECT_ROOT / "tests" / "fixtures" / "twin_parity.json"
 DATA = PROJECT_ROOT / "web" / "data.json"
 STEP = 5
@@ -74,6 +85,58 @@ def browser_arrays(n: int, meals: list[list[float]], slow0: float) -> tuple[np.n
             carbs[i], curr = at[i][1], at[i][2]
         slow[i] = curr
     return carbs, slow
+
+
+def filter_state(th, y, carbs, slow, act, i_end, qd, r, p0, dt, nsub, bnd):  # noqa: ANN001, ANN201
+    """EKF state (x, P) after the update at ``i_end``: the loop of model.ekf_forecast, stopped there."""
+    n = len(y)
+    first = 0
+    while first < n and np.isnan(y[first]):
+        first += 1
+    x = initial_state(y[first] if first < n else th[0], th)
+    pm = np.diag(p0)
+    for i in range(first, i_end + 1):
+        if i > first:
+            x, f = step_jacobian(x, th, slow[i - 1], act[i - 1], dt, nsub, bnd)
+            pm = f @ pm @ f.T + qd
+        x[0] += carbs[i]
+        if not np.isnan(y[i]):
+            s_ = pm[IG, IG] + r
+            kg = pm[:, IG] / s_
+            x = x + kg * (y[i] - x[IG])
+            pm = pm - np.outer(kg, kg) * s_
+            pm = 0.5 * (pm + pm.T)
+            clip_state(x, bnd)
+    return x, pm
+
+
+def scenario_ref(
+    x, pm, th, slow_held, sc, walk, steps, qd, r, dt, nsub, bnd
+):  # noqa: ANN001, ANN201
+    """Python reference for the browser's TWIN.scenario (mean glucose per 5-min step, 0..steps)."""
+    x = x.copy()
+    pm = pm.copy()
+    if sc["carbs"] > 0:
+        x[0] += sc["carbs"]
+    thx = th
+    act = np.zeros(steps)
+    if sc["walk"]:
+        thx = np.append(th.copy(), 1.0)
+        thx[6] = walk["alpha"]
+        a0 = int(round(walk["start_after_meal_min"] / dt))
+        act[a0 : a0 + int(round(walk["duration_min"] / dt))] = walk["intensity"]
+    sl = sc["slow"] if sc["carbs"] > 0 else slow_held
+    mean = [x[IG]]
+    for j in range(1, steps + 1):
+        x, f = step_jacobian(x, thx, sl, act[j - 1], dt, nsub, bnd)
+        pm = f @ pm @ f.T + qd
+        mean.append(x[IG])
+    return np.array(mean)
+
+
+def slow_of(m: dict) -> float:
+    """Slowing ratio of a preset's macros (same weight 0.5 on protein as Part 4)."""
+    return (m["fat_g"] + 0.5 * m["protein_g"] + m["fiber_g"]) / (m["carbs_g"] + 1.0)
 
 
 def r1(x: np.ndarray, nd: int = 1) -> list[float]:
@@ -190,8 +253,66 @@ def build() -> dict[str, Any]:
     }
     OUT.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
     PARITY.parent.mkdir(parents=True, exist_ok=True)
-    cases = [{**pr, **{k: pt[k] for k in ("y", "meals", "slow0", "theta")}}
-             for pr, pt in zip(parity[:12], pats[:12], strict=True)]  # fmt: skip
+    # what-if scenarios: the browser's meal / walk path against a Python reference
+    presets = web["whatif_meta"]["presets"]
+    walk = out["meta"]["walk"]
+    qd = np.diag(qd_diag)
+
+    def run_scenarios(pt: dict, i: int, scs: list[dict]) -> list[dict]:
+        n = len(pt["y"])
+        carbs_js, slow_js = browser_arrays(n, pt["meals"], pt["slow0"])
+        y_js = np.array([np.nan if v is None else v for v in pt["y"]], dtype=float)
+        th_js = np.array(pt["theta"])
+        x, pm = filter_state(th_js, y_js, carbs_js, slow_js, np.zeros(n), i, qd, R_OBS, p0,
+                             dt, nsub, bnd)  # fmt: skip
+        res = []
+        for sc in scs:
+            m = scenario_ref(x, pm, th_js, slow_js[i], sc, walk, 24, qd, R_OBS, dt, nsub, bnd)
+            res.append({**sc, "mean": m.tolist(), "peak": float(m.max())})
+        return res
+
+    def sc_of(k: int | None, walk_on: bool) -> dict:
+        if k is None:
+            return {"label": "no change" + (" + walk" if walk_on else ""), "carbs": 0.0,
+                    "slow": 0.5, "walk": walk_on}  # fmt: skip
+        m = presets[k]["macros"]
+        return {"label": presets[k]["label"] + (" + walk" if walk_on else ""),
+                "carbs": float(round(m["carbs_g"])), "slow": slow_of(m), "walk": walk_on}  # fmt: skip
+
+    cases = []
+    for pr, pt in zip(parity[:12], pats[:12], strict=True):
+        i = BEFORE - 7 * (len(cases) % 5)  # a few different moments
+        scs = [sc_of(3, False), sc_of(6, True), sc_of(None, True), sc_of(len(cases) % 16, False)]
+        cases.append({**pr, **{k: pt[k] for k in ("y", "meals", "slow0", "theta")},
+                      "scenario_i": int(i), "scenarios": run_scenarios(pt, i, scs)})  # fmt: skip
+    # gaps: the same patient with every 7th reading removed (sensor dropouts)
+    g = dict(pats[0])
+    g["y"] = [None if j % 7 == 3 else v for j, v in enumerate(g["y"])]
+    y_g = np.array([np.nan if v is None else v for v in g["y"]], dtype=float)
+    cg, sg = browser_arrays(len(y_g), g["meals"], g["slow0"])
+    anchors = np.arange(BEFORE - 287, BEFORE + 1, 6)
+    mg, vg = ekf_forecast(np.array(g["theta"]), y_g, cg, sg, np.zeros(len(y_g)), anchors, HSTEPS,
+                          qd, R_OBS, p0, dt, nsub, bnd)  # fmt: skip
+    cases.append({"id": g["id"] + "-gaps", "anchors": anchors.tolist(), "mean": mg.tolist(),
+                  "var": vg.tolist(), **{k: g[k] for k in ("y", "meals", "slow0", "theta")},
+                  "scenario_i": BEFORE, "scenarios": run_scenarios(g, BEFORE, [sc_of(5, True)])})  # fmt: skip
+
+    # the README example: S-151, 20 minutes before "now"
+    names = {q["label"]: k for k, q in enumerate(presets)}
+    s151 = next(pt for pt in pats if pt["id"] == "S-151")
+    ex_sc = [sc_of(names["Vegetarian thali"], False), sc_of(names["Vegetarian thali"], True),
+             sc_of(names["Upma"], False), sc_of(names["Upma"], True)]  # fmt: skip
+    ex = run_scenarios(s151, BEFORE - 4, ex_sc)
+    cases.append({"id": "S-151", "scenario_i": BEFORE - 4, "scenarios": ex,
+                  **{k: s151[k] for k in ("y", "meals", "slow0", "theta")}})  # fmt: skip
+    EXAMPLE.write_text(json.dumps({
+        "SYNTHETIC": True,
+        "patient": "S-151", "minutes_before_now": 20,
+        "glucose_now_mgdl": round(float(s151["y"][BEFORE - 4]), 1),
+        "note": "Simulated patient. Twin rollout from the filtered state; walk effect ASSUMED (D-052).",
+        "scenarios": [{"plan": r["label"], "carbs_g": r["carbs"],
+                       "peak_mgdl": round(r["peak"], 1)} for r in ex],
+    }, indent=1), encoding="utf-8")  # fmt: skip
     PARITY.write_text(json.dumps({"meta": out["meta"], "cases": cases}), encoding="utf-8")
     print(f"wrote {OUT} ({OUT.stat().st_size / 1e6:.2f} MB); Gb median |err| "
           f"{out['meta']['gb_identifiability']}; accuracy {acc}")  # fmt: skip

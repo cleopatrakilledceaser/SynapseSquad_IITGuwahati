@@ -1695,3 +1695,12 @@ the same equations, so this is optimistic; on real patients the twin is 12.7 / 1
 Also corrected in this change: README §7, the model card and the architecture diagram had listed heart
 rate and activity among the served model's inputs. The served model (configs/hybrid.yaml, A0) uses
 CGM, time of day, HbA1c and fasting glucose, and on CGMacros meal macros and post-meal activity.
+
+Addendum (after three external reviews, same day): the parity test now also covers the what-if path the
+page uses (`TWIN.scenario`: a meal now, the assumed walk with the one-sided kernel), a patient with
+sensor gaps, and the README's S-151 example, against Python references built from `src/mech/model.py`
+(`filter_state`, `scenario_ref` in `src/web/twin_live.py`): 1,872 forecasts and 1,325 what-if steps,
+max difference 5e-7 mg/dL. A deliberate 1 % change to the walk gain makes the test fail. The S-151
+numbers are written to `reports/metrics/twin_example_s151.json`. README wording was corrected where
+reviewers found claims stronger than the evidence (cohort and model labels on every headline row,
+the low-glucose alert result, subgroup coverage, per-pair what-if agreement, "lower bound").

@@ -1,0 +1,29 @@
+{
+ "SYNTHETIC": true,
+ "patient": "S-151",
+ "minutes_before_now": 20,
+ "glucose_now_mgdl": 152.2,
+ "note": "Simulated patient. Twin rollout from the filtered state; walk effect ASSUMED (D-052).",
+ "scenarios": [
+  {
+   "plan": "Vegetarian thali",
+   "carbs_g": 95.0,
+   "peak_mgdl": 257.5
+  },
+  {
+   "plan": "Vegetarian thali + walk",
+   "carbs_g": 95.0,
+   "peak_mgdl": 220.3
+  },
+  {
+   "plan": "Upma",
+   "carbs_g": 47.0,
+   "peak_mgdl": 197.9
+  },
+  {
+   "plan": "Upma + walk",
+   "carbs_g": 47.0,
+   "peak_mgdl": 172.4
+  }
+ ]
+}

@@ -27,7 +27,7 @@ DISCLAIMER = (
 )
 WHATIF_NOTE = (
     "Model-based estimate, not a causal guarantee. In matched real breakfasts the models predicted "
-    "about half the observed rise; treat sizes as lower bounds."
+    "about half the observed average rise; treat sizes as likely under-estimates."
 )
 CONF_BARS = {"uncertain": 1, "moderate": 2, "high": 3}
 
