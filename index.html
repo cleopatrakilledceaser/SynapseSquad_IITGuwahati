@@ -163,6 +163,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tw-res div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; background: var(--bg); }
 .tw-res b { color: var(--z-high); font-weight: 500; white-space: nowrap; }
 .tw-how summary { cursor: pointer; }
+.tw-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.tw-row input { flex: 1; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; font: inherit; }
+.tw-feed .btn { white-space: nowrap; }
+.tw-feed > .btn { width: 100%; }
+.tw-msg { margin: 8px 0 0; font-size: 12.5px; color: var(--ok); }
+.tw-msg.err { color: var(--crit); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font-size: inherit; }
 .tw-how ul { margin-top: 10px; font-size: 13px; color: var(--muted); }
 .bar { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
 .bar i { display: block; height: 100%; border-radius: 99px; }
@@ -899,7 +906,7 @@ const TWIN = (() => {
 })();
 /* TWIN-CORE-END */
 
-const TW = { data: null, loading: false, cache: {}, cur: null, play: null, carbs: 0, preset: -1, walk: false, seen: false };
+const TW = { data: null, loading: false, cache: {}, cur: null, play: null, carbs: 0, preset: -1, walk: false, seen: false, edits: {}, msg: "" };
 function twinLoad() {
   if (TW.data || TW.loading) return; TW.loading = true;
   fetch("twin.json").then((r) => (r.ok ? r.json() : null)).then((d) => { TW.data = d; TW.loading = false; if (S.tab === "twin") mainView(); })
@@ -908,11 +915,48 @@ function twinLoad() {
 function twinOf(p) {
   if (!TW.data) return null;
   if (TW.cache[p.id]) return TW.cache[p.id];
-  const tp = TW.data.patients.find((q) => q.id === p.id); if (!tp) return null;
+  const tp0 = TW.data.patients.find((q) => q.id === p.id); if (!tp0) return null;
+  const tp = twinEdited(tp0, TW.edits[p.id]);
   const M = TWIN.model(TW.data.meta), A = TWIN.arrays(tp);
   const t0 = performance.now(), f = TWIN.filter(tp.theta, A.y, A.carbs, A.slow, A.act, M);
   const o = { tp, M, A, f, ms: performance.now() - t0, nowI: TW.data.meta.before };
   TW.cache[p.id] = o; return o;
+}
+/* Readings and meals the viewer feeds in (kept in memory only): readings replace the value at that
+   5-minute step; meals add carbohydrate there (merged with any logged meal at the same step). */
+function twinEdited(tp, ed) {
+  if (!ed || (!Object.keys(ed.y).length && !ed.meals.length)) return tp;
+  const y = tp.y.slice();
+  for (const [i, v] of Object.entries(ed.y)) y[+i] = v;
+  const byI = new Map(tp.meals.map((m) => [m[0], m.slice()]));
+  for (const [i, c, sl] of ed.meals) {
+    const m = byI.get(i);
+    if (m) { m[1] += c; m[2] = sl; } else byI.set(i, [i, c, sl]);
+  }
+  return { ...tp, y, meals: [...byI.values()].sort((a, b) => a[0] - b[0]) };
+}
+function twinFeed(kind) {
+  const p = cur(), o = twinOf(p); if (!o) return;
+  const meta = TW.data.meta, i = TW.cur + 1, last = meta.before + meta.after;
+  if (i > last) { TW.err = true; TW.msg = "The demo window ends here; move the slider back to add data."; mainView(); return; }
+  TW.err = false;
+  const ed = TW.edits[p.id] || (TW.edits[p.id] = { y: {}, meals: [] });
+  if (kind === "reading") {
+    const box = $("#twval"), raw = box ? +box.value : NaN, v = S.unit === "mgdl" ? raw : raw * MG;
+    if (!(v >= 40 && v <= 400)) { TW.err = true; TW.msg = `Enter a reading between ${gv(40)} and ${gv(400)} ${unitLabel()}.`; mainView(); return; }
+    ed.y[i] = Math.round(v * 10) / 10;
+    TW.msg = `Reading ${gv(v)} ${unitLabel()} sent at ${clock(p, (i - o.nowI) * 5)}.`;
+    logAction(`Fed a reading to the live twin for ${p.id}`);
+  } else {
+    if (!(TW.carbs > 0)) { TW.err = true; TW.msg = "Choose a meal or a carbohydrate amount above first."; mainView(); return; }
+    const pr = TW.preset >= 0 ? S.data.whatif_meta.presets[TW.preset].macros : null;
+    ed.meals.push([i, TW.carbs, pr ? TWIN.slowOf(pr) : 0.5]);
+    TW.msg = `${TW.carbs} g meal logged at ${clock(p, (i - o.nowI) * 5)}.`;
+    TW.carbs = 0; TW.preset = -1; TW.walk = false;
+    logAction(`Logged a meal on the live twin for ${p.id}`);
+  }
+  if (i > o.nowI) TW.seen = true;
+  delete TW.cache[p.id]; TW.cur = i; mainView();
 }
 const TWIN_H = 24; // 2 h of 5-min steps
 function twinForecast(o, i) {
@@ -952,8 +996,13 @@ function twinChart(o, i, fc, W) {
   s += unseen.map((q) => `<circle cx="${x(q[0]).toFixed(1)}" cy="${yy(q[1]).toFixed(1)}" r="2" fill="var(--faint)"/>`).join("");
   s += shown.map((q) => `<circle cx="${x(q[0]).toFixed(1)}" cy="${yy(q[1]).toFixed(1)}" r="2.1" fill="var(--fg)" fill-opacity=".75"/>`).join("");
   s += `<path d="${P(est)}" fill="none" stroke="var(--z-in)" stroke-width="2.2" stroke-linejoin="round"/>`;
+  const mine = (TW.edits[cur().id] || { y: {} }).y;
+  for (const k of Object.keys(mine)) { const t = (+k - i) * 5; if (t < t0 || t > t1) continue;
+    s += `<circle cx="${x(t).toFixed(1)}" cy="${yy(mine[k]).toFixed(1)}" r="5" fill="none" stroke="var(--z-high)" stroke-width="2"/>`; }
+  let lastX = -1e9, lift = 0;
   for (const ml of o.tp.meals) { const t = (ml[0] - i) * 5; if (t < t0 || t > t1) continue;
-    s += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - m.b - 14}" y2="${H - m.b}" stroke="var(--accent)" stroke-width="2"/><text x="${x(t)}" y="${H - m.b - 18}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${Math.round(ml[1])} g</text>`; }
+    lift = x(t) - lastX < 34 ? lift + 12 : 0; lastX = x(t);
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - m.b - 14}" y2="${H - m.b}" stroke="var(--accent)" stroke-width="2"/><text x="${x(t)}" y="${H - m.b - 18 - lift}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${Math.round(ml[1])} g</text>`; }
   s += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--fg)" stroke-opacity=".55"/>` +
        `<text x="${x(0) - 6}" y="${m.t - 10}" text-anchor="end" font-size="12" fill="var(--fg)" font-weight="600">Twin time ${clock(cur(), -nowOff)}</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Twin estimate, readings and two-hour twin forecast">${s}</svg>`;
@@ -976,16 +1025,27 @@ function twinBody(p) {
     `<label class="chk tw-seen"><input type="checkbox" id="twseen" ${TW.seen ? "checked" : ""}> Continue past now (simulated readings)</label></div>` +
     `<input class="tw-slider" id="twslider" type="range" min="${lo}" max="${hi}" step="1" value="${TW.cur}" data-tw="cur" aria-label="Twin time">` +
     `<div class="chartbox" id="twchart"></div>` +
-    `<div class="legend"><span><i style="background:var(--fg)"></i>Readings the twin has seen</span><span><i style="background:var(--faint)"></i>Readings it has not seen yet</span><span><i style="background:var(--z-in)"></i>Twin's running estimate</span><span><i style="background:var(--accent)"></i>Twin forecast, 80% range</span><span><i style="background:var(--z-high)"></i>With your change</span></div>` +
+    `<div class="legend"><span><i style="background:var(--fg)"></i>Readings the twin has seen</span><span><i style="background:var(--faint)"></i>Readings it has not seen yet</span><span><i style="background:var(--z-in)"></i>Twin's running estimate</span><span><i style="background:var(--accent)"></i>Twin forecast, 80% range</span><span><i style="background:var(--z-high)"></i>With your change</span><span><i style="background:transparent;border:2px solid var(--z-high);border-radius:50%"></i>Reading you sent</span></div>` +
     `<p class="tw-surp" id="twsurp"></p></div>` +
     `<div style="display:grid;gap:14px;align-content:start"><div class="card" id="twstate"></div>` +
-    `<div class="card"><h3 id="twwhen">Try a change</h3>${wi}</div></div></div>` +
+    `<div class="card"><h3 id="twwhen">Try a change</h3>${wi}</div>` + twinFeedCard(p) + `</div></div>` +
     `<details class="card tw-how"><summary><b>How the live twin works, and how far to trust it</b></summary><ul class="bullets">` +
     `<li>Six states: carbohydrate in two gut compartments, glucose, an insulin surrogate, insulin action and activity. Six parameters were fitted to this patient's first ${meta.k_days} days, starting from a population prior built on 45 real CGMacros patients (Part 4).</li>` +
     `<li>Only basal glucose is personalised with confidence. On real patients it is the one parameter reproducible between two 3-day windows (r = 0.62). Across these ${gbi.n} simulated patients the fitted value lands a median <b class="num">${gbi.median_abs_err_mgdl} mg/dL</b> from the truth (r = ${gbi.corr_fit_true}).</li>` +
     `<li>The browser code reproduces the Python reference to within a millionth of a mg/dL on 1,872 forecasts and on the meal and walk what-ifs, including sensor gaps (tests/twin_parity.mjs, run on every change). Filtering this patient's 50 hours took <b class="num">${o.ms.toFixed(0)} ms</b> on your device.</li>` +
     `<li>On these simulated patients the twin forecast is close (mean error ${acc["30"].twin_mae} / ${acc["60"].twin_mae} / ${acc["120"].twin_mae} mg/dL at +30 / +60 / +120 min) because the simulator is built from the same equations. On real patients it is ${real["30"]} / ${real["60"]} / ${real["120"]} mg/dL, behind the machine-learning forecaster. That is why the forecast on the Now tab comes from LightGBM, and the twin carries the patient state and sizes changes.</li>` +
     `<li>The walk uses an assumed effect from the literature (a 20 % smaller 3-hour rise), not one learned from data. Meal effects come from the fitted model. Decision support only.</li></ul></details>`;
+}
+function twinFeedCard(p) {
+  const ed = TW.edits[p.id], nR = ed ? Object.keys(ed.y).length : 0, nM = ed ? ed.meals.length : 0;
+  const o = twinOf(p), next = o ? clock(p, (TW.cur + 1 - o.nowI) * 5) : "";
+  return `<div class="card tw-feed"><h3>Feed the twin new data</h3><p class="sub">Send the next CGM reading or log a meal; the twin takes it in and re-estimates its state. In your browser only, nothing is saved.</p>` +
+    `<div class="tw-row"><input id="twval" type="number" inputmode="decimal" min="${gv(40)}" max="${gv(400)}" step="${S.unit === "mgdl" ? 1 : 0.1}" placeholder="${S.unit === "mgdl" ? "e.g. 190" : "e.g. 10.5"}" aria-label="New reading in ${unitLabel()}">` +
+    `<button class="btn" id="twadd">Send reading at ${next}</button></div>` +
+    `<button class="btn ghost" id="twmeal" ${TW.carbs > 0 ? "" : "disabled"}>${TW.carbs > 0 ? `Log ${TW.carbs} g as eaten at ${next}` : "Choose a meal above to log it"}</button>` +
+    (TW.msg ? `<p class="tw-msg${TW.err ? " err" : ""}">${esc(TW.msg)}</p>` : "") +
+    (nR || nM ? `<p class="sub" style="margin:8px 0 0">Your additions: ${nR} reading${nR === 1 ? "" : "s"}, ${nM} meal${nM === 1 ? "" : "s"}. <button class="linkbtn" id="twclear">Clear them</button></p>` : "") +
+    `</div>`;
 }
 function twinPaint() {
   const p = cur(), o = twinOf(p), box = $("#twchart"); if (!o || !box) return;
@@ -1007,6 +1067,9 @@ function twinPaint() {
     `<div class="tw-gb"><span>Personal basal glucose</span><b class="num">${gv(o.tp.gb_fit)}</b><small>fitted from the first ${TW.data.meta.k_days} days &middot; the simulator's true value is <b class="num">${gv(o.tp.gb_true)}</b> (median gap over all ${TW.data.meta.gb_identifiability.n} patients: ${TW.data.meta.gb_identifiability.median_abs_err_mgdl} mg/dL)</small></div>`;
   $("#twwhen").textContent = `Try a change at ${when}`;
   const c = $("#twcarbs"); if (c) c.textContent = `${TW.carbs} g`;
+  const nx = clock(p, (i + 1 - o.nowI) * 5), ba = $("#twadd"), bm = $("#twmeal");
+  if (ba) ba.textContent = `Send reading at ${nx}`;
+  if (bm) { bm.disabled = !(TW.carbs > 0); bm.textContent = TW.carbs > 0 ? `Log ${TW.carbs} g as eaten at ${nx}` : "Choose a meal above to log it"; }
   const basePk = Math.max(...fc.base.mean), f60 = fc.base.mean[12];
   $("#twres").innerHTML = fc.alt
     ? `<div class="tw-res"><div><span>Peak in the next 2 h</span><b class="num">${gv(basePk)} &rarr; ${gv(Math.max(...fc.alt.mean))}</b></div><div><span>At +60 min</span><b class="num">${gv(f60)} &rarr; ${gv(fc.alt.mean[12])}</b></div><div><span>At +120 min</span><b class="num">${gv(fc.base.mean[24])} &rarr; ${gv(fc.alt.mean[24])}</b></div></div>`
@@ -1081,7 +1144,7 @@ function shell() {
 }
 
 function select(id, why) {
-  twinStop(); TW.cur = null; TW.carbs = 0; TW.preset = -1; TW.walk = false;
+  twinStop(); TW.cur = null; TW.carbs = 0; TW.preset = -1; TW.walk = false; TW.msg = "";
   S.pid = id; S.replay = false; S.view = "patients"; S.wi.win = 0; S.wi.walk = false; S.wi.src = "logged";
   document.querySelectorAll("[data-view]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.view === "patients"));
   const wins = (cur().whatif || { windows: [] }).windows; if (wins.length) S.wi.carbs = Math.round(wins[0].base_macros.carbs / 5) * 5;
@@ -1102,6 +1165,9 @@ function bind() {
     else if (b.dataset.etab) { S.etab = b.dataset.etab; evidenceView(); }
     else if (b.dataset.ph) { S.ph = b.dataset.ph; evidenceView(); }
     else if (b.dataset.role) { S.role = b.dataset.role; logAction(`Switched role to ${b.textContent}`); mainView(); }
+    else if (b.id === "twadd") twinFeed("reading");
+    else if (b.id === "twmeal") twinFeed("meal");
+    else if (b.id === "twclear") { delete TW.edits[S.pid]; delete TW.cache[S.pid]; TW.msg = "Your additions were cleared."; mainView(); }
     else if (b.id === "twplay") { if (TW.play) twinStop(); else { const o = twinOf(cur()); if (o && TW.cur >= o.nowI + (TW.seen ? TW.data.meta.after : 0)) TW.cur = o.nowI - 287; TW.play = setInterval(twinTick, 140); b.textContent = "Pause"; logAction(`Played the live twin for ${S.pid}`); } }
     else if (b.dataset.twstep) { twinStop(); const o = twinOf(cur()); if (!o) return; const hi = o.nowI + (TW.seen ? TW.data.meta.after : 0), lo = o.nowI - 287;
       TW.cur = b.dataset.twstep === "now" ? o.nowI : Math.min(hi, Math.max(lo, TW.cur + +b.dataset.twstep)); twinPaint(); }
