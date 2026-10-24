@@ -26,7 +26,8 @@ See [data_card.md](data_card.md).
 ## Performance
 **Served model** (tuned LightGBM, held-out test patients, D-072a), MAE mg/dL at +30 / +60 / +120:
 CGMacros 10.88 / 15.70 / 19.96; Shanghai T2DM 8.73 / 15.51 / 22.79. CV+ 80 % coverage at +60:
-80.5 % in each cohort overall; 73.8 % for CGMacros' type 2 patients. Event AUROC at +60 (README §9.2):
+80.5 % in each cohort overall; 73.8 % for CGMacros' type 2 patients with pooled calibration,
+79.8 % with group-wise calibration (D-076). Event AUROC at +60 (README §9.2):
 0.83 (above 180) and 0.77 (above 140) on CGMacros; 0.89 / 0.85 / 0.91 (above 180 / above 140 /
 below 70) on Shanghai T2DM.
 
@@ -40,7 +41,8 @@ meals 11.6 / 16.8 / 21.2.
   Shanghai T2DM). Retrain or calibrate on local patients.
 - **Sensor bias and drift** lower interval coverage (80 % to about 65 % for +20 mg/dL bias). The
   quality score does not detect this.
-- **Subgroups.** Coverage is lower for T2D rows (73 %) than healthy rows (87 %).
+- **Subgroups.** With pooled calibration, coverage is lower for T2D rows (73.8 %) than healthy rows
+  (85.7 %); group-wise calibration (D-076) brings both to about 80 %, with wider type 2 ranges.
 - **Hypoglycaemia.** Few events (8 patients on CGMacros); a simple alert beat the model on Shanghai.
 - **What-if.** The ML models under-estimate the average carbohydrate effect by about half; treat their
   sizes as likely under-estimates. Neither engine predicts individual meals well (per-pair r ≤ 0.21).

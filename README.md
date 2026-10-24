@@ -58,7 +58,7 @@ model; full tables and 95 % confidence intervals are in §9.
 |---|---|
 | **A two-hour forecast** | Shanghai T2DM (100 real type 2 patients), +120 min, development CGM LightGBM, cross-validated: **RMSE 34.1 mg/dL** against 43.9 for repeating the last value (22 % lower), **97.0 %** in Clarke zones A+B ([baselines_shanghai_t2dm.json](reports/metrics/baselines_shanghai_t2dm.json)) |
 | **An accurate next hour** | Served model, held-out test patients, +60 min: mean error **15.70 mg/dL** (CGMacros) and **15.51 mg/dL** (Shanghai T2DM) ([D-072a](docs/DECISIONS.md)) |
-| **A range with its coverage measured** | Served model, +60 min: the 80 % range contains the reading **80.5 %** of the time in each cohort overall. Within groups: 79.5–83.7 % across HbA1c bands in Shanghai (all type 2), but **73.8 %** for CGMacros' 14 type 2 patients — calibrating each group separately is the next fix |
+| **A range that holds in every group** | Served model, +60 min: the 80 % range contains the reading **80.5 %** of the time in each cohort. Pooled calibration left CGMacros' 14 type 2 patients at 73.8 %; calibrating each group on its own residuals (pre-registered, [D-076](docs/DECISIONS.md)) brings them to **79.8 %** [76.2, 83.7] (and 79.5 % at +120 min), with every group in both cohorts at 79.7–80.6 % at +60 and overall coverage unchanged. The cost: wider ranges for type 2 patients (48 → 59 mg/dL at +60), narrower for healthy ones ([mondrian.json](reports/metrics/mondrian.json)) |
 | **Warning before a high** | Shanghai T2DM: AUROC **0.82** two hours ahead. At about one unconfirmed alert per patient per day, the model catches **83 %** of episodes against 59 % for a threshold alert, with a median warning of 15 minutes (CGMacros: 49 % against 42 %) |
 | **Warning before a low** | Shanghai T2DM: AUROC **0.91** one hour ahead for ranking risk, but at the same alert budget a plain threshold alert catches more lows (84 % against 62 %), so it should stay in place. CGMacros has too few lows to judge (8 patients) |
 | **The size of a meal's effect** | CGMacros, real breakfasts eaten twice by the same person, +60 min: the twin's average predicted difference is **27.5 mg/dL against 33.5 observed** (44 pairs); the ML models average 18.6 against 35.3 (87 pairs, a wider set). Per pair the agreement is weak for both (r = 0.21 twin, 0.14–0.16 ML): the twin gets the average size right, not each meal |
@@ -251,6 +251,13 @@ Clarke error-grid figures are from the development fusion models; the two-hour S
 - **Intervals hold their promise:** the served model's 80 % bands cover 80.5 % in both cohorts at
   +60 min, against an 80 % target, and stay at 80.3 % or above at every horizon (D-072a). Coverage
   is reported per subgroup as well as pooled, and both dashboards show it.
+- **And within every group (D-076).** Pooled calibration under-covered CGMacros' type 2 patients
+  (73.8 % at +60, 68.9 % at +120) because two thirds of the residual pool is non-diabetic.
+  Calibrating each group on its own training patients' residuals — no refitting, same forecasts —
+  gives 79.3 / 79.8 / 79.5 % for type 2 at +30 / +60 / +120 and 94.8–95.1 % at the 95 % level, with
+  overall coverage 79.7–80.1 % (CGMacros) and 79.9–80.0 % (Shanghai). The pre-registered criterion
+  was met. Type 2 ranges widen (+60: 48.3 → 59.3 mg/dL), healthy ranges narrow (47.7 → 40.4). The
+  3-patient holdout (design B) moves the same way (71.1 → 75.7 % at +60).
 - **Robustness is tested, not assumed:** sensor faults are injected into the test data and the
   causal features recomputed, and a data-quality score (completeness, recency, plausibility, rate
   of change) travels with every forecast. Section 15 records where this is weakest.
@@ -423,9 +430,9 @@ both.
 > **Recorded before the final review round.** Where the video and this repository differ, the
 > repository, the presentation and the live console are current: the console now has a **Live
 > twin** tab (the physiological model running in the browser, shown in slides 6 and 7), the what-if
-> example is S-151, the decision log has 76 entries (72 written before their run; the deck, made one entry earlier, says 71 of 75), machine-learning
+> example is S-151, the decision log has 76 entries (72 written before their run), machine-learning
 > what-if sizes are described as likely under-estimates rather than lower bounds, and interval
-> coverage is reported for the type 2 subgroup as well as overall.
+> coverage is reported for the type 2 subgroup and fixed with group-wise calibration (D-076).
 
 | | Section | Covers |
 |---|---|---|
@@ -494,8 +501,9 @@ Each slide cites the decision and the metrics file it came from in its own foote
   meal effects are predicted poorly by both engines (per-pair r ≤ 0.21). The walk effect is assumed.
 - Sensor bias and drift are not detected by the quality score: a +20 mg/dL bias drops 80 %
   interval coverage to about 65 %. This is stated on the Data quality page.
-- Interval coverage is not uniform across subgroups (73 % on T2D rows against 87 % on healthy
-  rows); both dashboards report it per subgroup.
+- With pooled calibration, interval coverage was not uniform across subgroups (73.8 % on type 2
+  rows, 85.7 % on healthy rows). Group-wise calibration (D-076) brings every group to about 80 %;
+  it is evaluated on stored outputs and is not yet the dashboards' default.
 - For hypoglycaemia on Shanghai a simple threshold alert outperforms the model at one false alarm
   per day.
 - Hypoglycaemia evidence is thin (8 CGMacros patients with events).

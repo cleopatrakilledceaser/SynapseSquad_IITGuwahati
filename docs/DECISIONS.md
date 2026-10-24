@@ -1734,3 +1734,16 @@ calibration as the fix, with its width cost; switching the console's bands to `c
 separate, later decision. If not met, the result is reported as found. Either way the served point
 forecast is unchanged.
 
+### D-076: outcome (recorded after the single run)
+
+Run once on the owner's machine (commit e56de06, `reports/metrics/mondrian.json`, no fallbacks: every
+group had its own quantile in every fold). **Primary endpoint met:** design A, CGMacros, type 2,
++60 min, 80 %: served CV+ 73.8 % [70.1, 77.8] -> group-wise 79.8 % [76.2, 83.7]; pooled control
+72.1 %. Type 2 at +30 / +120: 77.2 -> 79.3 % and 68.9 -> 79.5 %. 95 % level, type 2: 92.5 -> 94.8 %
+at +60. Overall 80 % coverage, group-wise: CGMacros 80.1 / 80.1 / 79.7 %, Shanghai 80.0 / 79.9 / 79.9 %
+(secondary criterion, >= 79 % everywhere: met). Median 80 % width at +60, CGMacros: type 2 48.3 ->
+59.3 mg/dL, healthy 47.7 -> 40.4, overall 47.8 -> 46.3. Shanghai HbA1c >= 9 at +120: 76.6 -> 79.7 %.
+Design B (confirmatory, 3 type 2 test patients): type 2 at +60 71.1 -> 75.7 %, at +120 65.7 -> 77.4 %.
+
+Reported in the README, model card, architecture diagram and slide 11. The served point forecast is
+unchanged. Making group-wise bands the dashboards' default remains a separate step.
