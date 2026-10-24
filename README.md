@@ -23,25 +23,28 @@ All on real patients, always split by patient, 95 % confidence intervals in §9.
 | **A two-hour forecast** | On 100 real type 2 patients (Shanghai T2DM): **RMSE 34.1 mg/dL, 22 % better than repeating the last value, 97.0 % of forecasts in Clarke error-grid zones A+B** (development model; the served model is more accurate still) |
 | **An accurate next hour** | Mean error **15.7 mg/dL** (US cohort) and **15.5 mg/dL** (China cohort) at +60 min for the served model; 99.1 % in Clarke zones A+B (development model, US cohort) |
 | **A range that can be trusted** | The 80 % range contains the reading **80.5 %** of the time, in both cohorts |
-| **Warning before a high or a low** | AUROC **0.82** for glucose above 180 two hours ahead; **0.91** for below 70 one hour ahead. At the same number of alerts, it catches **83 %** of highs an hour ahead against 59 % for a threshold alert |
+| **Warning before a high or a low** | AUROC **0.82** for glucose above 180 two hours ahead; **0.91** for below 70 one hour ahead. At the same alert budget as a clinic's threshold alert (about one unconfirmed alert per patient per day), it catches **83 %** of highs an hour ahead against 59 %, with a median warning of 15–30 minutes before the crossing |
 | **A "what if" sized correctly** | On real breakfasts eaten twice by the same person, the twin predicted **27.5 of the observed 33.5 mg/dL** difference |
 | **Fusion that pays on real data** | On 45 people with CGM, Fitbit, meal logs and labs, removing any stream raises error: meals +0.92, HbA1c and fasting glucose +0.61, heart rate and activity +0.12 mg/dL (each interval excludes zero) |
 | **Privacy by design** | Federated training across clinics matches pooled training to within **0.09–0.12 mg/dL** without moving a single record |
 
 ### A patient, two hours ahead
 
-Simulated patient **S-151**, glucose 151 mg/dL, about to eat dinner. In the console's Live twin
-(search *S-151*, click −5 min four times, then try the meals):
+**S-151** is a 53-year-old woman with type 2 diabetes for six years, hypertension, a BMI of 24 and
+an HbA1c of 7.6 % — numbers that look only moderately off at a clinic visit. At 20:25 her glucose
+is 151 mg/dL and she is about to eat dinner. The twin, which has been following every CGM reading,
+answers the question her clinician would ask (console → search *S-151* → Live twin → click −5 min
+four times → try the meals):
 
 | Plan | Twin's predicted peak |
 |---|---|
 | Vegetarian thali | 257 mg/dL |
 | Thali + 30-minute walk | 220 mg/dL, still high |
 | Upma instead | 198 mg/dL, still high |
-| **Upma + 30-minute walk** | **173 mg/dL, stays in range** |
+| **Upma + 30-minute walk** | **172 mg/dL, stays in range** |
 
 One change is not enough; the combination is. The clinician sees it before the meal, not after the
-spike. (Simulated patient; the walk's size is a literature-based assumption, labelled on screen.)
+spike. (S-151 is simulated; the walk's size is a literature-based assumption, labelled on screen.)
 
 ### What this is, in five lines
 
@@ -163,6 +166,19 @@ The data card is [docs/data_card.md](docs/data_card.md).
 
 MAE in mg/dL at +60 min, 95 % patient-bootstrap intervals in brackets. All splits are by patient.
 Every simulated number is labelled SIMULATED.
+
+**Which number is which.** Several +60 min errors appear in this README because they answer
+different questions, each on patients the model never trained on:
+
+| Number (CGMacros, +60 min) | Model | Evaluation |
+|---|---|---|
+| **15.70** | Served model (tuned LightGBM, D-072a) | Held-out test patients, design A |
+| 16.8–17.2 | Development fusion models (§9.1 table, model-family comparison) | Patient-grouped cross-validation |
+| 16.06 → 14.94 | Population LightGBM before tuning, then fine-tuned on 7 days of the patient's own data | Common test region from day 7 (personalisation, Part 5) |
+| 18.1 | Mechanistic twin alone | Same windows, from day 3 |
+
+Clarke error-grid figures are from the development fusion models; the two-hour Shanghai RMSE
+(34.1 mg/dL) is the development CGM model.
 
 ### 9.1 Forecasting and fusion (CGMacros, 45 patients)
 
