@@ -8,7 +8,7 @@ Happiest Health Digital Twin Challenge 2026.
 | | |
 |---|---|
 | ▶ **Demo video** (22 min) | [Watch on Google Drive](https://drive.google.com/file/d/1YjyfhFT6rcIV6HiqQKcVzY41-ewbUZoW/view?usp=sharing) |
-| ▶ **Presentation** (PDF) | [Open on Google Drive](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing) · also in the repository: [docs/SynapseSquad_IITGuwahati_presentation.pdf](docs/SynapseSquad_IITGuwahati_presentation.pdf) |
+| ▶ **Presentation** (PDF) | [Open on Google Drive](https://drive.google.com/file/d/1X1OXQRix0O0JUEBs-zGqiUBXkCoEg3ku/view?usp=sharing) · also in the repository: [docs/SynapseSquad_IITGuwahati_presentation.pdf](docs/SynapseSquad_IITGuwahati_presentation.pdf) |
 | ▶ **Live clinician console** | [cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati](https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/) — opens in a browser, no install, no sign-in. 120 simulated patients; the **Live twin** tab runs the physiological model in your browser |
 | **Architecture diagram** | [docs/architecture.pdf](docs/architecture.pdf) |
 | **Team** | Synapse Squad · Jahnavi Harsha (solo) · IIT Guwahati — details in [§1](#1-team-details) |
@@ -454,7 +454,7 @@ evaluation protocol, AI/ML models, measured results, privacy design and scope.
 
 ## 14. Presentation
 
-**▶ [Open the presentation (PDF)](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing)** · also in this repository:
+**▶ [Open the presentation (PDF)](https://drive.google.com/file/d/1X1OXQRix0O0JUEBs-zGqiUBXkCoEg3ku/view?usp=sharing)** · also in this repository:
 [docs/SynapseSquad_IITGuwahati_presentation.pdf](docs/SynapseSquad_IITGuwahati_presentation.pdf)
 
 The twenty slides are in this repository as images, rendered at 3600 × 2027 from HTML and inline
