@@ -85,7 +85,7 @@ effect of going from 30 g to 60 g of carbohydrate (same direction, within 10 mg/
 effect). The insulin surrogate cannot represent injected insulin or sulfonylureas, so the twin does
 not model medication. Next step: feed the twin's state into the served forecaster and retest.
 
-Of the 75 entries in [docs/DECISIONS.md](docs/DECISIONS.md), 71 set a protocol before the run it
+Of the 76 entries in [docs/DECISIONS.md](docs/DECISIONS.md), 72 set a protocol before the run it
 governs (one of them, D-056, is a labelled post-hoc amendment); D-055 records findings, and D-073 to
 D-075 record later changes. Every comparison carries a patient-level confidence interval.
 
@@ -423,7 +423,7 @@ both.
 > **Recorded before the final review round.** Where the video and this repository differ, the
 > repository, the presentation and the live console are current: the console now has a **Live
 > twin** tab (the physiological model running in the browser, shown in slides 6 and 7), the what-if
-> example is S-151, the decision log has 75 entries (71 written before their run), machine-learning
+> example is S-151, the decision log has 76 entries (72 written before their run; the deck, made one entry earlier, says 71 of 75), machine-learning
 > what-if sizes are described as likely under-estimates rather than lower bounds, and interval
 > coverage is reported for the type 2 subgroup as well as overall.
 

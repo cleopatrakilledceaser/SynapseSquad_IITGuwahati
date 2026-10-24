@@ -1704,3 +1704,33 @@ max difference 5e-7 mg/dL. A deliberate 1 % change to the walk gain makes the te
 numbers are written to `reports/metrics/twin_example_s151.json`. README wording was corrected where
 reviewers found claims stronger than the evidence (cohort and model labels on every headline row,
 the low-glucose alert result, subgroup coverage, per-pair what-if agreement, "lower bound").
+
+## D-076: group-conditional (Mondrian) conformal intervals for the served model (SPEC, written before the run)
+
+Why: the served CV+ 80 % band covers 80.5 % overall in both cohorts but 73.8 % [70.1, 77.8] for
+CGMacros' 14 type 2 patients at +60 min (D-072a, `uncertainty.json` A.cgmacros.coverage.group). The
+residual pool it is calibrated on is two-thirds non-diabetic. External reviewers ranked this the
+most important gap for a type 2 product.
+
+What (`src/uncertainty/mondrian.py`, `make mondrian`): no refitting. On the stored Part 6 outputs of
+the served model (designs A and B, both cohorts, every fold), keep the served point forecast
+(`cvp_pop|h`) and compare three intervals on the same test rows:
+- `cvp`: the served CV+ interval (reference);
+- `cvc`: point +/- the conformal quantile of ALL the fold's training patients' out-of-fold residuals
+  (rows from day 7, the rows CV+ uses) — the control that isolates the effect of grouping;
+- `cvm`: the same, but the quantile is taken over training patients in the test row's own group
+  (CGMacros diabetes status; Shanghai HbA1c band, the reporting groups of D-045). A group with fewer
+  than 200 residual rows or 2 training patients falls back to the pooled quantile (flagged).
+Groups are static record fields, known before any forecast.
+
+Primary endpoint, fixed now: design A, CGMacros, type 2 group, +60 min, 80 % level, `cvm` coverage
+with its patient-bootstrap CI. **Met** if the point estimate is between 78 % and 86 % and the CI's
+upper bound reaches 80 %. Secondary: `cvm` overall coverage stays at or above 79 % at every horizon
+in both cohorts; median width per group reported beside coverage (wider type 2 bands are the
+expected cost). Design B (3 type 2 test patients in CGMacros) is reported as confirmatory only.
+
+What happens with the result: if met, the README, model card and slide 11 report group-wise
+calibration as the fix, with its width cost; switching the console's bands to `cvm` would be a
+separate, later decision. If not met, the result is reported as found. Either way the served point
+forecast is unchanged.
+

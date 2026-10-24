@@ -7,7 +7,7 @@ else
 PY ?= python
 endif
 
-.PHONY: web-twin twin-parity web-data web-evidence web-real federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
+.PHONY: mondrian web-twin twin-parity web-data web-evidence web-real federated-privacy sleep-power federated india transfer app-data app-check all setup data features models fusion mech hybrid personalize uncertainty whatif figures app test lint format smoke clean help
 
 help:
 	@echo "Targets: setup data features models figures app test lint format smoke all"
@@ -125,6 +125,9 @@ web-data:
 
 web-evidence:
 	python -m src.web.evidence
+
+mondrian:  ## D-076 group-conditional conformal on the stored Part 6 outputs (needs make uncertainty)
+	python -W ignore -u -m src.uncertainty.mondrian
 
 web-twin:  ## fit the live twin for the console patients -> web/twin.json + tests/fixtures/twin_parity.json
 	python -W ignore -u -m src.web.twin_live
