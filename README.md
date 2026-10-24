@@ -8,7 +8,7 @@ Happiest Health Digital Twin Challenge 2026.
 | | |
 |---|---|
 | ▶ **Demo video** (22 min) | [Watch on Google Drive](https://drive.google.com/file/d/1YjyfhFT6rcIV6HiqQKcVzY41-ewbUZoW/view?usp=sharing) |
-| ▶ **Presentation** (PDF) | [Open on Google Drive](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing) |
+| ▶ **Presentation** (PDF) | [Open on Google Drive](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing) · also in the repository: [docs/SynapseSquad_IITGuwahati_presentation.pdf](docs/SynapseSquad_IITGuwahati_presentation.pdf) |
 | ▶ **Live clinician console** | [cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati](https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/) — opens in a browser, no install, no sign-in. 120 simulated patients; the **Live twin** tab runs the physiological model in your browser |
 | **Architecture diagram** | [docs/architecture.pdf](docs/architecture.pdf) |
 | **Team** | Synapse Squad · Jahnavi Harsha (solo) · IIT Guwahati — details in [§1](#1-team-details) |
@@ -420,6 +420,13 @@ maker and the system never recommends a dose or a drug.
 A 22-minute walkthrough: the live console, the Streamlit application, and the evidence behind
 both.
 
+> **Recorded before the final review round.** Where the video and this repository differ, the
+> repository, the presentation and the live console are current: the console now has a **Live
+> twin** tab (the physiological model running in the browser, shown in slides 6 and 7), the what-if
+> example is S-151, the decision log has 75 entries (71 written before their run), machine-learning
+> what-if sizes are described as likely under-estimates rather than lower bounds, and interval
+> coverage is reported for the type 2 subgroup as well as overall.
+
 | | Section | Covers |
 |---|---|---|
 | 0:00 | Opening | What the system does and who it is for |
@@ -447,7 +454,8 @@ evaluation protocol, AI/ML models, measured results, privacy design and scope.
 
 ## 14. Presentation
 
-**▶ [Open the presentation (PDF)](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing)**
+**▶ [Open the presentation (PDF)](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing)** · also in this repository:
+[docs/SynapseSquad_IITGuwahati_presentation.pdf](docs/SynapseSquad_IITGuwahati_presentation.pdf)
 
 The twenty slides are in this repository as images, rendered at 3600 × 2027 from HTML and inline
 SVG so that every figure is regenerated from `reports/metrics/*.json` rather than redrawn by hand.
