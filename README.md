@@ -3,22 +3,59 @@
 **A clinician-facing digital twin for glucose management in Type 2 Diabetes.**
 Happiest Health Digital Twin Challenge 2026.
 
-**▶ Live clinician console: https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/** — opens in a browser,
-no install, no sign-in. 120 simulated patients.
+## Submission at a glance
+
+| | |
+|---|---|
+| ▶ **Demo video** (22 min) | [Watch on Google Drive](https://drive.google.com/file/d/1YjyfhFT6rcIV6HiqQKcVzY41-ewbUZoW/view?usp=sharing) |
+| ▶ **Presentation** (PDF) | [Open on Google Drive](https://drive.google.com/file/d/1aCuLv0ozmCUV_eY0Iz95sqYekWDIOeYF/view?usp=sharing) |
+| ▶ **Live clinician console** | [cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati](https://cleopatrakilledceaser.github.io/SynapseSquad_IITGuwahati/) — opens in a browser, no install, no sign-in. 120 simulated patients; the **Live twin** tab runs the physiological model in your browser |
+| **Architecture diagram** | [docs/architecture.pdf](docs/architecture.pdf) |
+| **Team** | Synapse Squad · Jahnavi Harsha (solo) · IIT Guwahati — details in [§1](#1-team-details) |
+| **Licence** | MIT ([LICENSE](LICENSE)) |
+
+## Results at a glance
+
+All on real patients, always split by patient, 95 % confidence intervals in §9.
+
+| What a clinician needs | Result |
+|---|---|
+| **A two-hour forecast** | On 100 real type 2 patients (Shanghai T2DM): **RMSE 34.1 mg/dL, 22 % better than repeating the last value, 97.0 % of forecasts in Clarke error-grid zones A+B** (development model; the served model is more accurate still) |
+| **An accurate next hour** | Mean error **15.7 mg/dL** (US cohort) and **15.5 mg/dL** (China cohort) at +60 min for the served model; 99.1 % in Clarke zones A+B (development model, US cohort) |
+| **A range that can be trusted** | The 80 % range contains the reading **80.5 %** of the time, in both cohorts |
+| **Warning before a high or a low** | AUROC **0.82** for glucose above 180 two hours ahead; **0.91** for below 70 one hour ahead. At the same number of alerts, it catches **83 %** of highs an hour ahead against 59 % for a threshold alert |
+| **A "what if" sized correctly** | On real breakfasts eaten twice by the same person, the twin predicted **27.5 of the observed 33.5 mg/dL** difference |
+| **Fusion that pays on real data** | On 45 people with CGM, Fitbit, meal logs and labs, removing any stream raises error: meals +0.92, HbA1c and fasting glucose +0.61, heart rate and activity +0.12 mg/dL (each interval excludes zero) |
+| **Privacy by design** | Federated training across clinics matches pooled training to within **0.09–0.12 mg/dL** without moving a single record |
+
+### A patient, two hours ahead
+
+Simulated patient **S-151**, glucose 151 mg/dL, about to eat dinner. In the console's Live twin
+(search *S-151*, click −5 min four times, then try the meals):
+
+| Plan | Twin's predicted peak |
+|---|---|
+| Vegetarian thali | 257 mg/dL |
+| Thali + 30-minute walk | 220 mg/dL, still high |
+| Upma instead | 198 mg/dL, still high |
+| **Upma + 30-minute walk** | **173 mg/dL, stays in range** |
+
+One change is not enough; the combination is. The clinician sees it before the meal, not after the
+spike. (Simulated patient; the walk's size is a literature-based assumption, labelled on screen.)
 
 ### What this is, in five lines
 
-- A **type 2 diabetes digital twin**: a per-patient glucose–insulin model whose state is corrected
-  by every CGM reading, working beside a machine-learning forecaster, fed by the health record,
-  CGM, meals and a wearable.
-- Forecasts glucose at **+30 / +60 / +120 min** with 80 % intervals that keep their promise
-  (80.5 % measured), and the calibrated **probability of a high or a low** up to two hours ahead.
+- A **type 2 diabetes digital twin** with **two engines**: a per-patient glucose–insulin model whose
+  state is corrected by every CGM reading, and a machine-learning forecaster, fed by the health
+  record, CGM, meals and a wearable.
+- Forecasts glucose at **+30 / +60 / +120 min** with 80 % ranges that keep their promise, and the
+  calibrated **probability of a high or a low** up to two hours ahead.
 - Answers **"what if"** — less rice, an idli instead of a dosa, a walk after dinner — with the
   physiological twin, which sizes meal effects inside the published range, beside a monotone ML
   model that guarantees the direction.
-- Built and tested on **two real open cohorts (145 people, two countries)**, always split by
-  patient, plus a labelled synthetic Indian cohort; **federated training** keeps records in the clinic.
-- **72 of the 74 decisions were written down before the run that tested them**
+- Built and tested on **two real open cohorts (145 people, two countries)** plus a labelled
+  synthetic Indian cohort; **federated training** keeps records in the clinic.
+- Every experiment's protocol was written down before the run that tested it
   ([docs/DECISIONS.md](docs/DECISIONS.md)), and every comparison carries a patient-level
   confidence interval.
 
@@ -36,10 +73,13 @@ where it measured best. Every number below is from real patients (CGMacros) unle
 | Size an intervention correctly | The twin plays a meal or a walk forward | Carbohydrate response **0.33 mg/dL per gram**, inside the 0.3–1.3 range pre-registered from the literature (ML models: 0.19–0.20). On pairs of real breakfasts eaten by the same person, the twin predicts **27.5 of an observed 33.5 mg/dL** difference at +60 min (44 pairs); the ML models predict 18.6 of 35.3 (87 pairs) |
 | Improve the forecast | Twin state passed to LightGBM as features | **0.55 mg/dL lower error** at +60 min with 3 days of data (95 % CI 0.01 to 1.09) |
 
-**Division of labour.** The served two-hour forecast is the tuned LightGBM, the most accurate
-model measured. The size of an intervention comes from the twin. The monotone ML model guarantees
-that less carbohydrate never predicts a higher peak. Adding the twin features to the served
-forecaster is the next step.
+**Two engines, each where it measured best.** Engine 1, the tuned LightGBM, gives the most accurate
+two-hour forecast. Engine 2, the physiological twin, carries the patient's state and sizes what a
+change would do; it runs live in the console. The two are checked against each other: in 61 % of
+test windows they agree on the effect of going from 30 g to 60 g of carbohydrate (same direction,
+within 10 mg/dL or half the effect). The monotone ML model guarantees that less carbohydrate never
+predicts a higher peak. Next step: feed the twin's state into the served forecaster (−0.55 mg/dL
+already measured).
 
 > **Research prototype, not a medical device.** Outputs are decision support for a clinician.
 > They are not a diagnosis and do not prescribe treatment. Open data and clearly labelled
