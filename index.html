@@ -243,7 +243,7 @@ table.t td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
-<div id="app" class="loading">Loading the patient panel…</div>
+<div id="app" class="loading">GlucoTwin clinic console — loading 120 simulated patients and their live twins…</div>
 
 <script>
 (() => {
@@ -744,7 +744,7 @@ function whatifView(p) {
   const rows = ["30", "60", "120"].map((h) => { const d = r.now[h] - r.base[h]; return `<tr><td>+${h} min</td><td class="num">${gv(r.base[h])}</td><td class="num">${gv(r.now[h])}</td><td class="delta ${d > 0.5 ? "up" : d < -0.5 ? "down" : ""}">${d >= 0 ? "+" : "−"}${S.unit === "mgdl" ? Math.abs(d).toFixed(0) : (Math.abs(d) / MG).toFixed(1)}</td></tr>`; }).join("");
   const res = `<div class="chartbox" id="wichart"></div><div class="legend"><span><i style="background:var(--fg)"></i>Glucose before the meal</span><span><i style="background:var(--z-high)"></i>What the simulated patient did</span><span><i style="background:var(--faint)"></i>Baseline: logged meal, no walk</span><span><i style="background:var(--accent)"></i>What-if</span></div>` +
     `<div class="scroll" style="margin-top:10px"><table class="t"><thead><tr><th>Horizon</th><th>Baseline (${unitLabel()})</th><th>What-if (${unitLabel()})</th><th>Change</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Replace a logged meal with another one, optionally add a walk, and see how the forecast changes. The patient and the meal are simulated; the numbers are model estimates.</span></div>` +
+  return `<div class="notice" style="margin-bottom:0"><span class="tag warn">Simulated</span><span>Replace a logged meal with another one, optionally add a walk, and see how the forecast changes. This tab uses the machine-learning model: trust its direction and ranking; its sizes are lower bounds. For physiologically sized effects, open <b>Live twin</b>. The patient and the meal are simulated.</span></div>` +
     `<div class="grid2" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start"><div class="card"><h3>Scenario</h3>${ctl}</div><div class="card"><h3>Forecast from the meal</h3>${res}</div></div>` +
     `<div class="callout">${esc(WHATIF_NOTE)}</div>` +
     ([].concat(meta.notes || []).length ? `<div class="card"><h3>About these results</h3><ul class="bullets">${[].concat(meta.notes).map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>` : "") +
